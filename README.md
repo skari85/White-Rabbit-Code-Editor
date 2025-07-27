@@ -1,13 +1,209 @@
-# Recreate UI design
+# Hex & Kex - Build Progressive Web Apps
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+Hex & Kex is a visual tool for creating Progressive Web Applications with ease. Build, customize, and export PWAs using an intuitive drag-and-drop interface.
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/georgoskar-7854s-projects/v0-recreate-ui-design)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/f1mzLkvOodF)
+[![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
 
-## Overview
+## Features
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
+### ✨ Core Features
+- **Visual PWA Builder**: Create PWAs with a visual interface
+- **Code Editor**: Full-featured code editor with syntax highlighting
+- **Live Preview**: See your changes in real-time with mobile preview
+- **Template Library**: Pre-built templates (Employee Directory, Todo App, etc.)
+- **PWA Generation**: Automatic manifest.json and service worker generation
+- **Export Functionality**: Download your PWA as a ZIP file
+- **Responsive Design**: Works on desktop, tablet, and mobile devices
+
+### 🚀 PWA Features
+- **Offline Support**: Works without internet connection
+- **Installable**: Can be installed on devices like native apps
+- **Push Notifications**: Support for web push notifications
+- **Background Sync**: Sync data when connection is restored
+- **App Shell**: Fast loading app shell architecture
+
+### 🛠️ Technical Features
+- Built with **Next.js 15** and **React 19**
+- **TypeScript** for type safety
+- **Tailwind CSS** for styling
+- **Radix UI** components for accessibility
+- **JSZip** for file compression and export
+- Modern PWA standards compliance
+
+## Quick Start
+
+### Prerequisites
+- Node.js 18+ 
+- npm or pnpm package manager
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/skari85/pwa-code.git
+   cd pwa-code
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   pnpm install
+   ```
+
+3. **Start the development server**
+   ```bash
+   npm run dev
+   # or
+   pnpm dev
+   ```
+
+4. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## How to Use
+
+### 1. Choose Your Mode
+- **Code Editor**: Write code manually with full control
+- **PWA Builder**: Use the visual interface to build PWAs
+
+### 2. Start with a Template
+- Select from pre-built templates:
+  - **Employee Directory**: Browse and search employees
+  - **Todo App**: Task management application
+  - More templates coming soon!
+
+### 3. Customize Your App
+- **Settings Panel**: Configure app name, description, colors, and icons
+- **File Editor**: Modify HTML, CSS, JavaScript, and JSON files
+- **Live Preview**: See changes instantly in the mobile preview
+
+### 4. Generate PWA Files
+- Click **"Generate PWA"** to create:
+  - `manifest.json` with your app configuration
+  - `sw.js` service worker for offline functionality
+  - Optimized HTML with PWA meta tags
+
+### 5. Export and Deploy
+- **Download**: Export as ZIP file containing all your files
+- **Preview**: Test your app in a new browser tab
+- **Deploy**: Upload to any web server or hosting platform
+
+## Project Structure
+
+```
+pwa-code/
+├── app/                    # Next.js app directory
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Main page
+├── components/            # Reusable UI components
+│   ├── ui/               # Shadcn/ui components
+│   └── theme-provider.tsx
+├── hooks/                 # Custom React hooks
+│   └── use-pwa-builder.ts # PWA builder logic
+├── lib/                   # Utility libraries
+│   ├── pwa-generator.ts   # PWA file generation
+│   ├── templates.ts       # Template definitions
+│   └── utils.ts          # General utilities
+├── public/               # Static assets
+│   ├── manifest.json     # PWA manifest
+│   ├── sw.js            # Service worker
+│   └── *.svg            # Icons
+└── plunker-clone.tsx     # Main application component
+```
+
+## Available Templates
+
+### 1. Employee Directory
+A professional employee directory application featuring:
+- Employee search and filtering
+- Responsive card layout
+- Contact information display
+- PWA installation prompt
+
+### 2. Todo App
+A task management application with:
+- Add, edit, and delete tasks
+- Mark tasks as complete
+- Local storage persistence
+- Clean, modern interface
+
+## PWA Standards Compliance
+
+This tool generates PWAs that meet modern web standards:
+
+- ✅ **Web App Manifest**: Complete manifest.json configuration
+- ✅ **Service Worker**: Offline functionality and caching
+- ✅ **HTTPS Ready**: Works with secure connections
+- ✅ **Responsive Design**: Mobile-first approach
+- ✅ **Installable**: Add to home screen functionality
+- ✅ **Performance**: Optimized loading and caching
+
+## Development
+
+### Building for Production
+```bash
+npm run build
+npm start
+```
+
+### Code Quality
+```bash
+npm run lint
+```
+
+### Technologies Used
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: Radix UI primitives
+- **File Handling**: JSZip for exports
+- **PWA**: Web App Manifest + Service Workers
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Roadmap
+
+### Upcoming Features
+- [ ] More PWA templates (Weather App, News Reader, etc.)
+- [ ] Drag-and-drop visual builder
+- [ ] Component library integration
+- [ ] Database integration templates
+- [ ] Push notification setup wizard
+- [ ] Advanced theming options
+- [ ] Collaborative editing
+- [ ] Version control integration
+
+### Technical Improvements
+- [ ] Enhanced code editor with IntelliSense
+- [ ] Real-time collaboration
+- [ ] Template marketplace
+- [ ] Custom component creation
+- [ ] Advanced PWA features (background sync, etc.)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+If you encounter any issues or have questions:
+
+1. Check the [Issues](https://github.com/skari85/pwa-code/issues) page
+2. Create a new issue with detailed information
+3. Join our community discussions
+
+---
+
+**Built with ❤️ by the Hex & Kex team**
 Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
 
 ## Deployment

@@ -62,6 +62,15 @@ const config: Config = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
+  			},
+  			// Hex & Kex custom colors
+  			hex: {
+  				background: 'var(--hex-background)',
+  				'accent-1': 'var(--hex-accent-1)',
+  				'accent-2': 'var(--hex-accent-2)',
+  				foreground: 'var(--hex-foreground)',
+  				error: 'var(--hex-error)',
+  				subtle: 'var(--hex-subtle)'
   			}
   		},
   		borderRadius: {
@@ -85,11 +94,24 @@ const config: Config = {
   				to: {
   					height: '0'
   				}
+  			},
+  			// Hex & Kex custom animations
+  			glitch: {
+  				'0%': { transform: 'translate(0)' },
+  				'20%': { transform: 'translate(-2px, 1px)' },
+  				'40%': { transform: 'translate(3px, -1px)' },
+  				'60%': { transform: 'translate(-1px, 2px)' },
+  				'80%': { transform: 'translate(1px, -2px)' },
+  				'100%': { transform: 'translate(0)' }
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			glitch: 'glitch 0.4s infinite'
+  		},
+  		fontFamily: {
+  			mono: ['JetBrains Mono', 'Fira Code', 'monospace']
   		}
   	}
   },

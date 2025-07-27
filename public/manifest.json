@@ -1,0 +1,46 @@
+{
+  "name": "Hex & Kex - Build Progressive Web Apps",
+  "short_name": "Hex & Kex",
+  "description": "Hex & Kex - A visual tool for creating Progressive Web Applications",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512", 
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["productivity", "developer", "utilities"],
+  "shortcuts": [
+    {
+      "name": "New PWA",
+      "short_name": "New",
+      "description": "Create a new Progressive Web App",
+      "url": "/?mode=pwa",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Code Editor",
+      "short_name": "Code",
+      "description": "Open the code editor",
+      "url": "/?mode=code",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+    }
+  ]
+}

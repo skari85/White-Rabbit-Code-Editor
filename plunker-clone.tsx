@@ -1,11 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useEffect } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { usePWABuilder, useCodeExport } from "@/hooks/use-pwa-builder"
+import { generateManifest, generateServiceWorker, generateHTMLTemplate, generateIconSVG, PWASettings } from "@/lib/pwa-generator"
+import { useTemplates } from "@/lib/templates"
+import { useAIAssistant } from "@/hooks/use-ai-assistant"
+import { AIChat } from "@/components/ai-chat"
+import { AISettingsPanel } from "@/components/ai-settings-panel"
 import {
   Download,
   ExternalLink,
@@ -23,21 +30,114 @@ import {
   BookOpen,
   Share2,
   LayoutTemplateIcon as Template,
+  X,
+  Play,
+  Bot,
+  Settings,
 } from "lucide-react"
 
 export default function Component() {
-  const [selectedFile, setSelectedFile] = useState("index.html")
+  // PWA Builder hooks
+  const { 
+    files, 
+    selectedFile, 
+    setSelectedFile, 
+    updateFileContent, 
+    addNewFile, 
+    deleteFile, 
+    getSelectedFileContent,
+    getSelectedFileType,
+    setFiles
+  } = usePWABuilder();
+  
+  const { exportAsZip, previewInNewTab } = useCodeExport();
+  const { templates, loadTemplate } = useTemplates();
+  const { 
+    settings: aiSettings, 
+    messages: aiMessages, 
+    isLoading: aiLoading, 
+    isConfigured: aiConfigured,
+    saveSettings: saveAISettings,
+    sendMessage: sendAIMessage,
+    clearMessages: clearAIMessages,
+    testConnection: testAIConnection
+  } = useAIAssistant();
 
-  const [viewMode, setViewMode] = useState<"code" | "pwa">("code")
+  const [viewMode, setViewMode] = useState<"code" | "pwa" | "ai">("code")
+  const [aiPanelMode, setAIPanelMode] = useState<"chat" | "settings">("chat")
   const [selectedTab, setSelectedTab] = useState("ALL")
-  const [appSettings, setAppSettings] = useState({
+  const [appSettings, setAppSettings] = useState<PWASettings>({
     name: "Employees",
-    description: "",
-    author: "",
-    appUrl: "https://",
+    description: "A simple employee directory app",
+    author: "PWA Builder",
+    appUrl: "https://my-pwa.app",
     accentColor: "#3B82F6",
     icon: "👥",
+    backgroundColor: "#ffffff",
+    themeColor: "#3B82F6",
   })
+
+  // Generate PWA files when settings change
+  const generatePWAFiles = useCallback(() => {
+    const manifest = generateManifest(appSettings);
+    const serviceWorker = generateServiceWorker();
+    const htmlTemplate = generateHTMLTemplate(appSettings);
+    const iconSvg = generateIconSVG(appSettings.icon, appSettings.accentColor);
+
+    updateFileContent('manifest.json', JSON.stringify(manifest, null, 2));
+    updateFileContent('sw.js', serviceWorker);
+    updateFileContent('index.html', htmlTemplate);
+    updateFileContent('icon.svg', iconSvg);
+  }, [appSettings, updateFileContent]);
+
+  // Handle file content changes
+  const handleFileContentChange = useCallback((content: string) => {
+    updateFileContent(selectedFile, content);
+  }, [selectedFile, updateFileContent]);
+
+  // Handle app settings changes
+  const handleSettingsChange = useCallback((key: keyof PWASettings, value: string) => {
+    setAppSettings(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  // Load template
+  const handleLoadTemplate = useCallback((templateId: string) => {
+    const template = loadTemplate(templateId);
+    if (template) {
+      setFiles(template.files);
+      setAppSettings(prev => ({
+        ...prev,
+        ...template.settings,
+        backgroundColor: prev.backgroundColor,
+        themeColor: template.settings.accentColor
+      }));
+      setSelectedFile('index.html');
+    }
+  }, [loadTemplate, setFiles]);
+
+  // Handle AI message with context
+  const handleAIMessage = useCallback(async (message: string) => {
+    const context = {
+      files,
+      selectedFile,
+      appSettings
+    };
+    
+    try {
+      await sendAIMessage(message, context);
+    } catch (error) {
+      console.error('AI message error:', error);
+    }
+  }, [sendAIMessage, files, selectedFile, appSettings]);
+
+  // Register service worker
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => console.log('SW registered:', registration))
+        .catch(error => console.log('SW registration failed:', error));
+    }
+  }, []);
 
   const employees = [
     {
@@ -66,12 +166,22 @@ export default function Component() {
     },
   ]
 
-  const files = [
-    { name: "index.html", icon: FileText },
-    { name: "README.md", icon: FileText },
-    { name: "script.js", icon: File },
-    { name: "style.css", icon: File },
-  ]
+  // Helper function to get file icon
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'html':
+      case 'md':
+        return FileText;
+      case 'js':
+      case 'css':
+      case 'json':
+      case 'svg':
+        return File;
+      default:
+        return File;
+    }
+  };
 
   const codeContent = `<!DOCTYPE html>
 <html>
@@ -89,26 +199,32 @@ export default function Component() {
 </html>`
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-hex-background">
       {/* Top Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+      <div className="bg-black/20 border-b border-hex-accent-1/30 px-4 py-2 flex items-center justify-between backdrop-blur-sm">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 text-gray-600">
-            <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center">
-              <span className="text-white text-xs font-bold">P</span>
+          <div className="flex items-center text-hex-foreground">
+            <div className="w-12 h-12 relative">
+              <Image
+                src="/hexkexlogo.png"
+                alt="Hex & Kex Logo"
+                width={48}
+                height={48}
+                className="object-contain"
+                priority
+              />
             </div>
-            <span className="font-medium">Plunker</span>
           </div>
           <div className="flex items-center gap-1 ml-4">
-            <Button variant="outline" size="sm" className="gap-1 bg-transparent">
+            <Button variant="outline" size="sm" className="gap-1 bg-transparent border-hex-accent-1/30 text-hex-foreground hover:bg-hex-accent-1/20 glitch-hover">
               <Snowflake className="w-4 h-4" />
               Freeze
             </Button>
-            <Button variant="outline" size="sm" className="gap-1 bg-transparent">
+            <Button variant="outline" size="sm" className="gap-1 bg-transparent border-hex-accent-2/30 text-hex-foreground hover:bg-hex-accent-2/20 glitch-hover">
               <GitFork className="w-4 h-4" />
               Fork
             </Button>
-            <Button variant="default" size="sm" className="gap-1 bg-green-600 hover:bg-green-700">
+            <Button variant="default" size="sm" className="gap-1 bg-hex-accent-1 hover:bg-hex-accent-1/80 hex-button">
               <Plus className="w-4 h-4" />
               New
             </Button>
@@ -119,11 +235,28 @@ export default function Component() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => exportAsZip(files, appSettings.name)}
+          >
             <Download className="w-4 h-4" />
           </Button>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => previewInNewTab(files)}
+          >
             <ExternalLink className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="bg-green-600 hover:bg-green-700"
+            onClick={generatePWAFiles}
+          >
+            <Play className="w-4 h-4" />
+            Generate PWA
           </Button>
           <Button variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700">
             Sign in with Google
@@ -151,30 +284,75 @@ export default function Component() {
           )}
           {/* Code Files (existing) */}
           {viewMode === "code" && (
-            <div className="p-3">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">FILES</div>
-              <div className="space-y-1">
-                {files.map((file) => {
-                  const Icon = file.icon
-                  return (
+            <>
+              <div className="p-3">
+                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">TEMPLATES</div>
+                <div className="space-y-1">
+                  {templates.map((template) => (
                     <button
-                      key={file.name}
-                      onClick={() => setSelectedFile(file.name)}
-                      className={`w-full flex items-center gap-2 px-2 py-1 text-sm rounded hover:bg-gray-100 ${
-                        selectedFile === file.name ? "bg-blue-100 text-blue-700" : "text-gray-700"
-                      }`}
+                      key={template.id}
+                      onClick={() => handleLoadTemplate(template.id)}
+                      className="w-full flex items-center gap-2 px-2 py-1 text-sm rounded hover:bg-gray-100 text-gray-700"
                     >
-                      <Icon className="w-4 h-4" />
-                      {file.name}
+                      <span className="text-base">{template.icon}</span>
+                      <div className="flex-1 text-left">
+                        <div className="font-medium">{template.name}</div>
+                        <div className="text-xs text-gray-500">{template.description}</div>
+                      </div>
                     </button>
-                  )
-                })}
+                  ))}
+                </div>
               </div>
-              <Button variant="outline" size="sm" className="w-full mt-2 gap-1 bg-transparent">
-                <Plus className="w-4 h-4" />
-                New file
-              </Button>
-            </div>
+              <Separator />
+              <div className="p-3">
+                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">FILES</div>
+                <div className="space-y-1">
+                  {files.map((file) => {
+                    const Icon = getFileIcon(file.name)
+                    return (
+                      <div key={file.name} className="flex items-center">
+                        <button
+                          onClick={() => setSelectedFile(file.name)}
+                          className={`flex-1 flex items-center gap-2 px-2 py-1 text-sm rounded hover:bg-gray-100 ${
+                            selectedFile === file.name ? "bg-blue-100 text-blue-700" : "text-gray-700"
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {file.name}
+                        </button>
+                        {files.length > 1 && (
+                          <button
+                            onClick={() => deleteFile(file.name)}
+                            className="p-1 text-gray-400 hover:text-red-500"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full mt-2 gap-1 bg-transparent"
+                  onClick={() => {
+                    const fileName = prompt("Enter file name (e.g., styles.css, script.js):");
+                    if (fileName) {
+                      const extension = fileName.split('.').pop()?.toLowerCase();
+                      const type = extension === 'css' ? 'css' : 
+                                  extension === 'js' ? 'js' : 
+                                  extension === 'json' ? 'json' : 
+                                  extension === 'md' ? 'md' : 'html';
+                      addNewFile(fileName, type);
+                    }
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  New file
+                </Button>
+              </div>
+            </>
           )}
           <Separator />
           {/* PWA Options */}
@@ -274,49 +452,75 @@ export default function Component() {
         <div className="flex-1 flex">
           {/* Mode Toggle */}
           <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10">
-            <div className="bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
-              <Button variant={viewMode === "code" ? "default" : "ghost"} size="sm" onClick={() => setViewMode("code")}>
+            <div className="bg-black/40 border border-hex-accent-1/30 rounded-lg p-1 shadow-lg backdrop-blur-sm">
+              <Button 
+                variant={viewMode === "code" ? "default" : "ghost"} 
+                size="sm" 
+                onClick={() => setViewMode("code")}
+                className={viewMode === "code" ? "bg-hex-accent-1 text-white hex-button" : "text-hex-foreground hover:bg-hex-accent-1/20 glitch-hover"}
+              >
                 Code Editor
               </Button>
-              <Button variant={viewMode === "pwa" ? "default" : "ghost"} size="sm" onClick={() => setViewMode("pwa")}>
+              <Button 
+                variant={viewMode === "pwa" ? "default" : "ghost"} 
+                size="sm" 
+                onClick={() => setViewMode("pwa")}
+                className={viewMode === "pwa" ? "bg-hex-accent-1 text-white hex-button" : "text-hex-foreground hover:bg-hex-accent-1/20 glitch-hover"}
+              >
                 PWA Builder
+              </Button>
+              <Button 
+                variant={viewMode === "ai" ? "default" : "ghost"} 
+                size="sm" 
+                onClick={() => setViewMode("ai")}
+                className={`gap-1 ${viewMode === "ai" ? "bg-hex-accent-1 text-white hex-button" : "text-hex-foreground hover:bg-hex-accent-1/20 glitch-hover"}`}
+              >
+                <Bot className="w-4 h-4" />
+                AI Assistant
+                {!aiConfigured && <div className="w-2 h-2 bg-hex-error rounded-full animate-pulse" />}
               </Button>
             </div>
           </div>
 
           {viewMode === "code" ? (
             /* Existing Code Editor */
-            <div className="flex-1 bg-white">
+            <div className="flex-1 bg-black/20 backdrop-blur-sm">
               <div className="h-full flex flex-col">
-                <div className="bg-gray-50 border-b border-gray-200 px-4 py-2">
-                  <span className="text-sm font-medium text-gray-700">{selectedFile}</span>
+                <div className="bg-black/40 border-b border-hex-accent-1/30 px-4 py-2 flex items-center justify-between">
+                  <span className="text-sm font-medium text-hex-foreground font-mono">{selectedFile}</span>
+                  <Badge variant="secondary" className="text-xs bg-hex-accent-1/20 text-hex-accent-2 border-hex-accent-2/30">
+                    {getSelectedFileType().toUpperCase()}
+                  </Badge>
                 </div>
                 <div className="flex-1 font-mono text-sm overflow-auto">
-                  <div className="flex">
-                    <div className="bg-gray-50 border-r border-gray-200 px-3 py-4 text-gray-500 select-none">
-                      {codeContent.split("\n").map((_, index) => (
-                        <div key={index} className="leading-6">
+                  <div className="flex h-full">
+                    <div className="bg-black/20 border-r border-hex-accent-1/30 px-3 py-4 text-hex-subtle select-none min-w-[50px]">
+                      {getSelectedFileContent().split("\n").map((_, index) => (
+                        <div key={index} className="leading-6 text-right">
                           {index + 1}
                         </div>
                       ))}
                     </div>
-                    <div className="flex-1 p-4">
-                      <pre className="leading-6 text-gray-800">
-                        <code>{codeContent}</code>
-                      </pre>
+                    <div className="flex-1">
+                      <Textarea
+                        value={getSelectedFileContent()}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleFileContentChange(e.target.value)}
+                        className="w-full h-full border-0 rounded-none resize-none font-mono text-sm leading-6 p-4 focus:ring-0 bg-transparent text-hex-foreground placeholder-hex-subtle focus:outline-none"
+                        placeholder="Start coding..."
+                      />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          ) : (
+          ) : viewMode === "pwa" ? (
             /* PWA Builder Interface */
-            <div className="flex-1 bg-gray-50 p-6">
+            <div className="flex-1 bg-hex-background p-6">
               <div className="max-w-4xl mx-auto">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-black/20 rounded-lg shadow-lg border border-hex-accent-1/30 overflow-hidden backdrop-blur-sm">
                   {/* Mobile Preview */}
-                  <div className="bg-black p-4 flex justify-center">
-                    <div className="w-80 h-[600px] bg-white rounded-3xl p-4 shadow-2xl">
+                  <div className="bg-gradient-to-b from-hex-accent-1/20 to-hex-accent-2/20 p-4 flex justify-center">
+                    <div className="w-80 h-[600px] bg-hex-background rounded-3xl p-4 shadow-2xl border border-hex-accent-1/30 glow-purple">
                       {/* Status Bar */}
                       <div className="flex justify-between items-center mb-4 text-xs">
                         <span className="font-medium">10:08</span>
@@ -398,6 +602,119 @@ export default function Component() {
                 </div>
               </div>
             </div>
+          ) : (
+            /* AI Assistant Interface */
+            <div className="flex-1 flex">
+              {/* AI Chat Panel */}
+              <div className="flex-1 bg-white">
+                {aiPanelMode === "chat" ? (
+                  <AIChat
+                    messages={aiMessages}
+                    isLoading={aiLoading}
+                    onSendMessage={handleAIMessage}
+                    onClearMessages={clearAIMessages}
+                    isConfigured={aiConfigured}
+                  />
+                ) : (
+                  <div className="p-6 h-full overflow-auto">
+                    <AISettingsPanel
+                      settings={aiSettings}
+                      onSettingsChange={saveAISettings}
+                      onTestConnection={testAIConnection}
+                      isConfigured={aiConfigured}
+                    />
+                  </div>
+                )}
+              </div>
+              
+              {/* AI Controls */}
+              <div className="w-80 bg-gray-50 border-l border-gray-200 p-4">
+                <div className="space-y-4">
+                  <div className="flex gap-1">
+                    <Button
+                      variant={aiPanelMode === "chat" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setAIPanelMode("chat")}
+                      className="flex-1"
+                    >
+                      <Bot className="w-4 h-4 mr-1" />
+                      Chat
+                    </Button>
+                    <Button
+                      variant={aiPanelMode === "settings" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setAIPanelMode("settings")}
+                      className="flex-1"
+                    >
+                      <Settings className="w-4 h-4 mr-1" />
+                      Setup
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium">Quick Actions</h3>
+                    <div className="space-y-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start text-xs"
+                        onClick={() => handleAIMessage("Help me improve the current file")}
+                        disabled={aiLoading || !aiConfigured}
+                      >
+                        💡 Improve Current File
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start text-xs"
+                        onClick={() => handleAIMessage("Add responsive design to my PWA")}
+                        disabled={aiLoading || !aiConfigured}
+                      >
+                        📱 Make Responsive
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start text-xs"
+                        onClick={() => handleAIMessage("Optimize my PWA for performance")}
+                        disabled={aiLoading || !aiConfigured}
+                      >
+                        ⚡ Optimize Performance
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start text-xs"
+                        onClick={() => handleAIMessage("Add accessibility features")}
+                        disabled={aiLoading || !aiConfigured}
+                      >
+                        ♿ Add Accessibility
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start text-xs"
+                        onClick={() => handleAIMessage("Create a dark mode toggle")}
+                        disabled={aiLoading || !aiConfigured}
+                      >
+                        🌙 Dark Mode
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {aiConfigured && (
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium">AI Status</h3>
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <div>Provider: {aiSettings.provider}</div>
+                        <div>Model: {aiSettings.model}</div>
+                        <div>Messages: {aiMessages.length}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Settings Panel */}
@@ -429,9 +746,11 @@ export default function Component() {
                       (color) => (
                         <button
                           key={color}
-                          className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                          className={`w-8 h-8 rounded-full border-2 shadow-sm ${
+                            appSettings.accentColor === color ? 'border-gray-900' : 'border-white'
+                          }`}
                           style={{ backgroundColor: color }}
-                          onClick={() => setAppSettings({ ...appSettings, accentColor: color })}
+                          onClick={() => handleSettingsChange('accentColor', color)}
                         />
                       ),
                     )}
@@ -458,7 +777,7 @@ export default function Component() {
                       <label className="text-sm text-gray-600 block mb-1">Name</label>
                       <Input
                         value={appSettings.name}
-                        onChange={(e) => setAppSettings({ ...appSettings, name: e.target.value })}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSettingsChange('name', e.target.value)}
                         className="text-sm"
                       />
                     </div>
@@ -466,7 +785,7 @@ export default function Component() {
                       <label className="text-sm text-gray-600 block mb-1">Description</label>
                       <Textarea
                         value={appSettings.description}
-                        onChange={(e) => setAppSettings({ ...appSettings, description: e.target.value })}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleSettingsChange('description', e.target.value)}
                         className="text-sm min-h-[60px]"
                       />
                     </div>
@@ -474,7 +793,7 @@ export default function Component() {
                       <label className="text-sm text-gray-600 block mb-1">Author</label>
                       <Input
                         value={appSettings.author}
-                        onChange={(e) => setAppSettings({ ...appSettings, author: e.target.value })}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSettingsChange('author', e.target.value)}
                         className="text-sm"
                       />
                     </div>
@@ -482,7 +801,7 @@ export default function Component() {
                       <label className="text-sm text-gray-600 block mb-1">App URL</label>
                       <Input
                         value={appSettings.appUrl}
-                        onChange={(e) => setAppSettings({ ...appSettings, appUrl: e.target.value })}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSettingsChange('appUrl', e.target.value)}
                         className="text-sm"
                       />
                       <div className="text-xs text-gray-500 mt-1">30 characters max</div>

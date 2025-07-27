@@ -1,7 +1,19 @@
 {
-  "name": "my-v0-project",
-  "version": "0.1.0",
+  "name": "hex-and-kex",
+  "version": "1.0.0",
+  "description": "Hex & Kex - A visual tool for creating Progressive Web Applications",
   "private": true,
+  "keywords": [
+    "pwa",
+    "progressive-web-app",
+    "builder",
+    "maker",
+    "nextjs",
+    "react",
+    "hex-kex"
+  ],
+  "author": "Hex & Kex Team",
+  "license": "MIT",
   "scripts": {
     "build": "next build",
     "dev": "next dev",
@@ -37,6 +49,7 @@
     "@radix-ui/react-toggle": "latest",
     "@radix-ui/react-toggle-group": "latest",
     "@radix-ui/react-tooltip": "latest",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -45,6 +58,7 @@
     "embla-carousel-react": "latest",
     "geist": "latest",
     "input-otp": "latest",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
     "next-themes": "latest",
@@ -53,6 +67,7 @@
     "react-dom": "^19",
     "react-hook-form": "latest",
     "react-resizable-panels": "latest",
+    "react-syntax-highlighter": "^15.6.1",
     "recharts": "latest",
     "sonner": "latest",
     "tailwind-merge": "^2.5.5",
@@ -61,6 +76,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/jszip": "^3.4.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
