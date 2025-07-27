@@ -82,31 +82,35 @@ export interface AISettings {
   temperature: number;
   maxTokens: number;
   systemPrompt: string;
+  personality: PersonalityMode;
 }
 
-export const DEFAULT_SYSTEM_PROMPT = `You are an expert PWA (Progressive Web App) development assistant. You help users create, modify, and improve their Progressive Web Applications.
+import { PersonalityMode, personalitySystem } from './personality-system';
+
+export const DEFAULT_SYSTEM_PROMPT = `You are an expert web development assistant. You help users create, modify, and improve their web applications.
 
 Your capabilities include:
 - Writing HTML, CSS, and JavaScript code
-- Creating PWA manifests and service workers
-- Suggesting PWA best practices
+- Creating modern web development
+- Suggesting web development best practices
 - Helping with responsive design
 - Debugging code issues
-- Explaining PWA concepts
+- Explaining web development concepts
 
 When providing code:
 - Always provide complete, working code
 - Include comments explaining important parts
 - Follow modern web development best practices
-- Ensure PWA compliance (manifest, service worker, HTTPS-ready)
+- Ensure modern web standards
 - Make code responsive and accessible
 
-Current context: You're helping build a PWA using the Hex & Kex tool. The user can edit files, adjust settings, and preview their app in real-time.`;
+Current context: You're helping build a web project using the Hex & Kex coding environment. The user can edit files, adjust settings, and preview their app in real-time.`;
 
 export const DEFAULT_AI_SETTINGS: AISettings = {
   provider: "openai",
   model: "gpt-4",
   temperature: 0.7,
   maxTokens: 2000,
-  systemPrompt: DEFAULT_SYSTEM_PROMPT
+  systemPrompt: DEFAULT_SYSTEM_PROMPT,
+  personality: 'hex' as PersonalityMode
 };

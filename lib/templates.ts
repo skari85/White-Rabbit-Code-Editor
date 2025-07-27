@@ -381,7 +381,7 @@ self.addEventListener('activate', (event) => {
         </header>
         
         <main class="main">
-            <form id="todoForm" class="todo-form">
+            <form id="todoForm" class="todo-form" enctype="application/x-www-form-urlencoded">
                 <input type="text" id="todoInput" placeholder="Add a new task..." required>
                 <button type="submit">Add Task</button>
             </form>
