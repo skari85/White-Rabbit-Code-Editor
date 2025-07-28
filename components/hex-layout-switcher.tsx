@@ -142,7 +142,17 @@ export default function HexLayoutSwitcher({
       case 'terminal':
         return (
           <div className="h-full">
-            <TerminalComponent {...terminalProps} />
+            {terminalProps && terminalProps.session ? (
+              <TerminalComponent {...terminalProps} />
+            ) : (
+              <div className="flex items-center justify-center h-full text-green-400/60">
+                <div className="text-center">
+                  <TerminalIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p className="font-mono text-sm">Terminal</p>
+                  <p className="font-mono text-xs mt-1 opacity-60">Terminal session not available</p>
+                </div>
+              </div>
+            )}
           </div>
         );
       
