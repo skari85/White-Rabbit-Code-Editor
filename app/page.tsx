@@ -20,6 +20,7 @@ import { personalitySystem, PersonalityMode, CodeSuggestion } from '@/lib/person
 import { GitHubAuth } from '@/components/github-auth';
 import { CodeModeDial, useCodeMode, CodeMode } from '@/components/code-mode-dial';
 import { SummonCodeBar, useSummonCodeBar, CommandParser } from '@/components/summon-code-bar';
+import { useTerminal } from '@/hooks/use-terminal';
 import HexLayoutSwitcher from '@/components/hex-layout-switcher';
 
 interface GeneratedFile {
@@ -89,6 +90,15 @@ export default function CodeConsole() {
     deleteGeneration,
     markAsRejected
   } = useDNAThreads();
+
+  // Terminal hook
+  const {
+    sessions: terminalSessions,
+    activeSessionId,
+    executeCommand: terminalExecuteCommand
+  } = useTerminal();
+
+  const terminalSession = terminalSessions.find(s => s.id === activeSessionId) || null;
 
   useEffect(() => {
     setMounted(true);
@@ -492,6 +502,43 @@ export default function CodeConsole() {
               <HexLayoutSwitcher
                 onLayoutChange={(layout) => {
                   console.log('Layout changed to:', layout);
+                }}
+                selectedFile={selectedFileContent}
+                generatedFiles={generatedFiles}
+                onFileSelect={(fileName) => setSelectedFile(fileName)}
+                dnaProps={{
+                  generations,
+                  branches,
+                  currentGenerationId: currentGenerationId || undefined,
+                  onRewind: (generationId: string) => {
+                    rewindTo(generationId);
+                    const generation = generations.find(g => g.id === generationId);
+                    if (generation && selectedFileContent) {
+                      const updatedFiles = generatedFiles.map(file => 
+                        file.name === selectedFileContent.name 
+                          ? { ...file, content: generation.code }
+                          : file
+                      );
+                      setGeneratedFiles(updatedFiles);
+                    }
+                  },
+                  onFork: (generationId: string) => {
+                    const branchId = forkFrom(generationId);
+                  },
+                  onDelete: deleteGeneration,
+                  onPreview: (generationId: string) => {
+                    const generation = generations.find(g => g.id === generationId);
+                    if (generation) {
+                      startGeneration(generation.code);
+                    }
+                  },
+                  personality
+                }}
+                terminalProps={{
+                  session: terminalSession,
+                  onExecuteCommand: executeCommand,
+                  onClose: () => console.log('Terminal closed'),
+                  onMinimize: () => console.log('Terminal minimized')
                 }}
               >
                 {selectedFileContent ? (
