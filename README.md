@@ -52,15 +52,66 @@ Hex & Kex is a visual tool for creating Progressive Web Applications with ease. 
    pnpm install
    ```
 
-3. **Start the development server**
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Edit `.env.local` and add your GitHub OAuth credentials (see GitHub OAuth Setup below).
+
+4. **Start the development server**
    ```bash
    npm run dev
    # or
    pnpm dev
    ```
 
-4. **Open your browser**
+5. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
+
+## GitHub OAuth Setup
+
+To enable GitHub authentication, you need to create a GitHub OAuth App:
+
+### 1. Create GitHub OAuth App
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Click **"New OAuth App"**
+3. Fill in the application details:
+   - **Application name**: `Hex & Kex` (or your preferred name)
+   - **Homepage URL**: `http://localhost:3000` (for development)
+   - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
+4. Click **"Register application"**
+
+### 2. Configure Environment Variables
+1. Copy the **Client ID** and **Client Secret** from your GitHub OAuth App
+2. Update your `.env.local` file:
+   ```env
+   NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_SECRET=your-secret-key-here
+   GITHUB_CLIENT_ID=your-github-client-id
+   GITHUB_CLIENT_SECRET=your-github-client-secret
+   ```
+
+### 3. Generate NextAuth Secret
+Generate a secure secret for NextAuth:
+```bash
+openssl rand -base64 32
+```
+Use this value for `NEXTAUTH_SECRET` in your `.env.local` file.
+
+### 4. Production Setup
+For production deployment:
+1. Update your GitHub OAuth App settings:
+   - **Homepage URL**: `https://yourdomain.com`
+   - **Authorization callback URL**: `https://yourdomain.com/api/auth/callback/github`
+2. Update environment variables in your hosting platform
+3. Set `NEXTAUTH_URL` to your production domain
+
+### Features Enabled by GitHub Authentication
+- **User Authentication**: Secure sign-in with GitHub accounts
+- **User Profile**: Access to GitHub profile information
+- **Session Management**: Persistent login sessions
+- **Future Integrations**: Ready for GitHub API integrations (repositories, issues, etc.)
 
 ## How to Use
 

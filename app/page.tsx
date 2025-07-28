@@ -16,6 +16,10 @@ import { ContextSuggestions } from '@/components/context-suggestions';
 import { GlitchPreview, useGlitchPreview } from '@/components/glitch-preview';
 import { DNAThreads, useDNAThreads, CodeGeneration } from '@/components/dna-threads';
 import { personalitySystem, PersonalityMode, CodeSuggestion } from '@/lib/personality-system';
+import { GitHubAuth } from '@/components/github-auth';
+import { CodeModeDial, useCodeMode, CodeMode } from '@/components/code-mode-dial';
+import { SummonCodeBar, useSummonCodeBar, CommandParser } from '@/components/summon-code-bar';
+import HexLayoutSwitcher from '@/components/hex-layout-switcher';
 
 interface GeneratedFile {
   name: string;
@@ -31,6 +35,18 @@ export default function CodeConsole() {
   const [personality, setPersonality] = useState<PersonalityMode>('hex');
   const [cursorPosition, setCursorPosition] = useState({ line: 0, column: 0 });
   const [showDNAThreads, setShowDNAThreads] = useState(true);
+  
+  // Code Mode Dial hook
+  const { currentMode, transformCode, setMode } = useCodeMode();
+  
+  // Summon Code Bar hook
+  const { 
+    isOpen: isSummonBarOpen, 
+    recentCommands, 
+    open: openSummonBar, 
+    close: closeSummonBar, 
+    executeCommand 
+  } = useSummonCodeBar();
   
   const {
     settings,
@@ -242,6 +258,32 @@ export default function CodeConsole() {
     }
   };
 
+  // Handle Summon Code Bar command execution
+  const handleSummonCommand = async (command: string) => {
+    const processedCommand = executeCommand(command);
+    const prompt = CommandParser.generatePrompt(processedCommand, personality);
+    
+    // Switch to chat tab and send the command
+    setActiveTab('chat');
+    await handleSendMessage(prompt);
+  };
+
+  // Handle Code Mode change
+  const handleCodeModeChange = (newMode: CodeMode) => {
+    if (selectedFileContent) {
+      const transformedCode = transformCode(selectedFileContent.content, newMode, personality);
+      
+      // Update the selected file with transformed code
+      const updatedFiles = generatedFiles.map(file => 
+        file.name === selectedFileContent.name 
+          ? { ...file, content: transformedCode }
+          : file
+      );
+      setGeneratedFiles(updatedFiles);
+    }
+    setMode(newMode);
+  };
+
   return (
     <PersonalityThemeProvider personality={personality}>
       <div className="min-h-screen bg-gray-900 text-white">
@@ -257,6 +299,21 @@ export default function CodeConsole() {
           </div>
           
           <div className="flex items-center gap-4">
+            {/* Summon Code Bar Button */}
+            <Button
+              onClick={openSummonBar}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 bg-purple-600/20 border-purple-500/50 hover:bg-purple-600/30"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span className="hidden md:inline">Summon Code</span>
+              <kbd className="hidden lg:inline-flex px-1 py-0.5 bg-gray-700 rounded text-xs">⌘K</kbd>
+            </Button>
+
+            {/* GitHub Authentication */}
+            <GitHubAuth />
+            
             {/* Personality Toggle */}
             <PersonalityToggle
               personality={personality}
@@ -401,68 +458,80 @@ export default function CodeConsole() {
             </TabsContent>
 
             <TabsContent value="code" className="flex-1 m-0 p-4">
-              <div className="flex h-full gap-4">
-                {/* Code Editor Area */}
-                <div className="flex-1">
-                  {selectedFileContent ? (
-                    <Card className="h-full bg-gray-950 border-gray-800">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg">{selectedFileContent.name}</CardTitle>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">{selectedFileContent.type}</Badge>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setShowDNAThreads(!showDNAThreads)}
-                              className="text-xs"
-                            >
-                              🧬 {showDNAThreads ? 'Hide' : 'Show'} DNA
-                            </Button>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="bg-gray-900 p-4 rounded-lg overflow-auto h-[calc(100vh-200px)] text-sm">
-                          {isGenerating && pendingCode ? (
-                            <GlitchPreview
-                              code={pendingCode}
-                              isGenerating={isGenerating}
-                              onSolidify={() => {
-                                solidify();
-                                // Update the file content with solidified code
-                                if (selectedFileContent) {
-                                  const updatedFiles = generatedFiles.map(file => 
-                                    file.name === selectedFileContent.name 
-                                      ? { ...file, content: solidifiedCode || pendingCode }
-                                      : file
-                                  );
-                                  setGeneratedFiles(updatedFiles);
-                                }
-                              }}
-                              personality={personality}
-                            />
-                          ) : (
-                            <pre>
-                              <code>{selectedFileContent.content}</code>
-                            </pre>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                      <div className="text-center">
-                        <Code className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                        <h3 className="text-lg font-medium mb-2">No File Selected</h3>
-                        <p>Select a file from the sidebar to view its code</p>
+              {/* Hex Layout Switcher - Split Screen Feature */}
+              <HexLayoutSwitcher
+                onLayoutChange={(layout) => {
+                  console.log('Layout changed to:', layout);
+                }}
+              >
+                {selectedFileContent ? (
+                  <div className="h-full">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-400 font-mono text-sm">{selectedFileContent.name}</span>
+                        <Badge variant="outline" className="text-xs">{selectedFileContent.type}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowDNAThreads(!showDNAThreads)}
+                          className="text-xs"
+                        >
+                          🧬 {showDNAThreads ? 'Hide' : 'Show'} DNA
+                        </Button>
                       </div>
                     </div>
-                  )}
-                </div>
+                    
+                    {/* Code Mode Dial */}
+                    <div className="mb-4 p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
+                      <CodeModeDial
+                        currentMode={currentMode}
+                        onModeChange={handleCodeModeChange}
+                        personality={personality}
+                      />
+                    </div>
 
-                {/* DNA Threads Panel */}
-                {showDNAThreads && (
+                    <div className="bg-black/40 p-4 rounded border border-green-500/20 h-[300px] overflow-auto">
+                      {isGenerating && pendingCode ? (
+                        <GlitchPreview
+                          code={pendingCode}
+                          isGenerating={isGenerating}
+                          onSolidify={() => {
+                            solidify();
+                            // Update the file content with solidified code
+                            if (selectedFileContent) {
+                              const updatedFiles = generatedFiles.map(file => 
+                                file.name === selectedFileContent.name 
+                                  ? { ...file, content: solidifiedCode || pendingCode }
+                                  : file
+                              );
+                              setGeneratedFiles(updatedFiles);
+                            }
+                          }}
+                          personality={personality}
+                        />
+                      ) : (
+                        <pre className="text-green-300 font-mono text-sm">
+                          <code>{selectedFileContent.content}</code>
+                        </pre>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-green-400/60">
+                    <div className="text-center">
+                      <Code className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p className="font-mono text-sm">No file selected</p>
+                      <p className="font-mono text-xs mt-1 opacity-60">Choose a file to begin hex magic</p>
+                    </div>
+                  </div>
+                )}
+              </HexLayoutSwitcher>
+
+              {/* DNA Threads Panel - Positioned separately */}
+              {showDNAThreads && (
+                <div className="mt-4">
                   <DNAThreads
                     generations={generations}
                     branches={branches}
@@ -493,8 +562,8 @@ export default function CodeConsole() {
                     }}
                     personality={personality}
                   />
-                )}
-              </div>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="local" className="flex-1 m-0 p-4">
@@ -530,6 +599,15 @@ export default function CodeConsole() {
           personality={personality}
         />
       )}
+
+      {/* Summon Code Bar */}
+      <SummonCodeBar
+        isOpen={isSummonBarOpen}
+        onClose={closeSummonBar}
+        onExecuteCommand={handleSummonCommand}
+        personality={personality}
+        recentCommands={recentCommands}
+      />
     </div>
     </PersonalityThemeProvider>
   );

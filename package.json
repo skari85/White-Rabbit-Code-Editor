@@ -4,8 +4,6 @@
   "description": "Hex & Kex - A visual tool for creating Progressive Web Applications",
   "private": true,
   "keywords": [
-    
-    
     "builder",
     "maker",
     "nextjs",
@@ -61,6 +59,7 @@
     "jszip": "^3.10.1",
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
+    "next-auth": "^5.0.0-beta.29",
     "next-themes": "latest",
     "react": "^19",
     "react-day-picker": "latest",
