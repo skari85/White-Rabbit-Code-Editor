@@ -1,14 +1,18 @@
 {
   "name": "hex-and-kex",
-  "version": "1.0.0",
-  "description": "Hex & Kex - A visual tool for creating Progressive Web Applications",
+  "version": "2.0.0",
+  "description": "Hex & Kex - Professional Code Space Environment",
   "private": true,
   "keywords": [
-    "builder",
-    "maker",
+    "code-space",
+    "development-environment",
+    "git-integration",
+    "debugger",
+    "intellisense",
     "nextjs",
     "react",
-    "hex-kex"
+    "hex-kex",
+    "professional-ide"
   ],
   "author": "Hex & Kex Team",
   "license": "MIT",
