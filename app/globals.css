@@ -1,9 +1,13 @@
-/* Hex & Kex Custom Fonts */
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+
+/* Hex & Kex Custom Fonts */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Import Monaco Editor styles */
+@import '../styles/monaco-editor.css';
 
 @layer utilities {
   .text-balance {

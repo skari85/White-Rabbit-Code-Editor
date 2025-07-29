@@ -1,0 +1,269 @@
+/* Monaco Editor Custom Styles */
+
+/* Breakpoint styles */
+.breakpoint-decoration {
+  background-color: rgba(255, 0, 0, 0.2);
+  border-left: 3px solid #ff0000;
+}
+
+.breakpoint-glyph {
+  background-color: #ff0000;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: 2px;
+  margin-top: 2px;
+}
+
+.breakpoint-glyph::before {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 6px;
+  background-color: white;
+  border-radius: 50%;
+  margin: 3px;
+}
+
+/* Custom scrollbar for Monaco Editor */
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider {
+  background: rgba(121, 121, 121, 0.4);
+}
+
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider:hover {
+  background: rgba(121, 121, 121, 0.7);
+}
+
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider.active {
+  background: rgba(191, 191, 191, 0.4);
+}
+
+/* Custom selection colors for Hex theme */
+.monaco-editor.hex-dark .selected-text {
+  background-color: rgba(173, 214, 255, 0.3);
+}
+
+.monaco-editor.hex-dark .current-line {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Custom selection colors for Kex theme */
+.monaco-editor.kex-light .selected-text {
+  background-color: rgba(173, 214, 255, 0.6);
+}
+
+.monaco-editor.kex-light .current-line {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Error and warning decorations */
+.monaco-editor .squiggly-error {
+  border-bottom: 2px solid #ff6b6b;
+}
+
+.monaco-editor .squiggly-warning {
+  border-bottom: 2px solid #ffd93d;
+}
+
+.monaco-editor .squiggly-info {
+  border-bottom: 2px solid #74b9ff;
+}
+
+/* Suggestion widget customization */
+.monaco-editor .suggest-widget {
+  border: 1px solid #3c3c3c;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.monaco-editor .suggest-widget .monaco-list .monaco-list-row.focused {
+  background-color: #094771;
+}
+
+/* Parameter hints widget */
+.monaco-editor .parameter-hints-widget {
+  border: 1px solid #3c3c3c;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Hover widget */
+.monaco-editor .monaco-hover {
+  border: 1px solid #3c3c3c;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Find widget customization */
+.monaco-editor .find-widget {
+  border: 1px solid #3c3c3c;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Minimap customization */
+.monaco-editor .minimap {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.monaco-editor .minimap-slider {
+  background-color: rgba(121, 121, 121, 0.2);
+}
+
+.monaco-editor .minimap-slider:hover {
+  background-color: rgba(121, 121, 121, 0.3);
+}
+
+/* Context menu customization */
+.monaco-menu {
+  border: 1px solid #3c3c3c;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.monaco-menu .monaco-action-bar .action-item .action-label:hover {
+  background-color: #094771;
+}
+
+/* Loading animation */
+.monaco-editor-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background-color: #1e1e1e;
+  color: #cccccc;
+}
+
+.monaco-editor-loading .spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #3c3c3c;
+  border-top: 2px solid #007acc;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Diff editor styles */
+.monaco-diff-editor .diffViewport {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.monaco-diff-editor .diff-review-line-number {
+  color: #858585;
+}
+
+.monaco-diff-editor .char-insert {
+  background-color: rgba(155, 185, 85, 0.2);
+}
+
+.monaco-diff-editor .char-delete {
+  background-color: rgba(255, 0, 0, 0.2);
+}
+
+.monaco-diff-editor .line-insert {
+  background-color: rgba(155, 185, 85, 0.1);
+}
+
+.monaco-diff-editor .line-delete {
+  background-color: rgba(255, 0, 0, 0.1);
+}
+
+/* Custom gutter icons */
+.monaco-editor .margin-view-overlays .line-numbers {
+  color: #858585;
+}
+
+.monaco-editor .margin-view-overlays .current-line ~ .line-numbers {
+  color: #cccccc;
+}
+
+/* Bracket matching */
+.monaco-editor .bracket-match {
+  background-color: rgba(0, 100, 0, 0.3);
+  border: 1px solid rgba(0, 255, 0, 0.8);
+}
+
+/* Word highlighting */
+.monaco-editor .wordHighlight {
+  background-color: rgba(87, 87, 87, 0.72);
+}
+
+.monaco-editor .wordHighlightStrong {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Selection highlighting */
+.monaco-editor .selectionHighlight {
+  background-color: rgba(173, 214, 255, 0.15);
+}
+
+/* Folding decorations */
+.monaco-editor .folding-decoration {
+  color: #c5c5c5;
+}
+
+.monaco-editor .folding-decoration:hover {
+  color: #ffffff;
+}
+
+/* Custom theme transitions */
+.monaco-editor {
+  transition: all 0.3s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .monaco-editor .margin {
+    width: 40px;
+  }
+  
+  .monaco-editor .minimap {
+    display: none;
+  }
+  
+  .monaco-editor .suggest-widget {
+    max-width: 90vw;
+  }
+}
+
+/* High contrast mode adjustments */
+@media (prefers-contrast: high) {
+  .monaco-editor .squiggly-error {
+    border-bottom-width: 3px;
+  }
+  
+  .monaco-editor .squiggly-warning {
+    border-bottom-width: 3px;
+  }
+  
+  .monaco-editor .bracket-match {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .monaco-editor {
+    transition: none;
+  }
+  
+  .monaco-editor-loading .spinner {
+    animation: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .monaco-editor .margin {
+    display: none;
+  }
+  
+  .monaco-editor .minimap {
+    display: none;
+  }
+  
+  .monaco-editor .find-widget {
+    display: none;
+  }
+}
