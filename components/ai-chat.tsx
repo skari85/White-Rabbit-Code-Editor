@@ -510,83 +510,14 @@ function MessageContent({ content, onCopy, copiedCode }: {
   onCopy: (text: string, id: string) => void;
   copiedCode: string | null;
 }) {
-  // Parse code blocks from content
-  const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
-  const parts = [];
-  let lastIndex = 0;
-  let match;
-
-  while ((match = codeBlockRegex.exec(content)) !== null) {
-    // Add text before code block
-    if (match.index > lastIndex) {
-      parts.push({
-        type: 'text',
-        content: content.slice(lastIndex, match.index)
-      });
-    }
-
-    // Add code block
-    parts.push({
-      type: 'code',
-      language: match[1] || 'text',
-      content: match[2].trim(),
-      id: `code-${match.index}`
-    });
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  // Add remaining text
-  if (lastIndex < content.length) {
-    parts.push({
-      type: 'text',
-      content: content.slice(lastIndex)
-    });
-  }
-
+  // Remove code blocks from chat - only show text content
+  const textContent = content.replace(/```[\s\S]*?```/g, '[Code generated in right panel]');
+  
   return (
     <div className="space-y-2">
-      {parts.map((part, index) => {
-        if (part.type === 'text') {
-          return (
-            <div key={index} className="whitespace-pre-wrap text-sm">
-              {part.content}
-            </div>
-          );
-        } else {
-          return (
-            <div key={index} className="relative">
-              <div className="flex items-center justify-between bg-gray-900 text-gray-200 px-3 py-2 rounded-t-md">
-                <span className="text-xs font-mono">{part.language}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-5 w-5 p-0 text-gray-400 hover:text-white hover:bg-gray-700"
-                  onClick={() => onCopy(part.content, part.id || `code-${index}`)}
-                >
-                  {copiedCode === (part.id || `code-${index}`) ? (
-                    <Check className="w-3 h-3" />
-                  ) : (
-                    <Copy className="w-3 h-3" />
-                  )}
-                </Button>
-              </div>
-              <SyntaxHighlighter
-                language={part.language}
-                style={oneDark}
-                customStyle={{
-                  margin: 0,
-                  borderTopLeftRadius: 0,
-                  borderTopRightRadius: 0,
-                  fontSize: '12px',
-                }}
-              >
-                {part.content}
-              </SyntaxHighlighter>
-            </div>
-          );
-        }
-      })}
+      <div className="whitespace-pre-wrap text-sm">
+        {textContent}
+      </div>
     </div>
   );
 }

@@ -22,6 +22,8 @@ import { CodeModeDial, useCodeMode, CodeMode } from '@/components/code-mode-dial
 import { SummonCodeBar, useSummonCodeBar, CommandParser } from '@/components/summon-code-bar';
 import { useTerminal } from '@/hooks/use-terminal';
 import HexLayoutSwitcher from '@/components/hex-layout-switcher';
+import DevelopmentToolsPanel from '@/components/development-tools-panel';
+import InlineAICompletion from '@/components/inline-ai-completion';
 
 interface GeneratedFile {
   name: string;
@@ -38,6 +40,7 @@ export default function CodeConsole() {
   const [cursorPosition, setCursorPosition] = useState({ line: 0, column: 0 });
   const [showDNAThreads, setShowDNAThreads] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [showDevelopmentTools, setShowDevelopmentTools] = useState(false);
   
   // Code Mode Dial hook
   const { currentMode, transformCode, setMode } = useCodeMode();
@@ -253,6 +256,52 @@ export default function CodeConsole() {
     }
   };
 
+  // Open localhost for testing
+  const openLocalhost = (port: number = 3000) => {
+    window.open(`http://localhost:${port}`, '_blank');
+  };
+
+  // Test current app
+  const testCurrentApp = () => {
+    if (selectedFileContent && selectedFileContent.type === 'html') {
+      previewFile(selectedFileContent);
+    } else {
+      // If no HTML file is selected, try to find one
+      const htmlFile = generatedFiles.find(f => f.type === 'html');
+      if (htmlFile) {
+        previewFile(htmlFile);
+      } else {
+        // Create a simple test HTML file
+        const testHtml = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Test App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-info { background: #f0f0f0; padding: 20px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test App</h1>
+        <div class="test-info">
+            <h2>Generated Files:</h2>
+            <ul>
+                ${generatedFiles.map(f => `<li><strong>${f.name}</strong> (${f.type})</li>`).join('')}
+            </ul>
+            <p>This is a test page. Your actual app files are ready for development!</p>
+        </div>
+    </div>
+</body>
+</html>`;
+        
+        const testFile = { name: 'test.html', content: testHtml, type: 'html' };
+        previewFile(testFile);
+      }
+    }
+  };
+
   const selectedFileContent = generatedFiles.find(f => f.name === selectedFile);
 
   const handleApplySuggestion = (suggestion: CodeSuggestion) => {
@@ -296,6 +345,35 @@ export default function CodeConsole() {
     setMode(newMode);
   };
 
+  // Handle file operations for development tools
+  const handleFileSelect = (fileId: string, line?: number, column?: number) => {
+    const file = generatedFiles.find(f => f.name === fileId);
+    if (file) {
+      setSelectedFile(fileId);
+      // TODO: Navigate to specific line/column in editor
+    }
+  };
+
+  const handleFileReplace = (fileId: string, line: number, column: number, oldText: string, newText: string) => {
+    const updatedFiles = generatedFiles.map(file => {
+      if (file.name === fileId) {
+        const lines = file.content.split('\n');
+        const targetLine = lines[line - 1];
+        if (targetLine) {
+          const newLine = targetLine.substring(0, column - 1) + newText + targetLine.substring(column - 1 + oldText.length);
+          lines[line - 1] = newLine;
+          return { ...file, content: lines.join('\n') };
+        }
+      }
+      return file;
+    });
+    setGeneratedFiles(updatedFiles);
+  };
+
+  const handleFileFix = (fileId: string, line: number, column: number, oldText: string, newText: string) => {
+    handleFileReplace(fileId, line, column, oldText, newText);
+  };
+
   return (
     <PersonalityThemeProvider personality={personality}>
       <div className="min-h-screen bg-gray-900 text-white">
@@ -321,6 +399,17 @@ export default function CodeConsole() {
               <MessageSquare className="w-4 h-4" />
               <span className="hidden md:inline">Summon Code</span>
               <kbd className="hidden lg:inline-flex px-1 py-0.5 bg-gray-700 rounded text-xs">⌘K</kbd>
+            </Button>
+
+            {/* Development Tools Button */}
+            <Button
+              onClick={() => setShowDevelopmentTools(!showDevelopmentTools)}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 bg-orange-600/20 border-orange-500/50 hover:bg-orange-600/30"
+            >
+              <Code className="w-4 h-4" />
+              <span className="hidden md:inline">Dev Tools</span>
             </Button>
 
             {/* Settings Button */}
@@ -361,6 +450,36 @@ export default function CodeConsole() {
                 >
                   <Download className="w-4 h-4" />
                   Download Project
+                </Button>
+                
+                <Button
+                  onClick={testCurrentApp}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 bg-green-600/20 border-green-500/50 hover:bg-green-600/30"
+                >
+                  <Play className="w-4 h-4" />
+                  Test App
+                </Button>
+
+                <Button
+                  onClick={() => openLocalhost(3000)}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 bg-blue-600/20 border-blue-500/50 hover:bg-blue-600/30"
+                >
+                  <Code className="w-4 h-4" />
+                  Open Localhost
+                </Button>
+
+                <Button
+                  onClick={() => openLocalhost(3005)}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 bg-purple-600/20 border-purple-500/50 hover:bg-purple-600/30"
+                >
+                  <Code className="w-4 h-4" />
+                  Open Dev Server
                 </Button>
                 
                 {isLocalStorageSupported && selectedFileContent && localProject && (
@@ -421,6 +540,26 @@ export default function CodeConsole() {
                   {generatedFiles.length} files
                 </Badge>
               </div>
+              
+              {/* Development Tools Panel */}
+              {showDevelopmentTools && (
+                <div className="absolute top-full left-0 right-0 z-50 bg-gray-900 border-b border-gray-800">
+                  <DevelopmentToolsPanel
+                    files={Object.fromEntries(
+                      generatedFiles.map(file => [
+                        file.name,
+                        { name: file.name, content: file.content, language: file.type }
+                      ])
+                    )}
+                    onFileSelect={handleFileSelect}
+                    onReplace={handleFileReplace}
+                    onFixApply={handleFileFix}
+                    onSendToChat={(message) => {
+                      handleSendMessage(message);
+                    }}
+                  />
+                </div>
+              )}
               
               <div className="flex items-center gap-2">
                 {generatedFiles.length > 0 && (
@@ -579,9 +718,45 @@ export default function CodeConsole() {
                           personality={personality}
                         />
                       ) : (
-                        <pre className="text-green-300 font-mono text-sm">
-                          <code>{selectedFileContent.content}</code>
-                        </pre>
+                        <div className="relative">
+                          <pre className="text-green-300 font-mono text-sm">
+                            <code>{selectedFileContent.content}</code>
+                          </pre>
+                          
+                          {/* Inline AI Completion */}
+                          <InlineAICompletion
+                            currentFile={{
+                              id: selectedFileContent.name,
+                              name: selectedFileContent.name,
+                              content: selectedFileContent.content,
+                              language: selectedFileContent.type
+                            }}
+                            cursorPosition={cursorPosition}
+                            onAcceptSuggestion={(suggestion) => {
+                              // Apply suggestion to the file
+                              const updatedFiles = generatedFiles.map(file => {
+                                if (file.name === selectedFileContent.name) {
+                                  const lines = file.content.split('\n');
+                                  const targetLine = lines[suggestion.startLine - 1];
+                                  if (targetLine) {
+                                    const newLine = targetLine.substring(0, suggestion.startColumn - 1) + 
+                                                  suggestion.text + 
+                                                  targetLine.substring(suggestion.endColumn - 1);
+                                    lines[suggestion.startLine - 1] = newLine;
+                                    return { ...file, content: lines.join('\n') };
+                                  }
+                                }
+                                return file;
+                              });
+                              setGeneratedFiles(updatedFiles);
+                            }}
+                            onRejectSuggestion={(suggestionId) => {
+                              // Handle rejected suggestion
+                              console.log('Rejected suggestion:', suggestionId);
+                            }}
+                            className="top-0 right-0"
+                          />
+                        </div>
                       )}
                     </div>
                   </div>

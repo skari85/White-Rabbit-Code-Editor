@@ -122,7 +122,7 @@ export function SignatureAnimations({
 export function useSignatureAnimations() {
   const [isTyping, setIsTyping] = useState(false);
   const [isCodeAccepted, setIsCodeAccepted] = useState(false);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const typingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const triggerTyping = () => {
     setIsTyping(true);

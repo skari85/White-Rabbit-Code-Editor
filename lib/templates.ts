@@ -1,4 +1,8 @@
-import { FileContent } from '@/hooks/use-pwa-builder';
+export interface FileContent {
+  name: string;
+  type: string;
+  content: string;
+}
 
 export interface PWATemplate {
   id: string;

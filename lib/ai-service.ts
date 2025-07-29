@@ -22,6 +22,8 @@ export class AIService {
         return this.sendGoogleMessage(messages);
       case 'groq':
         return this.sendGroqMessage(messages);
+      case 'mistral':
+        return this.sendMistralMessage(messages);
       case 'ollama':
         return this.sendOllamaMessage(messages);
       default:
@@ -182,6 +184,45 @@ export class AIService {
     };
   }
 
+  private async sendMistralMessage(messages: AIMessage[]): Promise<AIMessage> {
+    if (!this.settings.apiKey) {
+      throw new Error('Mistral API key is required');
+    }
+
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.settings.apiKey}`
+      },
+      body: JSON.stringify({
+        model: this.settings.model,
+        messages: [
+          { role: 'system', content: this.settings.systemPrompt },
+          ...messages.map(m => ({ role: m.role, content: m.content }))
+        ],
+        temperature: this.settings.temperature,
+        max_tokens: this.settings.maxTokens
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Mistral API error: ${error.error?.message || 'Unknown error'}`);
+    }
+
+    const data = await response.json();
+    const choice = data.choices[0];
+    
+    return {
+      id: Date.now().toString(),
+      role: 'assistant',
+      content: choice.message.content,
+      timestamp: new Date(),
+      tokens: data.usage?.total_tokens
+    };
+  }
+
   private async sendOllamaMessage(messages: AIMessage[]): Promise<AIMessage> {
     const prompt = `${this.settings.systemPrompt}\n\n${messages.map(m => `${m.role}: ${m.content}`).join('\n\n')}`;
     
@@ -232,6 +273,8 @@ export function validateApiKey(provider: string, apiKey: string): boolean {
       return apiKey.length > 20; // Basic validation
     case 'groq':
       return apiKey.startsWith('gsk_'); // Groq API keys start with gsk_
+    case 'mistral':
+      return apiKey.startsWith('mist-'); // Mistral API keys start with mist-
     case 'ollama':
       return true; // No API key needed
     default:
