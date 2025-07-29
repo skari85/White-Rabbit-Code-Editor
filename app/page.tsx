@@ -24,6 +24,8 @@ import { useTerminal } from '@/hooks/use-terminal';
 import HexLayoutSwitcher from '@/components/hex-layout-switcher';
 import DevelopmentToolsPanel from '@/components/development-tools-panel';
 import InlineAICompletion from '@/components/inline-ai-completion';
+import { gitService } from '@/lib/git-service';
+import { GitBranch } from 'lucide-react';
 
 interface GeneratedFile {
   name: string;
@@ -438,6 +440,12 @@ export default function CodeConsole() {
             {isConfigured && (
               <Badge variant="secondary" className="bg-green-100 text-green-800">
                 AI Ready
+              </Badge>
+            )}
+            {gitService.isAvailable() && (
+              <Badge variant="outline" className="text-xs">
+                <GitBranch className="w-3 h-3 mr-1" />
+                Git
               </Badge>
             )}
             {generatedFiles.length > 0 && (

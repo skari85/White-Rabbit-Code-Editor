@@ -16,10 +16,14 @@ import {
   GitBranch,
   Package,
   Bug,
-  Zap
+  Zap,
+  Sparkles,
+  CheckCircle
 } from 'lucide-react';
 import SearchReplacePanel from './search-replace-panel';
 import ErrorDetectionPanel from './error-detection-panel';
+import DebuggerPanel from './debugger-panel';
+import GitPanel from './git-panel';
 import { cn } from '@/lib/utils';
 
 export interface DevelopmentToolsPanelProps {
@@ -66,7 +70,7 @@ const DevelopmentToolsPanel: React.FC<DevelopmentToolsPanelProps> = ({
       {isExpanded && (
         <CardContent className="pt-0">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="search" className="flex items-center gap-1 text-xs">
                 <Search className="w-3 h-3" />
                 Search
@@ -74,6 +78,14 @@ const DevelopmentToolsPanel: React.FC<DevelopmentToolsPanelProps> = ({
               <TabsTrigger value="errors" className="flex items-center gap-1 text-xs">
                 <AlertTriangle className="w-3 h-3" />
                 Errors
+              </TabsTrigger>
+              <TabsTrigger value="debug" className="flex items-center gap-1 text-xs">
+                <Bug className="w-3 h-3" />
+                Debug
+              </TabsTrigger>
+              <TabsTrigger value="intellisense" className="flex items-center gap-1 text-xs">
+                <Sparkles className="w-3 h-3" />
+                IntelliSense
               </TabsTrigger>
               <TabsTrigger value="terminal" className="flex items-center gap-1 text-xs">
                 <Terminal className="w-3 h-3" />
@@ -99,6 +111,43 @@ const DevelopmentToolsPanel: React.FC<DevelopmentToolsPanelProps> = ({
                 onFileSelect={onFileSelect}
                 onFixApply={onFixApply}
               />
+            </TabsContent>
+
+            <TabsContent value="debug" className="mt-4">
+              <DebuggerPanel className="w-full" />
+            </TabsContent>
+
+            <TabsContent value="intellisense" className="mt-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    IntelliSense
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Language Server</span>
+                      <Badge variant="outline" className="text-xs text-green-400">Active</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Auto-complete</span>
+                      <Badge variant="outline" className="text-xs text-green-400">Enabled</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        <Sparkles className="w-3 h-3 mr-2" />
+                        Refresh Completions
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        <CheckCircle className="w-3 h-3 mr-2" />
+                        Check Types
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="terminal" className="mt-4">
@@ -138,40 +187,7 @@ const DevelopmentToolsPanel: React.FC<DevelopmentToolsPanelProps> = ({
             </TabsContent>
 
             <TabsContent value="git" className="mt-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <GitBranch className="w-4 h-4" />
-                    Git Integration
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Current Branch</span>
-                      <Badge variant="secondary" className="text-xs">main</Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Status</span>
-                      <Badge variant="outline" className="text-xs text-green-400">Clean</Badge>
-                    </div>
-                    <div className="space-y-2">
-                      <Button variant="outline" size="sm" className="w-full justify-start">
-                        <GitBranch className="w-3 h-3 mr-2" />
-                        Commit Changes
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full justify-start">
-                        <GitBranch className="w-3 h-3 mr-2" />
-                        Push to Remote
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full justify-start">
-                        <GitBranch className="w-3 h-3 mr-2" />
-                        Pull Changes
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <GitPanel className="w-full" />
             </TabsContent>
           </Tabs>
         </CardContent>
