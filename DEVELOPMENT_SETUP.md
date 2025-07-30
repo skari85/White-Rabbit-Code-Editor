@@ -1,6 +1,6 @@
 # 🔮 Hex & Kex Development Environment Setup Guide
 
-Welcome to the Hex & Kex PWA Code project! This guide will help you set up your local development environment and understand the project structure that matches the folder organization shown in your attachment.
+Welcome to the Hex & Kex Code Development project! This guide will help you set up your local development environment and understand the project structure that matches the folder organization shown in your attachment.
 
 ## 📋 Prerequisites
 
@@ -57,58 +57,84 @@ pwa-code/
 │   │   ├── use-terminal.ts
 │   │   └── use-toast.ts
 │   └── lib/                # Utility libraries
-│       ├── ai-config.ts
-│       ├── ai-service.ts
-│       ├── auth.ts
+│       ├── ai-config.ts    # AI configuration
+│       ├── ai-service.ts   # AI service integration
+│       ├── auth.ts         # Authentication utilities
+│       ├── debugger-service.ts
+│       ├── git-service.ts  # Git integration
+│       ├── intellisense-service.ts
+│       ├── monaco-config.ts
 │       ├── personality-system.ts
-│       ├── templates.ts
-│       └── utils.ts
-├── node_modules/           # Dependencies
-├── public/                 # Static assets
-├── styles/                 # Additional styles
-├── types/                  # TypeScript definitions
-├── .env                    # Environment variables
-├── .env.example           # Environment template
-├── .gitignore             # Git ignore rules
-├── components.json        # Component configuration
-├── next-env.d.ts         # Next.js types
-├── next.config.mjs       # Next.js configuration
-└── package.json          # Project dependencies
+│       ├── templates.ts    # Application templates
+│       └── utils.ts        # General utilities
+├── hooks/                   # Custom React hooks
+├── lib/                     # Core libraries
+├── public/                  # Static assets
+│   ├── hexkexlogo.png     # Logo
+│   ├── icon-192.png       # App icons
+│   ├── icon-512.png
+│   └── favicon.ico
+├── styles/                  # Additional styles
+├── types/                   # TypeScript definitions
+├── next.config.mjs         # Next.js configuration
+├── package.json            # Dependencies
+├── tailwind.config.ts      # Tailwind CSS config
+├── tsconfig.json           # TypeScript config
+├── README.md               # Project documentation
+├── RELEASE_2.0.0.md       # Release notes
+├── DEVELOPMENT_SETUP.md    # This file
+├── dev-setup.js           # Automated setup script
+└── plunker-clone.tsx      # Main application component
 ```
 
-## 🎯 Key Features Implemented
+## 🔧 Development Features
 
-### 🧬 DNA Threads System
-- **Code Evolution Tracking**: Track every iteration of your code
-- **Branch Management**: Fork and merge code branches
-- **Generation History**: Rewind to any previous version
+### AI-Powered Development
+- **Conversational AI**: Build applications through natural language
+- **Code Generation**: AI-assisted code creation and modification
+- **Debugging Help**: AI-powered debugging assistance
+- **Template System**: Pre-built application templates
 
-### 🎨 Hex & Kex Personality System
-- **Dual Personalities**: Switch between Hex (structured) and Kex (creative)
-- **Context-Aware Suggestions**: AI adapts to your coding style
-- **Personality-Driven UI**: Interface changes based on selected personality
+### Professional Development Tools
+- **Git Integration**: Visual version control interface
+- **Debugging**: Real debugging with breakpoints
+- **IntelliSense**: Advanced code intelligence
+- **Terminal**: Built-in terminal support
+- **Error Detection**: Real-time error highlighting
 
-### 🔧 HexLayoutSwitcher (Split Screen System)
-- **Single View**: Focus on one component
-- **Horizontal Split**: Code + Terminal
-- **Vertical Split**: Code + File Navigator  
-- **Grid Layout**: All components visible (Code, Navigator, Terminal, DNA)
+### Code Management
+- **File System**: Visual file management
+- **Code Editor**: Monaco-based code editor
+- **Live Preview**: Real-time code preview
+- **Export**: Download projects as ZIP files
 
-### 🤖 AI Integration
-- **Multiple AI Providers**: OpenAI, Anthropic support
-- **Context-Aware Chat**: AI understands your project structure
-- **Code Generation**: Generate files directly from chat
-- **Smart Suggestions**: Real-time code improvement hints
+## 🚀 Getting Started
 
-### 🖥️ Terminal Integration
-- **Built-in Terminal**: Run commands without leaving the app
-- **Session Management**: Multiple terminal sessions
-- **Command History**: Track and reuse commands
+1. **Clone and Setup**
+   ```bash
+   git clone https://github.com/skari85/pwa-code.git
+   cd pwa-code
+   npm install
+   ```
+
+2. **Configure Environment**
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your API keys
+   ```
+
+3. **Start Development**
+   ```bash
+   npm run dev
+   ```
+
+4. **Open Browser**
+   Navigate to http://localhost:3000
 
 ## 🛠️ Development Commands
 
 ```bash
-# Start development server
+# Development server
 npm run dev
 
 # Build for production
@@ -117,166 +143,121 @@ npm run build
 # Start production server
 npm start
 
+# Lint code
+npm run lint
+
+# Type checking
+npx tsc --noEmit
+```
+
+## 📦 Key Dependencies
+
+### Core Framework
+- **Next.js 15**: React framework with App Router
+- **React 19**: Latest React with concurrent features
+- **TypeScript**: Type-safe development
+
+### UI Components
+- **Radix UI**: Accessible component primitives
+- **Tailwind CSS**: Utility-first CSS framework
+- **Lucide React**: Beautiful icons
+
+### Development Tools
+- **Monaco Editor**: VS Code-like code editor
+- **JSZip**: File compression for exports
+- **NextAuth**: Authentication system
+
+### AI Integration
+- **Multiple AI Providers**: OpenAI, Anthropic, Groq, etc.
+- **Local Ollama**: Local AI model support
+
+## 🔧 Configuration
+
+### Environment Variables
+Create a `.env.local` file with:
+
+```env
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key
+
+# GitHub OAuth (Optional)
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+
+# AI Provider API Keys (Optional)
+OPENAI_API_KEY=your-openai-key
+ANTHROPIC_API_KEY=your-anthropic-key
+GROQ_API_KEY=your-groq-key
+```
+
+### AI Configuration
+Configure AI providers in `lib/ai-config.ts`:
+
+```typescript
+export const AI_PROVIDERS = [
+  {
+    name: "OpenAI",
+    id: "openai",
+    requiresApiKey: true,
+    models: ["gpt-4o", "gpt-4o-mini"],
+    endpoint: "https://api.openai.com/v1/chat/completions"
+  },
+  // Add more providers...
+];
+```
+
+## 🧪 Testing
+
+```bash
+# Run tests (when implemented)
+npm test
+
 # Run linting
 npm run lint
 
-# Create new project structure
-node dev-setup.js --create my-new-project
+# Type checking
+npx tsc --noEmit
 ```
 
-## 🌐 Starting New Local Hosts
+## 📝 Contributing
 
-### Quick Server Start
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**Port already in use:**
 ```bash
-# Start on next available port (3000, 3001, 3002, etc.)
-node dev-setup.js
-
-# Start on specific port
-node dev-setup.js --port 3005
-
-# Start multiple instances
-node dev-setup.js --port 3001 &
-node dev-setup.js --port 3002 &
-node dev-setup.js --port 3003 &
+# Use different port
+npm run dev -- -p 3001
 ```
 
-### Create New Project
+**Module not found errors:**
 ```bash
-# Create a new project with proper structure
-node dev-setup.js --create "my-awesome-app"
-
-# Navigate to new project
-cd my-awesome-app
-
-# Start development
-node ../dev-setup.js
-```
-
-## ⚙️ Environment Configuration
-
-### Required Environment Variables
-```bash
-# Copy the example file
-cp .env.example .env
-
-# Edit with your values
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret-key-here
-
-# AI Configuration
-OPENAI_API_KEY=your-openai-api-key
-ANTHROPIC_API_KEY=your-anthropic-api-key
-
-# GitHub OAuth (optional)
-GITHUB_CLIENT_ID=your-github-client-id
-GITHUB_CLIENT_SECRET=your-github-client-secret
-```
-
-## 🎮 Using the Interface
-
-### 1. AI Chat (Left Sidebar)
-- Configure AI settings in the Settings panel
-- Chat with AI to generate code
-- Files are automatically extracted and displayed
-
-### 2. Code Space (Main Area)
-- **File Tabs**: Switch between generated files
-- **Layout Switcher**: Change between single/split/grid views
-- **Code Mode Dial**: Transform code style (functional, OOP, etc.)
-- **DNA Threads**: Track code evolution
-
-### 3. Split Screen Layouts
-- **🧿 Single**: Focus mode for coding
-- **⬌ Code + Terminal**: Development with command line
-- **⬍ Code + Navigator**: File browsing and editing
-- **⊞ Full Grid**: All tools visible simultaneously
-
-### 4. Terminal Integration
-- Built-in terminal in split layouts
-- Run npm commands, git operations, etc.
-- Multiple session support
-
-## 🔧 Troubleshooting
-
-### Port Already in Use
-The system automatically finds available ports (3000→3001→3002, etc.)
-
-### Missing Dependencies
-```bash
+# Clear cache and reinstall
+rm -rf node_modules .next
 npm install
 ```
 
-### Environment Issues
+**TypeScript errors:**
 ```bash
-# Reload environment
-npm run dev
+# Check types
+npx tsc --noEmit
 ```
 
-### Authentication Errors
-Make sure `NEXTAUTH_SECRET` is set in your `.env` file
+## 📚 Additional Resources
 
-## 🚀 Advanced Usage
-
-### Creating Custom Components
-```bash
-# Components follow the structure:
-components/
-├── ui/                    # Base UI components
-├── [feature-name].tsx     # Feature components
-└── [feature-name]/        # Complex features
-    ├── index.tsx
-    ├── components/
-    └── hooks/
-```
-
-### Adding New Hooks
-```bash
-# Custom hooks go in:
-hooks/
-├── use-[feature-name].ts
-└── use-[feature-name].tsx  # If JSX needed
-```
-
-### Library Extensions
-```bash
-# Utilities and services:
-lib/
-├── [service-name].ts
-├── [utility-name].ts
-└── types.ts
-```
-
-## 📚 Learning Resources
-
-- **Next.js 15**: [Documentation](https://nextjs.org/docs)
-- **React 18**: [Documentation](https://react.dev)
-- **TypeScript**: [Handbook](https://www.typescriptlang.org/docs)
-- **Tailwind CSS**: [Documentation](https://tailwindcss.com/docs)
-
-## 🎯 Next Steps
-
-1. **Configure AI**: Add your API keys to `.env`
-2. **Explore Layouts**: Try different split-screen modes
-3. **Generate Code**: Chat with AI to create files
-4. **Track Evolution**: Use DNA Threads to manage versions
-5. **Customize**: Modify personality settings and themes
-
-## 🆘 Getting Help
-
-- Check the terminal output for detailed error messages
-- Use `node dev-setup.js --help` for command options
-- Review the `.env.example` for required variables
-- Ensure Node.js and npm are properly installed
+- [Next.js Documentation](https://nextjs.org/docs)
+- [React Documentation](https://react.dev)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [Radix UI Documentation](https://www.radix-ui.com)
 
 ---
 
-**🎉 You're all set!** Your Hex & Kex development environment is ready for AI-powered coding adventures!
-
-Current Status:
-- ✅ Node.js v18.20.8 installed
-- ✅ npm v10.8.2 installed  
-- ✅ Dependencies installed
-- ✅ Development server running on http://localhost:3002
-- ✅ Project structure matches your attachment
-- ✅ AI integration ready
-- ✅ Split-screen layouts functional
+**Happy coding with Hex & Kex! 🚀**

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -422,6 +422,9 @@ const FileSystemManager: React.FC<FileSystemManagerProps> = ({
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Create New File</DialogTitle>
+                    <DialogDescription>
+                      Enter the name of the new file.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <Input
@@ -449,6 +452,9 @@ const FileSystemManager: React.FC<FileSystemManagerProps> = ({
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Create New Folder</DialogTitle>
+                    <DialogDescription>
+                      Enter the name of the new folder.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <Input

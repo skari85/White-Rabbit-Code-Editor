@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings, MessageSquare, Code, Download, Play, HardDrive, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AIChat } from '@/components/ai-chat';
 import { AISettingsPanel } from '@/components/ai-settings-panel';
 import { LocalStorageManager } from '@/components/local-storage-manager';
@@ -25,6 +25,7 @@ import HexLayoutSwitcher from '@/components/hex-layout-switcher';
 import DevelopmentToolsPanel from '@/components/development-tools-panel';
 import InlineAICompletion from '@/components/inline-ai-completion';
 import { gitService } from '@/lib/git-service';
+import { ErrorBoundary } from '@/components/error-boundary';
 import { GitBranch } from 'lucide-react';
 
 interface GeneratedFile {
@@ -378,7 +379,8 @@ export default function CodeConsole() {
 
   return (
     <PersonalityThemeProvider personality={personality}>
-      <div className="min-h-screen bg-gray-900 text-white">
+      <ErrorBoundary>
+        <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
       <header className="border-b border-gray-800 bg-gray-950">
         <div className="flex items-center justify-between px-6 py-4">
@@ -847,6 +849,9 @@ export default function CodeConsole() {
               <Settings className="w-5 h-5" />
               AI Settings & Configuration
             </DialogTitle>
+            <DialogDescription className="text-gray-400 text-sm">
+              Configure how the AI assistant interacts with your code and data.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="mt-4">
@@ -880,6 +885,7 @@ export default function CodeConsole() {
         </DialogContent>
       </Dialog>
     </div>
+    </ErrorBoundary>
     </PersonalityThemeProvider>
   );
 }

@@ -7,13 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Play, 
   Pause, 
-  StepOver, 
-  StepInto, 
-  StepOut,
   Square,
   Bug,
   Eye,
@@ -26,7 +23,10 @@ import {
   AlertCircle,
   CheckCircle,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  ArrowRight,
+  ArrowDown,
+  ArrowUp
 } from 'lucide-react';
 import { 
   debuggerService, 
@@ -228,13 +228,13 @@ export function DebuggerPanel({ className, onBreakpointToggle }: DebuggerPanelPr
                 Continue
               </Button>
               <Button size="sm" variant="outline" onClick={stepOver}>
-                <StepOver className="w-3 h-3" />
+                <ArrowRight className="w-3 h-3" />
               </Button>
               <Button size="sm" variant="outline" onClick={stepInto}>
-                <StepInto className="w-3 h-3" />
+                <ArrowDown className="w-3 h-3" />
               </Button>
               <Button size="sm" variant="outline" onClick={stepOut}>
-                <StepOut className="w-3 h-3" />
+                <ArrowUp className="w-3 h-3" />
               </Button>
             </>
           ) : (
@@ -384,6 +384,9 @@ export function DebuggerPanel({ className, onBreakpointToggle }: DebuggerPanelPr
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Debugger Settings</DialogTitle>
+            <DialogDescription>
+              Configure debugger options and performance settings.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex items-center justify-between">

@@ -3,174 +3,185 @@
 /**
  * Hex & Kex Development Environment Setup Script
  * 
- * This script helps you quickly set up and manage local development environments
- * for the Hex & Kex PWA Code project.
+ * This script automates the setup process for the Hex & Kex Code Development project.
+ * It handles dependency installation, environment configuration, and development server startup.
  */
 
-const { spawn, exec } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
 class DevEnvironmentManager {
   constructor() {
     this.projectRoot = process.cwd();
-    this.availablePorts = [3000, 3001, 3002, 3003, 3004, 3005];
-    this.runningServers = new Map();
+    this.port = 3000;
+    this.isServerRunning = false;
   }
 
-  // Check if Node.js is installed and get version
+  // Check if Node.js is installed
   async checkNodeInstallation() {
-    return new Promise((resolve) => {
-      exec('node --version', (error, stdout) => {
-        if (error) {
-          resolve({ installed: false, version: null });
-        } else {
-          resolve({ installed: true, version: stdout.trim() });
-        }
-      });
-    });
-  }
-
-  // Check if npm is installed and get version
-  async checkNpmInstallation() {
-    return new Promise((resolve) => {
-      exec('npm --version', (error, stdout) => {
-        if (error) {
-          resolve({ installed: false, version: null });
-        } else {
-          resolve({ installed: true, version: stdout.trim() });
-        }
-      });
-    });
-  }
-
-  // Find an available port
-  async findAvailablePort() {
-    const net = require('net');
-    
-    for (const port of this.availablePorts) {
-      const isAvailable = await new Promise((resolve) => {
-        const server = net.createServer();
-        server.listen(port, () => {
-          server.close(() => resolve(true));
-        });
-        server.on('error', () => resolve(false));
-      });
-      
-      if (isAvailable) {
-        return port;
-      }
+    try {
+      const version = execSync('node --version', { encoding: 'utf8' }).trim();
+      return { installed: true, version };
+    } catch (error) {
+      return { installed: false, version: null };
     }
-    
-    return null;
+  }
+
+  // Check if npm is installed
+  async checkNpmInstallation() {
+    try {
+      const version = execSync('npm --version', { encoding: 'utf8' }).trim();
+      return { installed: true, version };
+    } catch (error) {
+      return { installed: false, version: null };
+    }
   }
 
   // Install dependencies
   async installDependencies() {
-    console.log('🔧 Installing dependencies...');
-    
-    return new Promise((resolve, reject) => {
-      const npmInstall = spawn('npm', ['install'], {
-        stdio: 'inherit',
-        cwd: this.projectRoot
-      });
+    console.log('📦 Installing dependencies...');
+    try {
+      execSync('npm install', { stdio: 'inherit' });
+      console.log('✅ Dependencies installed successfully');
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to install dependencies:', error.message);
+      return false;
+    }
+  }
 
-      npmInstall.on('close', (code) => {
-        if (code === 0) {
-          console.log('✅ Dependencies installed successfully!');
-          resolve();
-        } else {
-          console.error('❌ Failed to install dependencies');
-          reject(new Error(`npm install failed with code ${code}`));
-        }
+  // Find available port
+  async findAvailablePort(startPort = 3000) {
+    const net = require('net');
+    
+    return new Promise((resolve) => {
+      const server = net.createServer();
+      server.listen(startPort, () => {
+        const { port } = server.address();
+        server.close(() => resolve(port));
+      });
+      server.on('error', () => {
+        resolve(this.findAvailablePort(startPort + 1));
       });
     });
   }
 
   // Start development server
-  async startDevServer(port = null) {
-    const targetPort = port || await this.findAvailablePort();
+  async startDevServer(port) {
+    console.log(`🚀 Starting development server on port ${port}...`);
     
-    if (!targetPort) {
-      throw new Error('No available ports found');
-    }
+    return new Promise((resolve, reject) => {
+      const server = spawn('npm', ['run', 'dev', '--', '-p', port.toString()], {
+        stdio: 'pipe',
+        shell: true
+      });
 
-    console.log(`🚀 Starting development server on port ${targetPort}...`);
+      let output = '';
+      let isReady = false;
 
-    const env = { ...process.env };
-    if (port) {
-      env.PORT = port.toString();
-    }
+      server.stdout.on('data', (data) => {
+        const message = data.toString();
+        output += message;
+        
+        if (message.includes('Ready') || message.includes('Local:')) {
+          if (!isReady) {
+            isReady = true;
+            console.log(`✅ Development server ready at http://localhost:${port}`);
+            resolve({ success: true, port });
+          }
+        }
+      });
 
-    const devServer = spawn('npm', ['run', 'dev'], {
-      stdio: 'inherit',
-      cwd: this.projectRoot,
-      env
+      server.stderr.on('data', (data) => {
+        console.error(`Server error: ${data.toString()}`);
+      });
+
+      server.on('error', (error) => {
+        console.error('❌ Failed to start server:', error.message);
+        reject(error);
+      });
+
+      server.on('close', (code) => {
+        if (code !== 0) {
+          console.error(`❌ Server process exited with code ${code}`);
+        }
+      });
+
+      // Store server reference for cleanup
+      this.server = server;
     });
-
-    this.runningServers.set(targetPort, devServer);
-
-    devServer.on('close', (code) => {
-      this.runningServers.delete(targetPort);
-      if (code !== 0) {
-        console.error(`❌ Development server on port ${targetPort} exited with code ${code}`);
-      }
-    });
-
-    return targetPort;
   }
 
-  // Create a new project structure
+  // Create project structure
   async createProjectStructure(projectName) {
     const projectPath = path.join(this.projectRoot, projectName);
     
     if (fs.existsSync(projectPath)) {
-      throw new Error(`Project ${projectName} already exists`);
+      console.log(`⚠️  Project directory '${projectName}' already exists`);
+      return false;
     }
 
-    console.log(`📁 Creating project structure for ${projectName}...`);
-
-    // Create the folder structure matching the attachment
-    const folders = [
-      'app',
-      'app/api',
-      'app/auth',
-      'components',
-      'hooks',
-      'lib',
-      'public',
-      'styles',
-      'types'
-    ];
-
-    fs.mkdirSync(projectPath, { recursive: true });
-
-    folders.forEach(folder => {
-      fs.mkdirSync(path.join(projectPath, folder), { recursive: true });
-    });
-
-    // Create basic files
-    const files = {
-      'package.json': this.generatePackageJson(projectName),
-      'next.config.mjs': this.generateNextConfig(),
-      'tsconfig.json': this.generateTsConfig(),
-      'tailwind.config.ts': this.generateTailwindConfig(),
-      '.env.example': this.generateEnvExample(),
-      '.gitignore': this.generateGitignore(),
-      'README.md': this.generateReadme(projectName),
-      'app/layout.tsx': this.generateAppLayout(),
-      'app/page.tsx': this.generateAppPage(),
-      'app/globals.css': this.generateGlobalsCss()
-    };
-
-    Object.entries(files).forEach(([filePath, content]) => {
-      fs.writeFileSync(path.join(projectPath, filePath), content);
-    });
-
-    console.log(`✅ Project ${projectName} created successfully!`);
-    console.log(`📂 Project location: ${projectPath}`);
+    console.log(`📁 Creating project structure for '${projectName}'...`);
     
-    return projectPath;
+    try {
+      // Create directory structure
+      const dirs = [
+        '',
+        'app',
+        'app/api',
+        'app/api/auth',
+        'components',
+        'components/ui',
+        'hooks',
+        'lib',
+        'public',
+        'styles',
+        'types'
+      ];
+
+      dirs.forEach(dir => {
+        fs.mkdirSync(path.join(projectPath, dir), { recursive: true });
+      });
+
+      // Generate package.json
+      const packageJson = this.generatePackageJson(projectName);
+      fs.writeFileSync(path.join(projectPath, 'package.json'), packageJson);
+
+      // Generate Next.js config
+      const nextConfig = this.generateNextConfig();
+      fs.writeFileSync(path.join(projectPath, 'next.config.mjs'), nextConfig);
+
+      // Generate TypeScript config
+      const tsConfig = this.generateTsConfig();
+      fs.writeFileSync(path.join(projectPath, 'tsconfig.json'), tsConfig);
+
+      // Generate Tailwind config
+      const tailwindConfig = this.generateTailwindConfig();
+      fs.writeFileSync(path.join(projectPath, 'tailwind.config.ts'), tailwindConfig);
+
+      // Generate global CSS
+      const globalCss = this.generateGlobalsCss();
+      fs.writeFileSync(path.join(projectPath, 'app/globals.css'), globalCss);
+
+      // Generate layout
+      const layout = this.generateLayout();
+      fs.writeFileSync(path.join(projectPath, 'app/layout.tsx'), layout);
+
+      // Generate main page
+      const page = this.generatePage();
+      fs.writeFileSync(path.join(projectPath, 'app/page.tsx'), page);
+
+      // Generate README
+      const readme = this.generateReadme(projectName);
+      fs.writeFileSync(path.join(projectPath, 'README.md'), readme);
+
+      console.log(`✅ Project '${projectName}' created successfully`);
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to create project structure:', error.message);
+      return false;
+    }
   }
 
   // Generate package.json
@@ -207,233 +218,60 @@ const nextConfig = {
   experimental: {
     appDir: true,
   },
-};
+}
 
-export default nextConfig;
-`;
+module.exports = nextConfig`;
   }
 
   generateTsConfig() {
-    return JSON.stringify({
-      "compilerOptions": {
-        "lib": ["dom", "dom.iterable", "es6"],
-        "allowJs": true,
-        "skipLibCheck": true,
-        "strict": true,
-        "noEmit": true,
-        "esModuleInterop": true,
-        "module": "esnext",
-        "moduleResolution": "bundler",
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "jsx": "preserve",
-        "incremental": true,
-        "plugins": [
-          {
-            "name": "next"
-          }
-        ],
-        "baseUrl": ".",
-        "paths": {
-          "@/*": ["./*"]
-        }
-      },
-      "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-      "exclude": ["node_modules"]
-    }, null, 2);
+    return `{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "es6"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}`;
   }
 
   generateTailwindConfig() {
-    return `import type { Config } from "tailwindcss";
-
-const config: Config = {
+    return `/** @type {import('tailwindcss').Config} */
+module.exports = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
-      colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic':
+          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
     },
   },
   plugins: [],
-};
-export default config;
-`;
-  }
-
-  generateEnvExample() {
-    return `# Environment Variables
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret-key-here
-
-# AI Configuration
-OPENAI_API_KEY=your-openai-api-key
-ANTHROPIC_API_KEY=your-anthropic-api-key
-
-# GitHub OAuth (optional)
-GITHUB_CLIENT_ID=your-github-client-id
-GITHUB_CLIENT_SECRET=your-github-client-secret
-`;
-  }
-
-  generateGitignore() {
-    return `# Dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# Testing
-/coverage
-
-# Next.js
-/.next/
-/out/
-
-# Production
-/build
-
-# Misc
-.DS_Store
-*.pem
-
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Local env files
-.env*.local
-.env
-
-# Vercel
-.vercel
-
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
-`;
-  }
-
-  generateReadme(projectName) {
-    return `# ${projectName}
-
-A Hex & Kex PWA Code project with AI-powered development features.
-
-## Getting Started
-
-1. Install dependencies:
-\`\`\`bash
-npm install
-\`\`\`
-
-2. Copy environment variables:
-\`\`\`bash
-cp .env.example .env
-\`\`\`
-
-3. Start the development server:
-\`\`\`bash
-npm run dev
-\`\`\`
-
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Project Structure
-
-\`\`\`
-${projectName}/
-├── app/                 # Next.js app directory
-│   ├── api/            # API routes
-│   ├── auth/           # Authentication pages
-│   ├── globals.css     # Global styles
-│   ├── layout.tsx      # Root layout
-│   └── page.tsx        # Home page
-├── components/         # React components
-├── hooks/             # Custom React hooks
-├── lib/               # Utility libraries
-├── public/            # Static assets
-├── styles/            # Additional styles
-└── types/             # TypeScript type definitions
-\`\`\`
-
-## Features
-
-- 🎨 Hex & Kex personality system
-- 🤖 AI-powered code generation
-- 🧬 DNA Threads for code evolution tracking
-- 🔧 Split-screen development environment
-- 📱 PWA capabilities
-- 🎯 Context-aware suggestions
-
-## Development Commands
-
-- \`npm run dev\` - Start development server
-- \`npm run build\` - Build for production
-- \`npm run start\` - Start production server
-- \`npm run lint\` - Run ESLint
-
-## AI Configuration
-
-Configure your AI providers in the \`.env\` file:
-
-1. OpenAI API key for GPT models
-2. Anthropic API key for Claude models
-3. GitHub OAuth for authentication (optional)
-
-## Learn More
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Hex & Kex Documentation](https://hexkex.dev)
-`;
-  }
-
-  generateAppLayout() {
-    return `import './globals.css'
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-
-const inter = Inter({ subsets: ['latin'] })
-
-export const metadata: Metadata = {
-  title: 'Hex & Kex PWA',
-  description: 'AI-powered development environment',
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
-    </html>
-  )
-}
-`;
-  }
-
-  generateAppPage() {
-    return `export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <h1 className="text-4xl font-bold text-center">
-          Welcome to Hex & Kex
-        </h1>
-        <p className="text-center text-lg mt-4">
-          AI-powered development environment
-        </p>
-      </div>
-    </main>
-  )
-}
-`;
+}`;
   }
 
   generateGlobalsCss() {
@@ -463,7 +301,85 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+}`;
+  }
+
+  generateLayout() {
+    return `import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: '${projectName}',
+  description: 'A Hex & Kex Code Development project with AI-powered development features.',
 }
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
+    </html>
+  )
+}`;
+  }
+
+  generatePage() {
+    return `export default function Home() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
+        <h1 className="text-4xl font-bold text-center mb-8">
+          Welcome to ${projectName}
+        </h1>
+        <p className="text-center text-lg">
+          A Hex & Kex Code Development project with AI-powered development features.
+        </p>
+      </div>
+    </main>
+  )
+}`;
+  }
+
+  generateReadme(projectName) {
+    return `# ${projectName}
+
+A Hex & Kex Code Development project with AI-powered development features.
+
+## Getting Started
+
+First, run the development server:
+
+\`\`\`bash
+npm run dev
+\`\`\`
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Features
+
+- AI-powered development assistance
+- Professional development tools
+- Git integration
+- Debugging capabilities
+- IntelliSense support
+
+## Learn More
+
+To learn more about Hex & Kex, take a look at the following resources:
+
+- [Hex & Kex Documentation](https://github.com/skari85/pwa-code) - learn about Hex & Kex features and API.
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out the [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
 `;
   }
 
@@ -510,56 +426,56 @@ body {
 // CLI interface
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const devManager = new DevEnvironmentManager();
-
-  if (args.includes('--help') || args.includes('-h')) {
-    console.log(`
-Hex & Kex Development Environment Setup
-
-Usage:
-  node dev-setup.js [options]
-
-Options:
-  --help, -h          Show this help message
-  --no-install        Skip dependency installation
-  --no-server         Skip starting development server
-  --port <number>     Specify port for development server
-  --create <name>     Create a new project with the specified name
-
-Examples:
-  node dev-setup.js                    # Full setup with server
-  node dev-setup.js --no-server        # Setup without starting server
-  node dev-setup.js --port 3002        # Start server on port 3002
-  node dev-setup.js --create my-app    # Create new project
-`);
-    process.exit(0);
-  }
-
   const options = {
-    install: !args.includes('--no-install'),
-    startServer: !args.includes('--no-server'),
-    port: args.includes('--port') ? parseInt(args[args.indexOf('--port') + 1]) : null
+    port: 3000,
+    install: true,
+    startServer: true
   };
 
-  if (args.includes('--create')) {
-    const projectName = args[args.indexOf('--create') + 1];
-    if (!projectName) {
-      console.error('❌ Please specify a project name');
-      process.exit(1);
+  // Parse command line arguments
+  for (let i = 0; i < args.length; i++) {
+    switch (args[i]) {
+      case '--port':
+        options.port = parseInt(args[++i]);
+        break;
+      case '--no-install':
+        options.install = false;
+        break;
+      case '--no-server':
+        options.startServer = false;
+        break;
+      case '--create':
+        options.create = args[++i];
+        break;
+      case '--help':
+        console.log(`
+Hex & Kex Development Environment Setup
+
+Usage: node dev-setup.js [options]
+
+Options:
+  --port <number>     Specify port for development server (default: 3000)
+  --no-install        Skip dependency installation
+  --no-server         Skip starting development server
+  --create <name>     Create a new project with the specified name
+  --help              Show this help message
+
+Examples:
+  node dev-setup.js                    # Basic setup
+  node dev-setup.js --port 3001       # Setup on port 3001
+  node dev-setup.js --create my-app   # Create new project
+  node dev-setup.js --no-server       # Setup without starting server
+`);
+        process.exit(0);
     }
-    
-    devManager.createProjectStructure(projectName)
-      .then(projectPath => {
-        console.log(`\n🎯 Next steps:`);
-        console.log(`   cd ${projectName}`);
-        console.log(`   node ../dev-setup.js`);
-      })
-      .catch(error => {
-        console.error('❌ Failed to create project:', error.message);
-        process.exit(1);
-      });
+  }
+
+  const manager = new DevEnvironmentManager();
+
+  if (options.create) {
+    manager.createProjectStructure(options.create);
   } else {
-    devManager.setup(options);
+    manager.setup(options);
   }
 }
 

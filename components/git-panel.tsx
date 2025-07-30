@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   GitBranch, 
   GitCommit, 
@@ -351,6 +351,9 @@ export function GitPanel({ className, onFileSelect }: GitPanelProps) {
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Commit Changes</DialogTitle>
+                      <DialogDescription>
+                        Write a descriptive, single-line commit message.
+                      </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                       <Input

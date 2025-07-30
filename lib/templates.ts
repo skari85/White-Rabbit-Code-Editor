@@ -1,24 +1,22 @@
-export interface FileContent {
-  name: string;
-  type: string;
-  content: string;
-}
-
-export interface PWATemplate {
+export interface AppTemplate {
   id: string;
   name: string;
   description: string;
   icon: string;
-  files: FileContent[];
   settings: {
     name: string;
     description: string;
     accentColor: string;
     icon: string;
   };
+  files: {
+    name: string;
+    type: string;
+    content: string;
+  }[];
 }
 
-export const templates: PWATemplate[] = [
+export const templates: AppTemplate[] = [
   {
     id: 'employee-directory',
     name: 'Employee Directory',
@@ -42,7 +40,6 @@ export const templates: PWATemplate[] = [
     <title>Employee Directory</title>
     <meta name="description" content="Browse and search company employees">
     <meta name="theme-color" content="#3B82F6">
-    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -57,10 +54,6 @@ export const templates: PWATemplate[] = [
                 <!-- Employees will be rendered here -->
             </div>
         </main>
-        
-        <button id="installBtn" class="install-btn" style="display: none;">
-            Install App
-        </button>
     </div>
     
     <script src="script.js"></script>
@@ -77,118 +70,76 @@ export const templates: PWATemplate[] = [
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    background: #f8fafc;
-    color: #334155;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     line-height: 1.6;
-}
-
-#app {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+    color: #333;
+    background: #f5f5f5;
 }
 
 .header {
+    background: #3B82F6;
+    color: white;
+    padding: 1rem;
     text-align: center;
-    margin-bottom: 2rem;
-}
-
-.header h1 {
-    color: #3B82F6;
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
 }
 
 .search-input {
     width: 100%;
     max-width: 400px;
-    padding: 12px 16px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 16px;
-    background: white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    margin-top: 1rem;
+    font-size: 1rem;
 }
 
-.search-input:focus {
-    outline: none;
-    border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.main {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .employee-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
+    gap: 1rem;
+    margin-top: 2rem;
 }
 
 .employee-card {
     background: white;
-    border-radius: 12px;
+    border-radius: 8px;
     padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
 }
 
 .employee-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.employee-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: #3B82F6;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    margin: 0 auto 1rem;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 .employee-name {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     font-weight: 600;
-    text-align: center;
+    color: #1f2937;
     margin-bottom: 0.5rem;
-    color: #1e293b;
 }
 
 .employee-title {
-    text-align: center;
-    color: #64748b;
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.employee-email {
+    color: #3B82F6;
+    text-decoration: none;
     font-size: 0.9rem;
 }
 
-.install-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #3B82F6;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 25px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    transition: background 0.2s;
-}
-
-.install-btn:hover {
-    background: #2563eb;
-}
-
-@media (max-width: 768px) {
-    .employee-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .header h1 {
-        font-size: 2rem;
-    }
+.employee-email:hover {
+    text-decoration: underline;
 }`
       },
       {
@@ -196,32 +147,52 @@ body {
         type: 'js',
         content: `// Sample employee data
 const employees = [
-    { id: 1, name: 'Michael Scott', title: 'Regional Manager', avatar: '👨‍💼' },
-    { id: 2, name: 'Dwight K. Schrute', title: 'Assistant Regional Manager', avatar: '🧑‍🌾' },
-    { id: 3, name: 'Pam Beesly', title: 'Receptionist', avatar: '👩‍💼' },
-    { id: 4, name: 'Jim Halpert', title: 'Sales Representative', avatar: '👨‍💼' },
-    { id: 5, name: 'Stanley Hudson', title: 'Sales Representative', avatar: '👨‍💼' },
-    { id: 6, name: 'Kevin Malone', title: 'Accountant', avatar: '👨‍💼' },
-    { id: 7, name: 'Angela Martin', title: 'Senior Accountant', avatar: '👩‍💼' },
-    { id: 8, name: 'Toby Flenderson', title: 'HR Representative', avatar: '👨‍💼' }
+    {
+        name: "Alice Johnson",
+        title: "Senior Software Engineer",
+        email: "alice.johnson@company.com"
+    },
+    {
+        name: "Bob Smith",
+        title: "Product Manager",
+        email: "bob.smith@company.com"
+    },
+    {
+        name: "Carol Davis",
+        title: "UX Designer",
+        email: "carol.davis@company.com"
+    },
+    {
+        name: "David Wilson",
+        title: "Frontend Developer",
+        email: "david.wilson@company.com"
+    },
+    {
+        name: "Eva Brown",
+        title: "Backend Developer",
+        email: "eva.brown@company.com"
+    },
+    {
+        name: "Frank Miller",
+        title: "DevOps Engineer",
+        email: "frank.miller@company.com"
+    }
 ];
 
-// DOM elements
 const employeeGrid = document.getElementById('employeeGrid');
 const searchInput = document.getElementById('searchInput');
-const installBtn = document.getElementById('installBtn');
 
 // Render employees
-function renderEmployees(employeesToRender = employees) {
+function renderEmployees(employeesToRender) {
     employeeGrid.innerHTML = '';
     
     employeesToRender.forEach(employee => {
         const card = document.createElement('div');
         card.className = 'employee-card';
         card.innerHTML = \`
-            <div class="employee-avatar">\${employee.avatar}</div>
             <div class="employee-name">\${employee.name}</div>
             <div class="employee-title">\${employee.title}</div>
+            <a href="mailto:\${employee.email}" class="employee-email">\${employee.email}</a>
         \`;
         employeeGrid.appendChild(card);
     });
@@ -237,118 +208,8 @@ searchInput.addEventListener('input', (e) => {
     renderEmployees(filteredEmployees);
 });
 
-// PWA Installation
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installBtn.style.display = 'block';
-});
-
-installBtn.addEventListener('click', async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            console.log('User accepted the install prompt');
-        }
-        deferredPrompt = null;
-        installBtn.style.display = 'none';
-    }
-});
-
-// Service Worker Registration
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-            .then((registration) => {
-                console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-                console.log('SW registration failed: ', registrationError);
-            });
-    });
-}
-
 // Initialize app
-renderEmployees();`
-      },
-      {
-        name: 'manifest.json',
-        type: 'json',
-        content: `{
-  "name": "Employee Directory",
-  "short_name": "Employees",
-  "description": "Browse and search company employees",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#3B82F6",
-  "orientation": "any",
-  "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192", 
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png", 
-      "purpose": "any maskable"
-    }
-  ]
-}`
-      },
-      {
-        name: 'sw.js',
-        type: 'js',
-        content: `const CACHE_NAME = 'employee-directory-v1';
-const urlsToCache = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/script.js',
-    '/manifest.json'
-];
-
-// Install event
-self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                return cache.addAll(urlsToCache);
-            })
-    );
-});
-
-// Fetch event
-self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                // Return cached version or fetch from network
-                return response || fetch(event.request);
-            })
-    );
-});
-
-// Activate event
-self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
-    );
-});`
+renderEmployees(employees);`
       }
     ]
   },
@@ -375,7 +236,6 @@ self.addEventListener('activate', (event) => {
     <title>Todo App</title>
     <meta name="description" content="Manage your daily tasks">
     <meta name="theme-color" content="#10B981">
-    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -385,7 +245,7 @@ self.addEventListener('activate', (event) => {
         </header>
         
         <main class="main">
-            <form id="todoForm" class="todo-form" enctype="application/x-www-form-urlencoded">
+            <form id="todoForm" class="todo-form">
                 <input type="text" id="todoInput" placeholder="Add a new task..." required>
                 <button type="submit">Add Task</button>
             </form>
@@ -397,10 +257,6 @@ self.addEventListener('activate', (event) => {
             
             <ul id="todoList" class="todo-list"></ul>
         </main>
-        
-        <button id="installBtn" class="install-btn" style="display: none;">
-            Install App
-        </button>
     </div>
     
     <script src="script.js"></script>
@@ -409,7 +265,7 @@ self.addEventListener('activate', (event) => {
       },
       {
         name: 'styles.css',
-        type: 'css', 
+        type: 'css',
         content: `* {
     margin: 0;
     padding: 0;
@@ -417,54 +273,47 @@ self.addEventListener('activate', (event) => {
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.6;
     color: #333;
-}
-
-#app {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
+    background: #f5f5f5;
 }
 
 .header {
+    background: #10B981;
+    color: white;
+    padding: 1rem;
     text-align: center;
-    margin-bottom: 2rem;
 }
 
-.header h1 {
-    color: white;
-    font-size: 2.5rem;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+.main {
+    padding: 2rem;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .todo-form {
     display: flex;
-    gap: 10px;
-    margin-bottom: 1rem;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
 }
 
 .todo-form input {
     flex: 1;
-    padding: 12px 16px;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    background: white;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 1rem;
 }
 
 .todo-form button {
+    padding: 0.75rem 1.5rem;
     background: #10B981;
     color: white;
     border: none;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-weight: 600;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background 0.2s;
+    font-size: 1rem;
 }
 
 .todo-form button:hover {
@@ -475,34 +324,23 @@ body {
     display: flex;
     justify-content: space-between;
     margin-bottom: 1rem;
-    padding: 0 4px;
-    color: white;
+    color: #6b7280;
     font-size: 0.9rem;
-    opacity: 0.9;
 }
 
 .todo-list {
     list-style: none;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    overflow: hidden;
 }
 
 .todo-item {
+    background: white;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
-    padding: 16px;
-    border-bottom: 1px solid #f1f5f9;
-    transition: background 0.2s;
-}
-
-.todo-item:hover {
-    background: #f8fafc;
-}
-
-.todo-item:last-child {
-    border-bottom: none;
+    gap: 1rem;
 }
 
 .todo-item.completed {
@@ -514,82 +352,52 @@ body {
 }
 
 .todo-checkbox {
-    margin-right: 12px;
-    width: 20px;
-    height: 20px;
-    accent-color: #10B981;
+    width: 1.2rem;
+    height: 1.2rem;
+    cursor: pointer;
 }
 
 .todo-text {
     flex: 1;
-    font-size: 1rem;
 }
 
 .todo-delete {
-    background: #EF4444;
+    background: #ef4444;
     color: white;
     border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background 0.2s;
+    font-size: 0.8rem;
 }
 
 .todo-delete:hover {
-    background: #DC2626;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: #64748b;
-}
-
-.install-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #10B981;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 25px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    transition: background 0.2s;
-}
-
-.install-btn:hover {
-    background: #059669;
+    background: #dc2626;
 }`
       },
       {
         name: 'script.js',
         type: 'js',
-        content: `// Todo App Logic
+        content: `// Todo app functionality
 let todos = JSON.parse(localStorage.getItem('todos')) || [];
 
-// DOM elements
 const todoForm = document.getElementById('todoForm');
 const todoInput = document.getElementById('todoInput');
 const todoList = document.getElementById('todoList');
 const totalTasks = document.getElementById('totalTasks');
 const completedTasks = document.getElementById('completedTasks');
-const installBtn = document.getElementById('installBtn');
 
 // Save todos to localStorage
 function saveTodos() {
     localStorage.setItem('todos', JSON.stringify(todos));
 }
 
-// Update stats
+// Update statistics
 function updateStats() {
     const total = todos.length;
     const completed = todos.filter(todo => todo.completed).length;
     
-    totalTasks.textContent = \`\${total} task\${total !== 1 ? 's' : ''}\`;
+    totalTasks.textContent = \`\${total} tasks\`;
     completedTasks.textContent = \`\${completed} completed\`;
 }
 
@@ -597,18 +405,11 @@ function updateStats() {
 function renderTodos() {
     todoList.innerHTML = '';
     
-    if (todos.length === 0) {
-        todoList.innerHTML = '<li class="empty-state">No tasks yet. Add one above!</li>';
-        updateStats();
-        return;
-    }
-    
     todos.forEach((todo, index) => {
         const li = document.createElement('li');
         li.className = \`todo-item \${todo.completed ? 'completed' : ''}\`;
         li.innerHTML = \`
-            <input type="checkbox" class="todo-checkbox" \${todo.completed ? 'checked' : ''} 
-                   onchange="toggleTodo(\${index})">
+            <input type="checkbox" class="todo-checkbox" \${todo.completed ? 'checked' : ''} onclick="toggleTodo(\${index})">
             <span class="todo-text">\${todo.text}</span>
             <button class="todo-delete" onclick="deleteTodo(\${index})">Delete</button>
         \`;
@@ -653,121 +454,12 @@ todoForm.addEventListener('submit', (e) => {
     }
 });
 
-// PWA Installation
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installBtn.style.display = 'block';
-});
-
-installBtn.addEventListener('click', async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            console.log('User accepted the install prompt');
-        }
-        deferredPrompt = null;
-        installBtn.style.display = 'none';
-    }
-});
-
-// Service Worker Registration
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-            .then((registration) => {
-                console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-                console.log('SW registration failed: ', registrationError);
-            });
-    });
-}
-
 // Initialize app
 renderTodos();
 
 // Make functions global for onclick handlers
 window.toggleTodo = toggleTodo;
 window.deleteTodo = deleteTodo;`
-      },
-      {
-        name: 'manifest.json',
-        type: 'json',
-        content: `{
-  "name": "Todo App",
-  "short_name": "Todos",
-  "description": "Manage your daily tasks",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#10B981",
-  "orientation": "any",
-  "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.png", 
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ]
-}`
-      },
-      {
-        name: 'sw.js',
-        type: 'js',
-        content: `const CACHE_NAME = 'todo-app-v1';
-const urlsToCache = [
-    '/',
-    '/index.html',
-    '/styles.css', 
-    '/script.js',
-    '/manifest.json'
-];
-
-// Install event
-self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                return cache.addAll(urlsToCache);
-            })
-    );
-});
-
-// Fetch event
-self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                return response || fetch(event.request);
-            })
-    );
-});
-
-// Activate event
-self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
-    );
-});`
       }
     ]
   }

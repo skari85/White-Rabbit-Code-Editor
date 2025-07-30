@@ -1,6 +1,6 @@
-# Hex & Kex - Build Progressive Web Apps
+# Hex & Kex - Professional Code Development Environment
 
-Hex & Kex is a visual tool for creating Progressive Web Applications with ease. Build, customize, and export PWAs using an intuitive drag-and-drop interface.
+Hex & Kex is a professional code development environment with AI-powered assistance. Build, debug, and deploy applications with an intuitive interface and powerful development tools.
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/georgoskar-7854s-projects/v0-recreate-ui-design)
 [![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
@@ -8,20 +8,19 @@ Hex & Kex is a visual tool for creating Progressive Web Applications with ease. 
 ## Features
 
 ### ✨ Core Features
-- **Visual PWA Builder**: Create PWAs with a visual interface
+- **AI-Powered Development**: Create applications through conversation with AI
 - **Code Editor**: Full-featured code editor with syntax highlighting
-- **Live Preview**: See your changes in real-time with mobile preview
+- **Live Preview**: See your changes in real-time
 - **Template Library**: Pre-built templates (Employee Directory, Todo App, etc.)
-- **PWA Generation**: Automatic manifest.json and service worker generation
-- **Export Functionality**: Download your PWA as a ZIP file
+- **Export Functionality**: Download your projects as ZIP files
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
 
-### 🚀 PWA Features
-- **Offline Support**: Works without internet connection
-- **Installable**: Can be installed on devices like native apps
-- **Push Notifications**: Support for web push notifications
-- **Background Sync**: Sync data when connection is restored
-- **App Shell**: Fast loading app shell architecture
+### 🚀 Development Features
+- **Git Integration**: Complete version control with visual interface
+- **Debugging Tools**: Real debugging capabilities with breakpoints
+- **IntelliSense**: Advanced code intelligence and autocomplete
+- **Terminal Integration**: Built-in terminal support
+- **Error Detection**: Real-time error highlighting and fixes
 
 ### 🛠️ Technical Features
 - Built with **Next.js 15** and **React 19**
@@ -29,7 +28,7 @@ Hex & Kex is a visual tool for creating Progressive Web Applications with ease. 
 - **Tailwind CSS** for styling
 - **Radix UI** components for accessibility
 - **JSZip** for file compression and export
-- Modern PWA standards compliance
+- Modern development standards compliance
 
 ## Quick Start
 
@@ -115,28 +114,23 @@ For production deployment:
 
 ## How to Use
 
-### 1. Choose Your Mode
-- **Code Editor**: Write code manually with full control
-- **PWA Builder**: Use the visual interface to build PWAs
+### 1. Start with AI Chat
+- Use the AI chat interface to describe what you want to build
+- The AI will help you create code step by step
+- Ask for specific features, debugging help, or code explanations
 
-### 2. Start with a Template
+### 2. Choose from Templates
 - Select from pre-built templates:
   - **Employee Directory**: Browse and search employees
   - **Todo App**: Task management application
   - More templates coming soon!
 
 ### 3. Customize Your App
-- **Settings Panel**: Configure app name, description, colors, and icons
-- **File Editor**: Modify HTML, CSS, JavaScript, and JSON files
-- **Live Preview**: See changes instantly in the mobile preview
+- **Code Editor**: Modify HTML, CSS, JavaScript, and other files
+- **Live Preview**: See changes instantly
+- **Development Tools**: Use debugging, git, and terminal features
 
-### 4. Generate PWA Files
-- Click **"Generate PWA"** to create:
-  - `manifest.json` with your app configuration
-  - `sw.js` service worker for offline functionality
-  - Optimized HTML with PWA meta tags
-
-### 5. Export and Deploy
+### 4. Export and Deploy
 - **Download**: Export as ZIP file containing all your files
 - **Preview**: Test your app in a new browser tab
 - **Deploy**: Upload to any web server or hosting platform
@@ -153,14 +147,12 @@ pwa-code/
 │   ├── ui/               # Shadcn/ui components
 │   └── theme-provider.tsx
 ├── hooks/                 # Custom React hooks
-│   └── use-pwa-builder.ts # PWA builder logic
+│   └── use-ai-assistant.ts # AI assistant logic
 ├── lib/                   # Utility libraries
-│   ├── pwa-generator.ts   # PWA file generation
+│   ├── ai-config.ts       # AI configuration
 │   ├── templates.ts       # Template definitions
 │   └── utils.ts          # General utilities
 ├── public/               # Static assets
-│   ├── manifest.json     # PWA manifest
-│   ├── sw.js            # Service worker
 │   └── *.svg            # Icons
 └── plunker-clone.tsx     # Main application component
 ```
@@ -172,7 +164,7 @@ A professional employee directory application featuring:
 - Employee search and filtering
 - Responsive card layout
 - Contact information display
-- PWA installation prompt
+- Clean, modern interface
 
 ### 2. Todo App
 A task management application with:
@@ -181,15 +173,14 @@ A task management application with:
 - Local storage persistence
 - Clean, modern interface
 
-## PWA Standards Compliance
+## Development Standards Compliance
 
-This tool generates PWAs that meet modern web standards:
+This tool follows modern development standards:
 
-- ✅ **Web App Manifest**: Complete manifest.json configuration
-- ✅ **Service Worker**: Offline functionality and caching
-- ✅ **HTTPS Ready**: Works with secure connections
+- ✅ **TypeScript**: Full type safety
+- ✅ **ESLint**: Code quality and consistency
 - ✅ **Responsive Design**: Mobile-first approach
-- ✅ **Installable**: Add to home screen functionality
+- ✅ **Accessibility**: Screen reader support
 - ✅ **Performance**: Optimized loading and caching
 
 ## Development
@@ -211,7 +202,7 @@ npm run lint
 - **Styling**: Tailwind CSS
 - **UI Components**: Radix UI primitives
 - **File Handling**: JSZip for exports
-- **PWA**: Web App Manifest + Service Workers
+- **AI Integration**: Multiple AI providers supported
 
 ## Contributing
 
@@ -224,21 +215,21 @@ npm run lint
 ## Roadmap
 
 ### Upcoming Features
-- [ ] More PWA templates (Weather App, News Reader, etc.)
+- [ ] More application templates (Weather App, News Reader, etc.)
 - [ ] Drag-and-drop visual builder
 - [ ] Component library integration
 - [ ] Database integration templates
-- [ ] Push notification setup wizard
 - [ ] Advanced theming options
 - [ ] Collaborative editing
-- [ ] Version control integration
+- [ ] Enhanced version control integration
 
 ### Technical Improvements
 - [ ] Enhanced code editor with IntelliSense
 - [ ] Real-time collaboration
 - [ ] Template marketplace
 - [ ] Custom component creation
-- [ ] Advanced PWA features (background sync, etc.)
+- [ ] Advanced debugging tools
+- [ ] Performance profiling
 
 ## License
 

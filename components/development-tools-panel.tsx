@@ -24,6 +24,7 @@ import SearchReplacePanel from './search-replace-panel';
 import ErrorDetectionPanel from './error-detection-panel';
 import DebuggerPanel from './debugger-panel';
 import GitPanel from './git-panel';
+import { PerformanceMonitorPanel } from './performance-monitor-panel';
 import { cn } from '@/lib/utils';
 
 export interface DevelopmentToolsPanelProps {
@@ -70,7 +71,7 @@ const DevelopmentToolsPanel: React.FC<DevelopmentToolsPanelProps> = ({
       {isExpanded && (
         <CardContent className="pt-0">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="search" className="flex items-center gap-1 text-xs">
                 <Search className="w-3 h-3" />
                 Search
@@ -94,6 +95,10 @@ const DevelopmentToolsPanel: React.FC<DevelopmentToolsPanelProps> = ({
               <TabsTrigger value="git" className="flex items-center gap-1 text-xs">
                 <GitBranch className="w-3 h-3" />
                 Git
+              </TabsTrigger>
+              <TabsTrigger value="performance" className="flex items-center gap-1 text-xs">
+                <Zap className="w-3 h-3" />
+                Perf
               </TabsTrigger>
             </TabsList>
 
@@ -188,6 +193,10 @@ const DevelopmentToolsPanel: React.FC<DevelopmentToolsPanelProps> = ({
 
             <TabsContent value="git" className="mt-4">
               <GitPanel className="w-full" />
+            </TabsContent>
+
+            <TabsContent value="performance" className="mt-4">
+              <PerformanceMonitorPanel />
             </TabsContent>
           </Tabs>
         </CardContent>
