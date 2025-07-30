@@ -1,15 +1,14 @@
 {
-  "name": "Hex & Kex - Magical Code Editor",
-  "short_name": "Hex & Kex",
-  "description": "A magical coding environment with dual AI personalities - HEX (precise) and KEX (creative)",
+  "name": "Hex & Kex AI Code Console",
+  "short_name": "HexKex AI",
+  "description": "AI-powered code generation and development console with Monaco Editor",
+  "version": "1.0.0",
+  "manifest_version": 3,
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0d0d0d",
-  "theme_color": "#6c2fff",
+  "background_color": "#111827",
+  "theme_color": "#10b981",
   "orientation": "portrait-primary",
-  "categories": ["developer", "productivity", "utilities"],
-  "lang": "en",
-  "dir": "ltr",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -18,97 +17,20 @@
       "purpose": "maskable any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-512.png", 
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable any"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshot-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Hex & Kex magical editor interface"
     },
     {
-      "src": "/screenshot-narrow.png",
-      "sizes": "720x1280",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Hex & Kex mobile interface"
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
     }
   ],
-  "shortcuts": [
-    {
-      "name": "New Project",
-      "short_name": "New",
-      "description": "Create a new coding project",
-      "url": "/?action=new",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "Toggle Personality",
-      "short_name": "Toggle",
-      "description": "Switch between HEX and KEX personalities",
-      "url": "/?action=toggle",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
-    }
-  ],
-  "related_applications": [],
-  "prefer_related_applications": false,
+  "categories": ["developer", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
   "scope": "/",
-  "id": "hex-kex-editor",
-  "launch_handler": {
-    "client_mode": "navigate-new"
-  },
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "protocol_handlers": [
-    {
-      "protocol": "web+hexkex",
-      "url": "/?protocol=%s"
-    }
-  ],
-  "file_handlers": [
-    {
-      "action": "/",
-      "accept": {
-        "text/plain": [".txt", ".md"],
-        "text/javascript": [".js", ".mjs"],
-        "text/typescript": [".ts", ".tsx"],
-        "text/html": [".html", ".htm"],
-        "text/css": [".css"],
-        "application/json": [".json"]
-      }
-    }
-  ],
-  "share_target": {
-    "action": "/",
-    "method": "POST",
-    "enctype": "multipart/form-data",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url",
-      "files": [
-        {
-          "name": "files",
-          "accept": ["text/*", "application/json"]
-        }
-      ]
-    }
-  }
+  "prefer_related_applications": false
 }

@@ -11,7 +11,7 @@ import { AIChat } from '@/components/ai-chat';
 import { AISettingsPanel } from '@/components/ai-settings-panel';
 import { LocalStorageManager } from '@/components/local-storage-manager';
 import { useAIAssistantEnhanced } from '@/hooks/use-ai-assistant-enhanced';
-import { useLocalStorage, LocalProject } from '@/hooks/use-local-storage';
+import { useLocalStorage, LocalProject, LocalFile } from '@/hooks/use-local-storage';
 import { PersonalityToggle, PersonalityThemeProvider } from '@/components/personality-toggle';
 import { ContextSuggestions } from '@/components/context-suggestions';
 import { GlitchPreview, useGlitchPreview } from '@/components/glitch-preview';
@@ -21,8 +21,12 @@ import { GitHubAuth } from '@/components/github-auth';
 import { CodeModeDial, useCodeMode, CodeMode } from '@/components/code-mode-dial';
 import { SummonCodeBar, useSummonCodeBar, CommandParser } from '@/components/summon-code-bar';
 import { useTerminal } from '@/hooks/use-terminal';
+import MonacoEditor from '@/components/monaco-editor-client';
 import HexLayoutSwitcher from '@/components/hex-layout-switcher';
 import DevelopmentToolsPanel from '@/components/development-tools-panel';
+
+import { FileExplorer } from '@/components/file-explorer';
+import { EditorTabs } from '@/components/editor-tabs';
 import InlineAICompletion from '@/components/inline-ai-completion';
 
 interface GeneratedFile {
@@ -37,10 +41,11 @@ export default function CodeConsole() {
   const [selectedFile, setSelectedFile] = useState<string>('');
   const [mounted, setMounted] = useState(false);
   const [personality, setPersonality] = useState<PersonalityMode>('hex');
-  const [cursorPosition, setCursorPosition] = useState({ line: 0, column: 0 });
+  const [cursorPosition, setCursorPosition] = useState({ lineNumber: 1, column: 1 });
   const [showDNAThreads, setShowDNAThreads] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showDevelopmentTools, setShowDevelopmentTools] = useState(false);
+  const [openFiles, setOpenFiles] = useState<string[]>([]);
   
   // Code Mode Dial hook
   const { currentMode, transformCode, setMode } = useCodeMode();
@@ -105,10 +110,19 @@ export default function CodeConsole() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    // Initialize personality system after mounting
+    personalitySystem.setPersonality(personality);
+  }, [personality]);
 
   if (!mounted) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading Hex & Kex AI Console...</p>
+        </div>
+      </div>
+    );
   }
 
   // Extract files from AI responses
@@ -719,9 +733,25 @@ export default function CodeConsole() {
                         />
                       ) : (
                         <div className="relative">
-                          <pre className="text-green-300 font-mono text-sm">
-                            <code>{selectedFileContent.content}</code>
-                          </pre>
+                          <MonacoEditor
+                            value={selectedFileContent.content}
+                            language={selectedFileContent.type}
+                            onChange={(value) => {
+                              // Update the file content when the editor changes
+                              if (value !== undefined && selectedFileContent) {
+                                const updatedFiles = generatedFiles.map(file => 
+                                  file.name === selectedFileContent.name 
+                                    ? { ...file, content: value }
+                                    : file
+                                );
+                                setGeneratedFiles(updatedFiles);
+                              }
+                            }}
+                            onCursorPositionChange={(position) => {
+                              setCursorPosition({ lineNumber: position.line, column: position.column });
+                            }}
+                            className="min-h-[400px]"
+                          />
                           
                           {/* Inline AI Completion */}
                           <InlineAICompletion
@@ -731,7 +761,7 @@ export default function CodeConsole() {
                               content: selectedFileContent.content,
                               language: selectedFileContent.type
                             }}
-                            cursorPosition={cursorPosition}
+                            cursorPosition={{ line: cursorPosition.lineNumber, column: cursorPosition.column }}
                             onAcceptSuggestion={(suggestion) => {
                               // Apply suggestion to the file
                               const updatedFiles = generatedFiles.map(file => {
@@ -816,7 +846,7 @@ export default function CodeConsole() {
         <ContextSuggestions
           code={selectedFileContent.content}
           fileName={selectedFileContent.name}
-          cursorPosition={cursorPosition}
+          cursorPosition={{ line: cursorPosition.lineNumber, column: cursorPosition.column }}
           onApplySuggestion={handleApplySuggestion}
           personality={personality}
         />
