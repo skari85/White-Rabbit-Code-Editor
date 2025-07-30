@@ -64,10 +64,18 @@ export default function CodeConsole() {
     messages,
     isLoading,
     isConfigured,
+    streamingContent,
+    streamingMessageId,
+    codeFiles,
+    activeFileIndex,
     saveSettings,
     sendMessage,
     clearMessages,
-    testConnection
+    clearCodeFiles,
+    setActiveFile,
+    updateFileContent,
+    testConnection,
+    cancelRequest
   } = useAIAssistantEnhanced();
 
   // Local storage hook
@@ -135,46 +143,12 @@ export default function CodeConsole() {
     return files;
   };
 
-  // Handle AI message and extract files
+  // Handle AI message - the enhanced service handles file extraction automatically
   const handleSendMessage = async (message: string) => {
     try {
-      const response = await sendMessage(message);
-      
-      // Extract files from the response
-      const newFiles = extractFilesFromMessage(response.content);
-      if (newFiles.length > 0) {
-        // Start glitch preview for each new file
-        newFiles.forEach(newFile => {
-          startGeneration(newFile.content);
-          
-          // Add to DNA threads
-          addGeneration(
-            newFile.content,
-            `Generated ${newFile.name} via ${personality.toUpperCase()} personality`,
-            personality,
-            newFile.name,
-            currentGenerationId || undefined
-          );
-        });
-
-        setGeneratedFiles(prev => {
-          const updated = [...prev];
-          newFiles.forEach(newFile => {
-            const existingIndex = updated.findIndex(f => f.name === newFile.name);
-            if (existingIndex >= 0) {
-              updated[existingIndex] = newFile;
-            } else {
-              updated.push(newFile);
-            }
-          });
-          return updated;
-        });
-        
-        // Select the first new file
-        if (!selectedFile && newFiles.length > 0) {
-          setSelectedFile(newFiles[0].name);
-        }
-      }
+      await sendMessage(message);
+      // The enhanced AI service automatically handles code file creation
+      // No need to manually extract files - they're handled by the codeFiles state
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -534,6 +508,11 @@ export default function CodeConsole() {
           showDevelopmentTools={showDevelopmentTools}
           onDevelopmentToolsToggle={() => setShowDevelopmentTools(!showDevelopmentTools)}
           collaborationService={collaborationService}
+          codeFiles={codeFiles}
+          activeFileIndex={activeFileIndex}
+          onClearCodeFiles={clearCodeFiles}
+          onSetActiveFile={setActiveFile}
+          onUpdateFileContent={updateFileContent}
         />
       </div>
       

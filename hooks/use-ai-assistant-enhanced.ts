@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { AISettings, AIMessage, DEFAULT_AI_SETTINGS } from '@/lib/ai-config';
-import { AIServiceEnhanced, AIStreamResponse } from '@/lib/ai-service-enhanced';
+import { AIServiceEnhanced, AIStreamResponse, CodeGenerationEvent, CodeFile } from '@/lib/ai-service-enhanced';
 
 const STORAGE_KEY = 'hex-kex-ai-settings';
 const MESSAGES_STORAGE_KEY = 'hex-kex-ai-messages';
@@ -13,6 +13,8 @@ export function useAIAssistantEnhanced() {
   const [aiService, setAIService] = useState<AIServiceEnhanced | null>(null);
   const [streamingContent, setStreamingContent] = useState('');
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const [codeFiles, setCodeFiles] = useState<CodeFile[]>([]);
+  const [activeFileIndex, setActiveFileIndex] = useState(0);
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -63,6 +65,23 @@ export function useAIAssistantEnhanced() {
     setMessages(newMessages);
     saveMessages(newMessages);
   }, [saveMessages]);
+
+  // Handle code generation events
+  const handleCodeEvent = useCallback((event: CodeGenerationEvent) => {
+    switch (event.type) {
+      case 'file_created':
+        setCodeFiles(event.files);
+        setActiveFileIndex(event.files.length - 1);
+        break;
+      case 'file_updated':
+        setCodeFiles(event.files);
+        break;
+      case 'file_switched':
+        setCodeFiles(event.files);
+        setActiveFileIndex(event.files.findIndex(f => f.isActive));
+        break;
+    }
+  }, []);
 
   // Send message with streaming
   const sendMessage = useCallback(async (content: string): Promise<AIMessage> => {
@@ -130,7 +149,7 @@ export function useAIAssistantEnhanced() {
           setStreamingContent('');
           setStreamingMessageId(null);
         }
-      });
+      }, handleCodeEvent);
 
       return streamingMessage;
     } catch (error) {
@@ -149,13 +168,45 @@ export function useAIAssistantEnhanced() {
       updateMessages([...updatedMessages, errorMessage]);
       throw error;
     }
-  }, [aiService, isConfigured, messages, updateMessages]);
+  }, [aiService, isConfigured, messages, updateMessages, handleCodeEvent]);
 
   // Clear messages
   const clearMessages = useCallback(() => {
     setMessages([]);
     saveMessages([]);
   }, [saveMessages]);
+
+  // Clear code files
+  const clearCodeFiles = useCallback(() => {
+    setCodeFiles([]);
+    setActiveFileIndex(0);
+    if (aiService) {
+      aiService.clearCodeFiles();
+    }
+  }, [aiService]);
+
+  // Set active file
+  const setActiveFile = useCallback((index: number) => {
+    if (index >= 0 && index < codeFiles.length) {
+      setActiveFileIndex(index);
+      if (aiService) {
+        aiService.setActiveFile(index);
+      }
+    }
+  }, [codeFiles.length, aiService]);
+
+  // Update file content
+  const updateFileContent = useCallback((index: number, content: string) => {
+    if (index >= 0 && index < codeFiles.length) {
+      const updatedFiles = [...codeFiles];
+      updatedFiles[index] = { ...updatedFiles[index], content };
+      setCodeFiles(updatedFiles);
+      
+      if (aiService) {
+        aiService.updateFileContent(index, content);
+      }
+    }
+  }, [codeFiles, aiService]);
 
   // Test connection
   const testConnection = useCallback(async (): Promise<boolean> => {
@@ -198,9 +249,14 @@ export function useAIAssistantEnhanced() {
     isConfigured,
     streamingContent,
     streamingMessageId,
+    codeFiles,
+    activeFileIndex,
     saveSettings,
     sendMessage,
     clearMessages,
+    clearCodeFiles,
+    setActiveFile,
+    updateFileContent,
     testConnection,
     cancelRequest,
   };

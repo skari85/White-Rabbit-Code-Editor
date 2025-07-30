@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { AIMessage, AI_PROVIDERS, AISettings } from '@/lib/ai-config';
+import { CodeFile } from '@/lib/ai-service-enhanced';
 import { 
   Send, 
   Trash2, 
@@ -64,6 +65,12 @@ interface SplitPanelLayoutProps {
   showDevelopmentTools?: boolean;
   onDevelopmentToolsToggle?: () => void;
   collaborationService?: any;
+  // Enhanced AI props
+  codeFiles?: CodeFile[];
+  activeFileIndex?: number;
+  onClearCodeFiles?: () => void;
+  onSetActiveFile?: (index: number) => void;
+  onUpdateFileContent?: (index: number, content: string) => void;
 }
 
 interface StreamingMessage {
@@ -74,13 +81,6 @@ interface StreamingMessage {
   streamType: 'text' | 'code' | 'command' | 'thinking' | 'planning';
   timestamp: Date;
   tokens?: number;
-}
-
-interface CodeFile {
-  name: string;
-  content: string;
-  language: string;
-  isActive: boolean;
 }
 
 export function SplitPanelLayout({ 
@@ -98,7 +98,12 @@ export function SplitPanelLayout({
   personality = 'hex',
   showDevelopmentTools = false,
   onDevelopmentToolsToggle,
-  collaborationService
+  collaborationService,
+  codeFiles = [],
+  activeFileIndex = 0,
+  onClearCodeFiles,
+  onSetActiveFile,
+  onUpdateFileContent
 }: SplitPanelLayoutProps) {
   const [input, setInput] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -108,8 +113,6 @@ export function SplitPanelLayout({
   const [streamingMessages, setStreamingMessages] = useState<StreamingMessage[]>([]);
   const [replaySpeed, setReplaySpeed] = useState(1);
   const [isReplaying, setIsReplaying] = useState(false);
-  const [codeFiles, setCodeFiles] = useState<CodeFile[]>([]);
-  const [activeFileIndex, setActiveFileIndex] = useState(0);
   const [chatPanelWidth, setChatPanelWidth] = useState(50); // Percentage
   const [isResizing, setIsResizing] = useState(false);
   const [showCodeEditor, setShowCodeEditor] = useState(true);
@@ -187,314 +190,10 @@ export function SplitPanelLayout({
     setShowModelDropdown(false);
   };
 
-  const addCodeFile = (name: string, content: string, language: string) => {
-    const newFile: CodeFile = {
-      name,
-      content,
-      language,
-      isActive: true
-    };
-    
-    setCodeFiles(prev => {
-      const updated = prev.map(f => ({ ...f, isActive: false }));
-      return [...updated, newFile];
-    });
-    setActiveFileIndex(codeFiles.length);
-  };
-
-  const updateCodeFile = (index: number, content: string) => {
-    setCodeFiles(prev => 
-      prev.map((file, i) => 
-        i === index ? { ...file, content } : file
-      )
-    );
-  };
-
-  const simulateStreamingResponse = async (message: string) => {
-    const streamingId = `stream-${Date.now()}`;
-    const newStreamingMessage: StreamingMessage = {
-      id: streamingId,
-      role: 'assistant',
-      content: '',
-      isStreaming: true,
-      streamType: 'text',
-      timestamp: new Date(),
-    };
-
-    setStreamingMessages(prev => [...prev, newStreamingMessage]);
-
-    // Simulate different types of responses based on message content
-    const responseTypes = [
-      { type: 'thinking', content: '🤔 Analyzing your request...', color: 'text-purple-400' },
-      { type: 'planning', content: '📋 Planning the solution...', color: 'text-blue-400' },
-      { type: 'code', content: '💻 Generating code...', color: 'text-green-400' },
-      { type: 'command', content: '⚡ Executing commands...', color: 'text-yellow-400' },
-      { type: 'text', content: '📝 Crafting response...', color: 'text-cyan-400' }
-    ];
-
-    const randomType = responseTypes[Math.floor(Math.random() * responseTypes.length)];
-    
-    // Update streaming message with type
-    setStreamingMessages(prev => 
-      prev.map(msg => 
-        msg.id === streamingId 
-          ? { ...msg, streamType: randomType.type as any }
-          : msg
-      )
-    );
-
-    // Simulate streaming content with code generation
-    const sampleResponses = [
-      {
-        type: 'thinking',
-        content: `I understand you want to ${message.toLowerCase()}. Let me analyze the requirements and create a comprehensive solution.`,
-        color: 'text-purple-400'
-      },
-      {
-        type: 'planning',
-        content: `Here's my plan:\n\n1. First, I'll set up the basic structure\n2. Then implement the core functionality\n3. Finally, add error handling and optimization`,
-        color: 'text-blue-400'
-      },
-      {
-        type: 'code',
-        content: `I'll create the following files:\n\n• index.html - Main structure\n• style.css - Styling\n• script.js - Functionality`,
-        color: 'text-green-400',
-        files: [
-          {
-            name: 'index.html',
-            content: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo App</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="container">
-        <h1>Todo App</h1>
-        <div class="input-section">
-            <input type="text" id="todo-input" placeholder="Enter a new task">
-            <button id="add-todo-btn">Add</button>
-        </div>
-        <ul id="todo-list"></ul>
-    </div>
-    <script src="script.js"></script>
-</body>
-</html>`,
-            language: 'html'
-          },
-          {
-            name: 'style.css',
-            content: `body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    margin: 0;
-    padding: 20px;
-    background-color: #f5f5f5;
-}
-
-.container {
-    max-width: 400px;
-    margin: 40px auto;
-    padding: 20px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-h1 {
-    text-align: center;
-    color: #333;
-    margin-bottom: 30px;
-}
-
-.input-section {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-#todo-input {
-    flex: 1;
-    padding: 12px;
-    font-size: 16px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    outline: none;
-}
-
-#todo-input:focus {
-    border-color: #007AFF;
-}
-
-#add-todo-btn {
-    background-color: #007AFF;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    font-size: 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-#add-todo-btn:hover {
-    background-color: #0056CC;
-}
-
-#todo-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-#todo-list li {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-#todo-list li:last-child {
-    border-bottom: none;
-}
-
-.todo-text {
-    flex: 1;
-    margin-right: 10px;
-}
-
-.delete-btn {
-    background-color: #FF3B30;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    font-size: 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.delete-btn:hover {
-    background-color: #D70015;
-}`,
-            language: 'css'
-          },
-          {
-            name: 'script.js',
-            content: `// Todo App JavaScript
-console.log('Todo App loaded!');
-
-// Get DOM elements
-const todoInput = document.getElementById('todo-input');
-const addTodoBtn = document.getElementById('add-todo-btn');
-const todoList = document.getElementById('todo-list');
-
-// Add event listeners
-addTodoBtn.addEventListener('click', addTodo);
-todoInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        addTodo();
-    }
-});
-
-// Add todo function
-function addTodo() {
-    const userInput = todoInput.value.trim();
-    
-    if (userInput !== '') {
-        // Create list item
-        const li = document.createElement('li');
-        
-        // Create todo text span
-        const todoText = document.createElement('span');
-        todoText.textContent = userInput;
-        todoText.className = 'todo-text';
-        
-        // Create delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.addEventListener('click', () => {
-            li.remove();
-        });
-        
-        // Assemble the todo item
-        li.appendChild(todoText);
-        li.appendChild(deleteBtn);
-        
-        // Add to list
-        todoList.appendChild(li);
-        
-        // Clear input
-        todoInput.value = '';
-        todoInput.focus();
-    }
-}
-
-// Initialize app
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Todo App initialized!');
-    todoInput.focus();
-});`,
-            language: 'javascript'
-          }
-        ]
-      },
-      {
-        type: 'command',
-        content: `Commands to run:\n\n\`\`\`bash
-# Start the development server
-python -m http.server 8000
-
-# Or use Node.js
-npx serve .
-
-# Open in browser
-open http://localhost:8000
-\`\`\``,
-        color: 'text-yellow-400'
-      }
-    ];
-
-    const selectedResponse = sampleResponses[Math.floor(Math.random() * sampleResponses.length)];
-    
-    // Simulate character-by-character streaming
-    const content = selectedResponse.content;
-    for (let i = 0; i <= content.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 50 / replaySpeed));
-      setStreamingMessages(prev => 
-        prev.map(msg => 
-          msg.id === streamingId 
-            ? { ...msg, content: content.substring(0, i) }
-            : msg
-        )
-      );
-    }
-
-    // If this is a code response, add files to the editor
-    if (selectedResponse.type === 'code' && selectedResponse.files) {
-      selectedResponse.files.forEach(file => {
-        addCodeFile(file.name, file.content, file.language);
-      });
-    }
-
-    // Mark as complete
-    setStreamingMessages(prev => 
-      prev.map(msg => 
-        msg.id === streamingId 
-          ? { ...msg, isStreaming: false }
-          : msg
-      )
-    );
-  };
-
   const handlePlanAction = async () => {
     if (!input.trim() || isLoading || !isConfigured) return;
     const planMessage = `Plan: ${input.trim()}`;
     setInput('');
-    await simulateStreamingResponse(planMessage);
     await onSendMessage(planMessage);
   };
 
@@ -502,7 +201,6 @@ open http://localhost:8000
     if (!input.trim() || isLoading || !isConfigured) return;
     const actMessage = `Act: ${input.trim()}`;
     setInput('');
-    await simulateStreamingResponse(actMessage);
     await onSendMessage(actMessage);
   };
 
@@ -514,7 +212,6 @@ open http://localhost:8000
     setInput('');
     
     try {
-      await simulateStreamingResponse(message);
       await onSendMessage(message);
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -999,7 +696,7 @@ open http://localhost:8000
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setCodeFiles([])}
+                onClick={onClearCodeFiles}
                 className="h-6 px-2 text-xs hover:bg-gray-700"
               >
                 <Trash2 className="w-3 h-3" />
@@ -1071,11 +768,32 @@ open http://localhost:8000
             </div>
           )}
 
-          {/* File Tabs */}
-          {(generatedFiles.length > 0 || codeFiles.length > 0) && (
+          {/* File Tabs - Prioritize Enhanced Code Files */}
+          {(codeFiles.length > 0 || generatedFiles.length > 0) && (
             <div className="flex border-b border-gray-700 bg-gray-800 overflow-x-auto">
-              {/* Generated Files */}
-              {generatedFiles.map((file) => (
+              {/* Enhanced Code Files (Priority) */}
+              {codeFiles.map((file, index) => (
+                <button
+                  key={`code-${index}`}
+                  onClick={() => onSetActiveFile?.(index)}
+                  className={`px-3 py-2 text-xs font-medium border-r border-gray-700 whitespace-nowrap ${
+                    index === activeFileIndex && codeFiles.length > 0
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-800 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-1">
+                    <FileText className="w-3 h-3" />
+                    {file.name}
+                    <Badge variant="outline" className="text-xs px-1 py-0 ml-1 bg-green-600/20 border-green-500/50">
+                      {file.language}
+                    </Badge>
+                  </div>
+                </button>
+              ))}
+              
+              {/* Legacy Generated Files (Fallback) */}
+              {codeFiles.length === 0 && generatedFiles.map((file) => (
                 <button
                   key={`gen-${file.name}`}
                   onClick={() => onFileSelect?.(file.name)}
@@ -1094,33 +812,12 @@ open http://localhost:8000
                   </div>
                 </button>
               ))}
-              
-              {/* Code Files */}
-              {codeFiles.map((file, index) => (
-                <button
-                  key={`code-${index}`}
-                  onClick={() => setActiveFileIndex(index)}
-                  className={`px-3 py-2 text-xs font-medium border-r border-gray-700 whitespace-nowrap ${
-                    index === activeFileIndex
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-800 text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-1">
-                    <FileText className="w-3 h-3" />
-                    {file.name}
-                    <Badge variant="outline" className="text-xs px-1 py-0 ml-1">
-                      {file.language}
-                    </Badge>
-                  </div>
-                </button>
-              ))}
             </div>
           )}
 
-          {/* Code Editor Content */}
+          {/* Code Editor Content - Prioritize Enhanced Code Files */}
           <div className="flex-1">
-            {generatedFiles.length === 0 && codeFiles.length === 0 ? (
+            {codeFiles.length === 0 && generatedFiles.length === 0 ? (
               <div className="flex items-center justify-center h-full text-gray-400">
                 <div className="text-center">
                   <Code className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -1130,8 +827,27 @@ open http://localhost:8000
               </div>
             ) : (
               <div className="h-full">
-                {/* Show generated files first, then code files */}
-                {generatedFiles.length > 0 ? (
+                {/* Prioritize Enhanced Code Files */}
+                {codeFiles.length > 0 ? (
+                  <div className="h-full">
+                    <MonacoEditorEnhanced
+                      value={codeFiles[activeFileIndex]?.content || ''}
+                      language={codeFiles[activeFileIndex]?.language || 'typescript'}
+                      fileName={codeFiles[activeFileIndex]?.name || 'untitled'}
+                      onChange={(newValue) => {
+                        if (onUpdateFileContent) {
+                          onUpdateFileContent(activeFileIndex, newValue);
+                        }
+                      }}
+                      onSave={() => {
+                        console.log('Save triggered');
+                      }}
+                      onRun={() => {
+                        console.log('Run triggered');
+                      }}
+                    />
+                  </div>
+                ) : (
                   <div className="h-full">
                     <MonacoEditorEnhanced
                       value={generatedFiles.find(f => f.name === selectedFile)?.content || ''}
@@ -1143,30 +859,9 @@ open http://localhost:8000
                         }
                       }}
                       onSave={() => {
-                        // Handle save
                         console.log('Save triggered');
                       }}
                       onRun={() => {
-                        // Handle run
-                        console.log('Run triggered');
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="h-full">
-                    <MonacoEditorEnhanced
-                      value={codeFiles[activeFileIndex]?.content || ''}
-                      language={codeFiles[activeFileIndex]?.language || 'typescript'}
-                      fileName={codeFiles[activeFileIndex]?.name || 'untitled'}
-                      onChange={(newValue) => {
-                        updateCodeFile(activeFileIndex, newValue);
-                      }}
-                      onSave={() => {
-                        // Handle save
-                        console.log('Save triggered');
-                      }}
-                      onRun={() => {
-                        // Handle run
                         console.log('Run triggered');
                       }}
                     />
@@ -1231,4 +926,4 @@ function MessageContent({ content, onCopy, copiedCode }: {
       ))}
     </div>
   );
-} 
+}

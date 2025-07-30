@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { AIMessage, AI_PROVIDERS, AISettings } from '@/lib/ai-config';
+import { CodeFile } from '@/lib/ai-service-enhanced';
 import { 
   Send, 
   Trash2, 
@@ -51,38 +52,36 @@ interface AIChatProps {
   isConfigured: boolean;
   settings: AISettings;
   onSettingsChange: (settings: AISettings) => void;
+  codeFiles: CodeFile[];
+  activeFileIndex: number;
+  onClearCodeFiles: () => void;
+  onSetActiveFile: (index: number) => void;
+  onUpdateFileContent: (index: number, content: string) => void;
 }
 
-interface StreamingMessage {
-  id: string;
-  role: 'assistant';
-  content: string;
-  isStreaming: boolean;
-  streamType: 'text' | 'code' | 'command' | 'thinking' | 'planning';
-  timestamp: Date;
-  tokens?: number;
-}
-
-interface CodeFile {
-  name: string;
-  content: string;
-  language: string;
-  isActive: boolean;
-}
-
-export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, isConfigured, settings, onSettingsChange }: AIChatProps) {
+export function AIChat({ 
+  messages, 
+  isLoading, 
+  onSendMessage, 
+  onClearMessages, 
+  isConfigured, 
+  settings, 
+  onSettingsChange,
+  codeFiles,
+  activeFileIndex,
+  onClearCodeFiles,
+  onSetActiveFile,
+  onUpdateFileContent
+}: AIChatProps) {
   const [input, setInput] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [showProviderConfig, setShowProviderConfig] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
-  const [streamingMessages, setStreamingMessages] = useState<StreamingMessage[]>([]);
   const [showCodePreview, setShowCodePreview] = useState(true);
   const [replaySpeed, setReplaySpeed] = useState(1);
   const [isReplaying, setIsReplaying] = useState(false);
   const [showCodeEditor, setShowCodeEditor] = useState(true);
-  const [codeFiles, setCodeFiles] = useState<CodeFile[]>([]);
-  const [activeFileIndex, setActiveFileIndex] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -93,7 +92,7 @@ export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, is
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, streamingMessages]);
+  }, [messages]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -128,314 +127,10 @@ export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, is
     setShowModelDropdown(false);
   };
 
-  const addCodeFile = (name: string, content: string, language: string) => {
-    const newFile: CodeFile = {
-      name,
-      content,
-      language,
-      isActive: true
-    };
-    
-    setCodeFiles(prev => {
-      const updated = prev.map(f => ({ ...f, isActive: false }));
-      return [...updated, newFile];
-    });
-    setActiveFileIndex(codeFiles.length);
-  };
-
-  const updateCodeFile = (index: number, content: string) => {
-    setCodeFiles(prev => 
-      prev.map((file, i) => 
-        i === index ? { ...file, content } : file
-      )
-    );
-  };
-
-  const simulateStreamingResponse = async (message: string) => {
-    const streamingId = `stream-${Date.now()}`;
-    const newStreamingMessage: StreamingMessage = {
-      id: streamingId,
-      role: 'assistant',
-      content: '',
-      isStreaming: true,
-      streamType: 'text',
-      timestamp: new Date(),
-    };
-
-    setStreamingMessages(prev => [...prev, newStreamingMessage]);
-
-    // Simulate different types of responses based on message content
-    const responseTypes = [
-      { type: 'thinking', content: '🤔 Analyzing your request...', color: 'text-purple-400' },
-      { type: 'planning', content: '📋 Planning the solution...', color: 'text-blue-400' },
-      { type: 'code', content: '💻 Generating code...', color: 'text-green-400' },
-      { type: 'command', content: '⚡ Executing commands...', color: 'text-yellow-400' },
-      { type: 'text', content: '📝 Crafting response...', color: 'text-cyan-400' }
-    ];
-
-    const randomType = responseTypes[Math.floor(Math.random() * responseTypes.length)];
-    
-    // Update streaming message with type
-    setStreamingMessages(prev => 
-      prev.map(msg => 
-        msg.id === streamingId 
-          ? { ...msg, streamType: randomType.type as any }
-          : msg
-      )
-    );
-
-    // Simulate streaming content with code generation
-    const sampleResponses = [
-      {
-        type: 'thinking',
-        content: `I understand you want to ${message.toLowerCase()}. Let me analyze the requirements and create a comprehensive solution.`,
-        color: 'text-purple-400'
-      },
-      {
-        type: 'planning',
-        content: `Here's my plan:\n\n1. First, I'll set up the basic structure\n2. Then implement the core functionality\n3. Finally, add error handling and optimization`,
-        color: 'text-blue-400'
-      },
-      {
-        type: 'code',
-        content: `I'll create the following files:\n\n• index.html - Main structure\n• style.css - Styling\n• script.js - Functionality`,
-        color: 'text-green-400',
-        files: [
-          {
-            name: 'index.html',
-            content: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo App</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="container">
-        <h1>Todo App</h1>
-        <div class="input-section">
-            <input type="text" id="todo-input" placeholder="Enter a new task">
-            <button id="add-todo-btn">Add</button>
-        </div>
-        <ul id="todo-list"></ul>
-    </div>
-    <script src="script.js"></script>
-</body>
-</html>`,
-            language: 'html'
-          },
-          {
-            name: 'style.css',
-            content: `body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    margin: 0;
-    padding: 20px;
-    background-color: #f5f5f5;
-}
-
-.container {
-    max-width: 400px;
-    margin: 40px auto;
-    padding: 20px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-h1 {
-    text-align: center;
-    color: #333;
-    margin-bottom: 30px;
-}
-
-.input-section {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-#todo-input {
-    flex: 1;
-    padding: 12px;
-    font-size: 16px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    outline: none;
-}
-
-#todo-input:focus {
-    border-color: #007AFF;
-}
-
-#add-todo-btn {
-    background-color: #007AFF;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    font-size: 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-#add-todo-btn:hover {
-    background-color: #0056CC;
-}
-
-#todo-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-#todo-list li {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-#todo-list li:last-child {
-    border-bottom: none;
-}
-
-.todo-text {
-    flex: 1;
-    margin-right: 10px;
-}
-
-.delete-btn {
-    background-color: #FF3B30;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    font-size: 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.delete-btn:hover {
-    background-color: #D70015;
-}`,
-            language: 'css'
-          },
-          {
-            name: 'script.js',
-            content: `// Todo App JavaScript
-console.log('Todo App loaded!');
-
-// Get DOM elements
-const todoInput = document.getElementById('todo-input');
-const addTodoBtn = document.getElementById('add-todo-btn');
-const todoList = document.getElementById('todo-list');
-
-// Add event listeners
-addTodoBtn.addEventListener('click', addTodo);
-todoInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        addTodo();
-    }
-});
-
-// Add todo function
-function addTodo() {
-    const userInput = todoInput.value.trim();
-    
-    if (userInput !== '') {
-        // Create list item
-        const li = document.createElement('li');
-        
-        // Create todo text span
-        const todoText = document.createElement('span');
-        todoText.textContent = userInput;
-        todoText.className = 'todo-text';
-        
-        // Create delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.addEventListener('click', () => {
-            li.remove();
-        });
-        
-        // Assemble the todo item
-        li.appendChild(todoText);
-        li.appendChild(deleteBtn);
-        
-        // Add to list
-        todoList.appendChild(li);
-        
-        // Clear input
-        todoInput.value = '';
-        todoInput.focus();
-    }
-}
-
-// Initialize app
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Todo App initialized!');
-    todoInput.focus();
-});`,
-            language: 'javascript'
-          }
-        ]
-      },
-      {
-        type: 'command',
-        content: `Commands to run:\n\n\`\`\`bash
-# Start the development server
-python -m http.server 8000
-
-# Or use Node.js
-npx serve .
-
-# Open in browser
-open http://localhost:8000
-\`\`\``,
-        color: 'text-yellow-400'
-      }
-    ];
-
-    const selectedResponse = sampleResponses[Math.floor(Math.random() * sampleResponses.length)];
-    
-    // Simulate character-by-character streaming
-    const content = selectedResponse.content;
-    for (let i = 0; i <= content.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 50 / replaySpeed));
-      setStreamingMessages(prev => 
-        prev.map(msg => 
-          msg.id === streamingId 
-            ? { ...msg, content: content.substring(0, i) }
-            : msg
-        )
-      );
-    }
-
-    // If this is a code response, add files to the editor
-    if (selectedResponse.type === 'code' && selectedResponse.files) {
-      selectedResponse.files.forEach(file => {
-        addCodeFile(file.name, file.content, file.language);
-      });
-    }
-
-    // Mark as complete
-    setStreamingMessages(prev => 
-      prev.map(msg => 
-        msg.id === streamingId 
-          ? { ...msg, isStreaming: false }
-          : msg
-      )
-    );
-  };
-
   const handlePlanAction = async () => {
     if (!input.trim() || isLoading || !isConfigured) return;
     const planMessage = `Plan: ${input.trim()}`;
     setInput('');
-    await simulateStreamingResponse(planMessage);
     await onSendMessage(planMessage);
   };
 
@@ -443,7 +138,6 @@ open http://localhost:8000
     if (!input.trim() || isLoading || !isConfigured) return;
     const actMessage = `Act: ${input.trim()}`;
     setInput('');
-    await simulateStreamingResponse(actMessage);
     await onSendMessage(actMessage);
   };
 
@@ -455,7 +149,6 @@ open http://localhost:8000
     setInput('');
     
     try {
-      await simulateStreamingResponse(message);
       await onSendMessage(message);
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -475,74 +168,8 @@ open http://localhost:8000
       setCopiedCode(id);
       setTimeout(() => setCopiedCode(null), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error('Failed to copy text: ', err);
     }
-  };
-
-  const getStreamTypeIcon = (type: string) => {
-    switch (type) {
-      case 'thinking': return <Brain className="w-4 h-4" />;
-      case 'planning': return <Lightbulb className="w-4 h-4" />;
-      case 'code': return <Code className="w-4 h-4" />;
-      case 'command': return <Terminal className="w-4 h-4" />;
-      default: return <MessageSquare className="w-4 h-4" />;
-    }
-  };
-
-  const getStreamTypeColor = (type: string) => {
-    switch (type) {
-      case 'thinking': return 'text-purple-400 bg-purple-400/10 border-purple-400/20';
-      case 'planning': return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
-      case 'code': return 'text-green-400 bg-green-400/10 border-green-400/20';
-      case 'command': return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
-      default: return 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20';
-    }
-  };
-
-  const renderStreamingMessage = (message: StreamingMessage) => {
-    const isStreaming = message.isStreaming;
-    const streamType = message.streamType;
-    
-    return (
-      <div key={message.id} className="flex gap-3 justify-start">
-        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 bg-gradient-to-br from-purple-500 to-blue-500">
-          <Sparkles className="w-4 h-4 text-white" />
-        </div>
-        
-        <div className="max-w-[80%]">
-          <div className={`rounded-lg px-4 py-3 border ${getStreamTypeColor(streamType)}`}>
-            <div className="flex items-center gap-2 mb-2">
-              {getStreamTypeIcon(streamType)}
-              <span className="text-xs font-medium capitalize">{streamType}</span>
-              {isStreaming && (
-                <div className="flex items-center gap-1">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  <span className="text-xs">Streaming...</span>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <div className="whitespace-pre-wrap text-sm">
-                {message.content}
-                {isStreaming && (
-                  <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1" />
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
-            <Clock className="w-3 h-3" />
-            <span>{message.timestamp.toLocaleTimeString()}</span>
-            <Badge variant="outline" className="text-xs border-gray-600 text-gray-400">
-              <Cpu className="w-3 h-3 mr-1" />
-              AI Assistant
-            </Badge>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   const renderMessage = (message: AIMessage) => {
@@ -739,7 +366,6 @@ open http://localhost:8000
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             {messages.map(renderMessage)}
-            {streamingMessages.map(renderStreamingMessage)}
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
@@ -903,7 +529,7 @@ open http://localhost:8000
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setCodeFiles([])}
+                onClick={onClearCodeFiles}
                 className="h-6 px-2 text-xs hover:bg-gray-700"
               >
                 <Trash2 className="w-3 h-3" />
@@ -917,7 +543,7 @@ open http://localhost:8000
               {codeFiles.map((file, index) => (
                 <button
                   key={index}
-                  onClick={() => setActiveFileIndex(index)}
+                  onClick={() => onSetActiveFile(index)}
                   className={`px-3 py-2 text-xs font-medium border-r border-gray-700 ${
                     index === activeFileIndex
                       ? 'bg-gray-900 text-white'
@@ -940,6 +566,9 @@ open http://localhost:8000
                 <div className="text-center">
                   <Code className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p className="text-sm">Code will appear here as AI generates it</p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Start chatting to see the magic happen!
+                  </p>
                 </div>
               </div>
             ) : (
@@ -966,56 +595,90 @@ open http://localhost:8000
   );
 }
 
-// Enhanced MessageContent component with visual code rendering
+// Enhanced MessageContent component - shows both text and code with indicators
 function MessageContent({ content, onCopy, copiedCode }: { 
   content: string; 
   onCopy: (text: string, id: string) => void;
   copiedCode: string | null;
 }) {
-  // Extract code blocks for visual rendering
-  const codeBlocks = content.match(/```[\s\S]*?```/g) || [];
-  const textParts = content.split(/```[\s\S]*?```/);
-  
+  // Extract code blocks and show them with indicators
+  const parts: Array<{type: 'text' | 'code', content: string, language?: string, id?: string}> = [];
+  let lastIndex = 0;
+  const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
+  let match;
+
+  while ((match = codeBlockRegex.exec(content)) !== null) {
+    // Add text before code block
+    if (match.index > lastIndex) {
+      parts.push({
+        type: 'text',
+        content: content.slice(lastIndex, match.index)
+      });
+    }
+
+    // Add code block
+    parts.push({
+      type: 'code',
+      language: match[1] || 'typescript',
+      content: (match[2] || '').trim(),
+      id: `code-${match.index}`
+    });
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add remaining text
+  if (lastIndex < content.length) {
+    parts.push({
+      type: 'text',
+      content: content.slice(lastIndex)
+    });
+  }
+
+  // If no code blocks found, just show text
+  if (parts.length === 0) {
+    return (
+      <div className="whitespace-pre-wrap text-sm">
+        {content}
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-3">
-      {textParts.map((text, index) => (
+    <div className="space-y-2">
+      {parts.map((part, index) => (
         <div key={index}>
-          {text && (
+          {part.type === 'text' ? (
             <div className="whitespace-pre-wrap text-sm">
-              {text}
+              {part.content}
             </div>
-          )}
-          {codeBlocks[index] && (
+          ) : (
             <div className="relative group">
               <div className="flex items-center justify-between p-2 bg-gray-900 border border-gray-700 rounded-t">
                 <div className="flex items-center gap-2">
                   <Code className="w-4 h-4 text-green-400" />
-                  <span className="text-xs text-gray-400">Code Block</span>
+                  <span className="text-xs text-gray-400">
+                    {part.language} → Live Editor
+                  </span>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onCopy(codeBlocks[index], `code-${index}`)}
+                  onClick={() => onCopy(part.content, part.id || `code-${index}`)}
                   className="h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  {copiedCode === `code-${index}` ? (
+                  {copiedCode === part.id ? (
                     <Check className="w-3 h-3 text-green-400" />
                   ) : (
                     <Copy className="w-3 h-3" />
                   )}
                 </Button>
               </div>
-              <SyntaxHighlighter
-                language="typescript"
-                style={oneDark}
-                customStyle={{
-                  margin: 0,
-                  borderRadius: '0 0 6px 6px',
-                  fontSize: '12px',
-                }}
-              >
-                {codeBlocks[index].replace(/```[\w]*\n?/, '').replace(/```$/, '')}
-              </SyntaxHighlighter>
+              <div className="bg-gray-900 p-3 rounded-b text-sm font-mono overflow-x-auto max-h-32 overflow-y-auto">
+                <pre className="text-green-300">
+                  <code>{part.content}</code>
+                </pre>
+              </div>
             </div>
           )}
         </div>

@@ -1,11 +1,8 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import { PersonalityThemeProvider } from '@/components/personality-toggle'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { AuthSessionProvider } from '@/components/session-provider'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Hex & Kex - Professional Code Development Environment',
@@ -27,7 +24,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body className={inter.className}>
+      <body className="font-mono">
         <ErrorBoundary>
           <AuthSessionProvider>
             <PersonalityThemeProvider personality="hex">
