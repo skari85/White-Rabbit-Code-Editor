@@ -38,12 +38,16 @@ import {
   Timer,
   Split,
   Maximize2,
-  Minimize2
+  Minimize2,
+  GripVertical,
+  Monitor,
+  MonitorOff,
+  Settings
 } from 'lucide-react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { MonacoEditorEnhanced } from './monaco-editor-dynamic';
+import { DevelopmentToolsEnhanced } from './development-tools-enhanced';
 
-interface AIChatProps {
+interface SplitPanelLayoutProps {
   messages: AIMessage[];
   isLoading: boolean;
   onSendMessage: (message: string) => Promise<void>;
@@ -51,6 +55,15 @@ interface AIChatProps {
   isConfigured: boolean;
   settings: AISettings;
   onSettingsChange: (settings: AISettings) => void;
+  // Integration props
+  generatedFiles?: Array<{ name: string; content: string; type: string }>;
+  selectedFile?: string;
+  onFileSelect?: (fileName: string) => void;
+  onFileUpdate?: (fileName: string, content: string) => void;
+  personality?: string;
+  showDevelopmentTools?: boolean;
+  onDevelopmentToolsToggle?: () => void;
+  collaborationService?: any;
 }
 
 interface StreamingMessage {
@@ -70,22 +83,40 @@ interface CodeFile {
   isActive: boolean;
 }
 
-export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, isConfigured, settings, onSettingsChange }: AIChatProps) {
+export function SplitPanelLayout({ 
+  messages, 
+  isLoading, 
+  onSendMessage, 
+  onClearMessages, 
+  isConfigured, 
+  settings, 
+  onSettingsChange,
+  generatedFiles = [],
+  selectedFile,
+  onFileSelect,
+  onFileUpdate,
+  personality = 'hex',
+  showDevelopmentTools = false,
+  onDevelopmentToolsToggle,
+  collaborationService
+}: SplitPanelLayoutProps) {
   const [input, setInput] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [showProviderConfig, setShowProviderConfig] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
   const [streamingMessages, setStreamingMessages] = useState<StreamingMessage[]>([]);
-  const [showCodePreview, setShowCodePreview] = useState(true);
   const [replaySpeed, setReplaySpeed] = useState(1);
   const [isReplaying, setIsReplaying] = useState(false);
-  const [showCodeEditor, setShowCodeEditor] = useState(true);
   const [codeFiles, setCodeFiles] = useState<CodeFile[]>([]);
   const [activeFileIndex, setActiveFileIndex] = useState(0);
+  const [chatPanelWidth, setChatPanelWidth] = useState(50); // Percentage
+  const [isResizing, setIsResizing] = useState(false);
+  const [showCodeEditor, setShowCodeEditor] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const resizeRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -94,6 +125,34 @@ export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, is
   useEffect(() => {
     scrollToBottom();
   }, [messages, streamingMessages]);
+
+  // Handle panel resizing
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isResizing && resizeRef.current) {
+        const container = resizeRef.current.parentElement;
+        if (container) {
+          const rect = container.getBoundingClientRect();
+          const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
+          setChatPanelWidth(Math.max(20, Math.min(80, newWidth)));
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -592,108 +651,124 @@ open http://localhost:8000
 
   if (!isConfigured) {
     return (
-      <div className="flex flex-col h-full bg-[#1a1a1a] text-white">
-        {/* Header */}
-        <div className="flex items-center justify-between p-3 border-b border-gray-700">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-blue-500">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-sm font-medium">Visual AI Assistant</span>
-          </div>
-        </div>
-
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center p-8">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-gradient-to-br from-purple-500 to-blue-500">
-              <Sparkles className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">AI Assistant Not Configured</h3>
-            <p className="text-gray-400 mb-4">
-              Configure your AI provider to start the visual coding experience.
-            </p>
-          </div>
-        </div>
-
-        {/* BYOK Footer */}
-        <div className="border-t border-gray-700 p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs text-gray-400">BYOK (Bring Your Own Key)</span>
-          </div>
-          <div className="flex gap-2">
-            <select 
-              className="flex-1 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm"
-              value={settings.provider}
-              onChange={(e) => handleProviderSelect(e.target.value)}
-            >
-              {AI_PROVIDERS.map(provider => (
-                <option key={provider.id} value={provider.id}>
-                  {provider.name}
-                </option>
-              ))}
-            </select>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowProviderConfig(!showProviderConfig)}
-              className="bg-gray-800 border-gray-600 hover:bg-gray-700"
-            >
-              <Settings2 className="w-4 h-4" />
-            </Button>
-          </div>
-          
-          {showProviderConfig && getCurrentProvider().requiresApiKey && (
-            <div className="mt-2">
-              <Input
-                type="password"
-                placeholder={`Enter ${getCurrentProvider().name} API Key`}
-                value={tempApiKey}
-                onChange={(e) => setTempApiKey(e.target.value)}
-                className="bg-gray-800 border-gray-600 text-sm"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    onSettingsChange({ ...settings, apiKey: tempApiKey });
-                    setTempApiKey('');
-                    setShowProviderConfig(false);
-                  }
-                }}
-              />
-              <div className="flex gap-1 mt-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    onSettingsChange({ ...settings, apiKey: tempApiKey });
-                    setTempApiKey('');
-                    setShowProviderConfig(false);
-                  }}
-                  className="text-xs bg-gray-800 border-gray-600 hover:bg-gray-700"
-                >
-                  Save
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setTempApiKey('');
-                    setShowProviderConfig(false);
-                  }}
-                  className="text-xs"
-                >
-                  Cancel
-                </Button>
+      <div className="flex h-full bg-[#1a1a1a] text-white">
+        {/* Chat Panel */}
+        <div className="flex flex-col w-1/2 border-r border-gray-700">
+          {/* Header */}
+          <div className="flex items-center justify-between p-3 border-b border-gray-700">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-blue-500">
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
+              <span className="text-sm font-medium">Visual AI Assistant</span>
             </div>
-          )}
+          </div>
+
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center p-8">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-gradient-to-br from-purple-500 to-blue-500">
+                <Sparkles className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">AI Assistant Not Configured</h3>
+              <p className="text-gray-400 mb-4">
+                Configure your AI provider to start the visual coding experience.
+              </p>
+            </div>
+          </div>
+
+          {/* BYOK Footer */}
+          <div className="border-t border-gray-700 p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs text-gray-400">BYOK (Bring Your Own Key)</span>
+            </div>
+            <div className="flex gap-2">
+              <select 
+                className="flex-1 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm"
+                value={settings.provider}
+                onChange={(e) => handleProviderSelect(e.target.value)}
+              >
+                {AI_PROVIDERS.map(provider => (
+                  <option key={provider.id} value={provider.id}>
+                    {provider.name}
+                  </option>
+                ))}
+              </select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowProviderConfig(!showProviderConfig)}
+                className="bg-gray-800 border-gray-600 hover:bg-gray-700"
+              >
+                <Settings2 className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {showProviderConfig && getCurrentProvider().requiresApiKey && (
+              <div className="mt-2">
+                <Input
+                  type="password"
+                  placeholder={`Enter ${getCurrentProvider().name} API Key`}
+                  value={tempApiKey}
+                  onChange={(e) => setTempApiKey(e.target.value)}
+                  className="bg-gray-800 border-gray-600 text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      onSettingsChange({ ...settings, apiKey: tempApiKey });
+                      setTempApiKey('');
+                      setShowProviderConfig(false);
+                    }
+                  }}
+                />
+                <div className="flex gap-1 mt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onSettingsChange({ ...settings, apiKey: tempApiKey });
+                      setTempApiKey('');
+                      setShowProviderConfig(false);
+                    }}
+                    className="text-xs bg-gray-800 border-gray-600 hover:bg-gray-700"
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setTempApiKey('');
+                      setShowProviderConfig(false);
+                    }}
+                    className="text-xs"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Code Editor Panel */}
+        <div className="w-1/2 flex flex-col bg-gray-900">
+          <div className="flex items-center justify-center h-full text-gray-400">
+            <div className="text-center">
+              <Code className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="text-sm">Configure AI to start coding</p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full bg-[#1a1a1a] text-white">
+    <div className="flex h-full bg-[#1a1a1a] text-white" ref={resizeRef}>
       {/* Chat Panel */}
-      <div className={`flex flex-col ${showCodeEditor ? 'w-1/2' : 'w-full'} border-r border-gray-700`}>
+      <div 
+        className="flex flex-col border-r border-gray-700"
+        style={{ width: `${chatPanelWidth}%` }}
+      >
         {/* Enhanced Header */}
         <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-900">
           <div className="flex items-center gap-2">
@@ -716,7 +791,7 @@ open http://localhost:8000
               onClick={() => setShowCodeEditor(!showCodeEditor)}
               className="h-6 px-2 text-xs hover:bg-gray-800"
             >
-              {showCodeEditor ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+              {showCodeEditor ? <MonitorOff className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
             </Button>
             
             <div className="flex items-center gap-1">
@@ -884,22 +959,43 @@ open http://localhost:8000
         </div>
       </div>
 
+      {/* Resize Handle */}
+      <div
+        ref={resizeRef}
+        className="w-1 bg-gray-700 hover:bg-gray-600 cursor-col-resize flex items-center justify-center"
+        onMouseDown={() => setIsResizing(true)}
+      >
+        <GripVertical className="w-4 h-4 text-gray-400" />
+      </div>
+
       {/* Code Editor Panel */}
       {showCodeEditor && (
-        <div className="w-1/2 flex flex-col bg-gray-900">
+        <div 
+          className="flex flex-col bg-gray-900"
+          style={{ width: `${100 - chatPanelWidth}%` }}
+        >
           {/* Code Editor Header */}
           <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
             <div className="flex items-center gap-2">
               <Code className="w-4 h-4 text-green-400" />
               <span className="text-sm font-medium">Live Code Editor</span>
-              {codeFiles.length > 0 && (
+              {(generatedFiles.length > 0 || codeFiles.length > 0) && (
                 <Badge variant="outline" className="text-xs">
-                  {codeFiles.length} files
+                  {generatedFiles.length + codeFiles.length} files
                 </Badge>
               )}
             </div>
             
             <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onDevelopmentToolsToggle}
+                className="h-6 px-2 text-xs hover:bg-gray-700"
+              >
+                <Settings className="w-3 h-3" />
+              </Button>
+              
               <Button
                 variant="ghost"
                 size="sm"
@@ -911,14 +1007,100 @@ open http://localhost:8000
             </div>
           </div>
 
+          {/* Development Tools Panel */}
+          {showDevelopmentTools && (
+            <div className="border-b border-gray-700 bg-gray-900">
+              <DevelopmentToolsEnhanced
+                files={Object.fromEntries([
+                  ...generatedFiles.map(file => [
+                    file.name,
+                    { name: file.name, content: file.content, language: file.type }
+                  ]),
+                  ...codeFiles.map(file => [
+                    file.name,
+                    { name: file.name, content: file.content, language: file.language }
+                  ])
+                ])}
+                onFileSelect={(fileId) => {
+                  const file = generatedFiles.find(f => f.name === fileId) || 
+                              codeFiles.find(f => f.name === fileId);
+                  if (file && onFileSelect) {
+                    onFileSelect(fileId);
+                  }
+                }}
+                onReplace={(fileId, line, column, oldText, newText) => {
+                  if (onFileUpdate) {
+                    // This is a simplified replace - in a real implementation you'd need more sophisticated text replacement
+                    const file = generatedFiles.find(f => f.name === fileId) || 
+                                codeFiles.find(f => f.name === fileId);
+                    if (file) {
+                      const lines = file.content.split('\n');
+                      const targetLine = lines[line - 1];
+                      if (targetLine) {
+                        const newLine = targetLine.substring(0, column - 1) + newText + targetLine.substring(column - 1 + oldText.length);
+                        lines[line - 1] = newLine;
+                        const newContent = lines.join('\n');
+                        onFileUpdate(fileId, newContent);
+                      }
+                    }
+                  }
+                }}
+                onFixApply={(fileId, line, column, oldText, newText) => {
+                  // Same as onReplace for now
+                  if (onFileUpdate) {
+                    const file = generatedFiles.find(f => f.name === fileId) || 
+                                codeFiles.find(f => f.name === fileId);
+                    if (file) {
+                      const lines = file.content.split('\n');
+                      const targetLine = lines[line - 1];
+                      if (targetLine) {
+                        const newLine = targetLine.substring(0, column - 1) + newText + targetLine.substring(column - 1 + oldText.length);
+                        lines[line - 1] = newLine;
+                        const newContent = lines.join('\n');
+                        onFileUpdate(fileId, newContent);
+                      }
+                    }
+                  }
+                }}
+                onSendToChat={(message) => {
+                  // This would need to be passed down from the parent
+                  console.log('Send to chat:', message);
+                }}
+                collaborationService={collaborationService}
+              />
+            </div>
+          )}
+
           {/* File Tabs */}
-          {codeFiles.length > 0 && (
-            <div className="flex border-b border-gray-700 bg-gray-800">
+          {(generatedFiles.length > 0 || codeFiles.length > 0) && (
+            <div className="flex border-b border-gray-700 bg-gray-800 overflow-x-auto">
+              {/* Generated Files */}
+              {generatedFiles.map((file) => (
+                <button
+                  key={`gen-${file.name}`}
+                  onClick={() => onFileSelect?.(file.name)}
+                  className={`px-3 py-2 text-xs font-medium border-r border-gray-700 whitespace-nowrap ${
+                    selectedFile === file.name
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-800 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-1">
+                    <FileText className="w-3 h-3" />
+                    {file.name}
+                    <Badge variant="outline" className="text-xs px-1 py-0 ml-1">
+                      {file.type}
+                    </Badge>
+                  </div>
+                </button>
+              ))}
+              
+              {/* Code Files */}
               {codeFiles.map((file, index) => (
                 <button
-                  key={index}
+                  key={`code-${index}`}
                   onClick={() => setActiveFileIndex(index)}
-                  className={`px-3 py-2 text-xs font-medium border-r border-gray-700 ${
+                  className={`px-3 py-2 text-xs font-medium border-r border-gray-700 whitespace-nowrap ${
                     index === activeFileIndex
                       ? 'bg-gray-900 text-white'
                       : 'bg-gray-800 text-gray-400 hover:text-white'
@@ -927,6 +1109,9 @@ open http://localhost:8000
                   <div className="flex items-center gap-1">
                     <FileText className="w-3 h-3" />
                     {file.name}
+                    <Badge variant="outline" className="text-xs px-1 py-0 ml-1">
+                      {file.language}
+                    </Badge>
                   </div>
                 </button>
               ))}
@@ -934,29 +1119,59 @@ open http://localhost:8000
           )}
 
           {/* Code Editor Content */}
-          <div className="flex-1 p-4">
-            {codeFiles.length === 0 ? (
+          <div className="flex-1">
+            {generatedFiles.length === 0 && codeFiles.length === 0 ? (
               <div className="flex items-center justify-center h-full text-gray-400">
                 <div className="text-center">
                   <Code className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p className="text-sm">Code will appear here as AI generates it</p>
+                  <p className="text-xs mt-2 opacity-60">Start chatting to see the magic happen!</p>
                 </div>
               </div>
             ) : (
               <div className="h-full">
-                <SyntaxHighlighter
-                  language={codeFiles[activeFileIndex]?.language || 'typescript'}
-                  style={oneDark}
-                  customStyle={{
-                    margin: 0,
-                    height: '100%',
-                    fontSize: '13px',
-                    borderRadius: '6px',
-                  }}
-                  showLineNumbers
-                >
-                  {codeFiles[activeFileIndex]?.content || ''}
-                </SyntaxHighlighter>
+                {/* Show generated files first, then code files */}
+                {generatedFiles.length > 0 ? (
+                  <div className="h-full">
+                    <MonacoEditorEnhanced
+                      value={generatedFiles.find(f => f.name === selectedFile)?.content || ''}
+                      language={generatedFiles.find(f => f.name === selectedFile)?.type || 'typescript'}
+                      fileName={selectedFile || 'untitled'}
+                      onChange={(newValue) => {
+                        if (selectedFile && onFileUpdate) {
+                          onFileUpdate(selectedFile, newValue);
+                        }
+                      }}
+                      onSave={() => {
+                        // Handle save
+                        console.log('Save triggered');
+                      }}
+                      onRun={() => {
+                        // Handle run
+                        console.log('Run triggered');
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-full">
+                    <MonacoEditorEnhanced
+                      value={codeFiles[activeFileIndex]?.content || ''}
+                      language={codeFiles[activeFileIndex]?.language || 'typescript'}
+                      fileName={codeFiles[activeFileIndex]?.name || 'untitled'}
+                      onChange={(newValue) => {
+                        updateCodeFile(activeFileIndex, newValue);
+                      }}
+                      onSave={() => {
+                        // Handle save
+                        console.log('Save triggered');
+                      }}
+                      onRun={() => {
+                        // Handle run
+                        console.log('Run triggered');
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1005,21 +1220,15 @@ function MessageContent({ content, onCopy, copiedCode }: {
                   )}
                 </Button>
               </div>
-              <SyntaxHighlighter
-                language="typescript"
-                style={oneDark}
-                customStyle={{
-                  margin: 0,
-                  borderRadius: '0 0 6px 6px',
-                  fontSize: '12px',
-                }}
-              >
-                {codeBlocks[index].replace(/```[\w]*\n?/, '').replace(/```$/, '')}
-              </SyntaxHighlighter>
+              <div className="bg-gray-900 p-3 rounded-b text-sm font-mono overflow-x-auto">
+                <pre className="text-green-300">
+                  <code>{codeBlocks[index].replace(/```[\w]*\n?/, '').replace(/```$/, '')}</code>
+                </pre>
+              </div>
             </div>
           )}
         </div>
       ))}
     </div>
   );
-}
+} 

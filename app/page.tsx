@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings, MessageSquare, Code, Download, Play, HardDrive, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AIChat } from '@/components/ai-chat';
+import { SplitPanelLayout } from '@/components/split-panel-layout';
 import { AISettingsPanel } from '@/components/ai-settings-panel';
 import { LocalStorageManager } from '@/components/local-storage-manager';
 import { useAIAssistantEnhanced } from '@/hooks/use-ai-assistant-enhanced';
@@ -22,7 +22,8 @@ import { CodeModeDial, useCodeMode, CodeMode } from '@/components/code-mode-dial
 import { SummonCodeBar, useSummonCodeBar, CommandParser } from '@/components/summon-code-bar';
 import { useTerminal } from '@/hooks/use-terminal';
 import HexLayoutSwitcher from '@/components/hex-layout-switcher';
-import DevelopmentToolsPanel from '@/components/development-tools-panel';
+import { DevelopmentToolsEnhanced } from '@/components/development-tools-enhanced';
+import { CollaborationService } from '@/lib/collaboration-service';
 import InlineAICompletion from '@/components/inline-ai-completion';
 import { gitService } from '@/lib/git-service';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -44,6 +45,7 @@ export default function CodeConsole() {
   const [showDNAThreads, setShowDNAThreads] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showDevelopmentTools, setShowDevelopmentTools] = useState(false);
+  const [collaborationService] = useState(() => new CollaborationService());
   
   // Code Mode Dial hook
   const { currentMode, transformCode, setMode } = useCodeMode();
@@ -509,328 +511,33 @@ export default function CodeConsole() {
         </div>
       </header>
 
-      <div className="flex h-[calc(100vh-80px)]">
-        {/* Left Side - AI Chat Sidebar */}
-        <div className="w-96 border-r border-gray-800 bg-gray-950 flex flex-col">
-          <div className="p-4 border-b border-gray-800">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-blue-400" />
-              <h3 className="font-medium text-sm text-gray-300">AI Chat</h3>
-              {isConfigured && (
-                <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                  Ready
-                </Badge>
-              )}
-            </div>
-          </div>
-          
-          {/* AI Chat - Full Height with Input at Bottom */}
-          <div className="flex-1 flex flex-col">
-            <AIChat
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              isLoading={isLoading}
-              isConfigured={isConfigured}
-              onClearMessages={clearMessages}
-              settings={settings}
-              onSettingsChange={saveSettings}
-            />
-          </div>
-        </div>
-
-        {/* Right Side - Code Space */}
-        <div className="flex-1 flex flex-col">
-          {/* Code Header */}
-          <div className="p-4 border-b border-gray-800 bg-gray-900">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Code className="w-5 h-5 text-green-400" />
-                <h3 className="font-medium text-sm text-gray-300">Code Space</h3>
-                <Badge variant="outline" className="text-xs">
-                  {generatedFiles.length} files
-                </Badge>
-              </div>
-              
-              {/* Development Tools Panel */}
-              {showDevelopmentTools && (
-                <div className="absolute top-full left-0 right-0 z-50 bg-gray-900 border-b border-gray-800">
-                  <DevelopmentToolsPanel
-                    files={Object.fromEntries(
-                      generatedFiles.map(file => [
-                        file.name,
-                        { name: file.name, content: file.content, language: file.type }
-                      ])
-                    )}
-                    onFileSelect={handleFileSelect}
-                    onReplace={handleFileReplace}
-                    onFixApply={handleFileFix}
-                    onSendToChat={(message) => {
-                      handleSendMessage(message);
-                    }}
-                  />
-                </div>
-              )}
-              
-              <div className="flex items-center gap-2">
-                {generatedFiles.length > 0 && (
-                  <>
-                    <Button
-                      onClick={downloadProject}
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      <Download className="w-4 h-4" />
-                      Download
-                    </Button>
-                    
-                    {isLocalStorageSupported && selectedFileContent && localProject && (
-                      <Button
-                        onClick={saveToLocal}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                      >
-                        <HardDrive className="w-4 h-4" />
-                        Save Local
-                      </Button>
-                    )}
-                  </>
-                )}
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowDNAThreads(!showDNAThreads)}
-                  className="text-xs"
-                >
-                  🧬 {showDNAThreads ? 'Hide' : 'Show'} DNA
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Generated Files Bar */}
-          {generatedFiles.length > 0 && (
-            <div className="p-2 border-b border-gray-800 bg-gray-900/50">
-              <div className="flex gap-1 overflow-x-auto">
-                {generatedFiles.map((file) => (
-                  <button
-                    key={file.name}
-                    className={`flex items-center gap-2 px-3 py-1 rounded text-sm whitespace-nowrap ${
-                      selectedFile === file.name 
-                        ? 'bg-green-600 text-white' 
-                        : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                    }`}
-                    onClick={() => setSelectedFile(file.name)}
-                  >
-                    <div className="w-2 h-2 rounded-full bg-current opacity-60" />
-                    {file.name}
-                    <Badge variant="outline" className="text-xs px-1 py-0 ml-1">
-                      {file.type}
-                    </Badge>
-                    {file.type === 'html' && (
-                      <Play 
-                        className="w-3 h-3 ml-1 cursor-pointer hover:text-blue-400" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          previewFile(file);
-                        }}
-                      />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Code Content Area - Scrollable */}
-          <div className="flex-1 overflow-auto">
-            {/* Hex Layout Switcher - Split Screen Feature */}
-            <div className="p-4">
-              <HexLayoutSwitcher
-                onLayoutChange={(layout) => {
-                  console.log('Layout changed to:', layout);
-                }}
-                selectedFile={selectedFileContent}
-                generatedFiles={generatedFiles}
-                onFileSelect={(fileName) => setSelectedFile(fileName)}
-                dnaProps={{
-                  generations,
-                  branches,
-                  currentGenerationId: currentGenerationId || undefined,
-                  onRewind: (generationId: string) => {
-                    rewindTo(generationId);
-                    const generation = generations.find(g => g.id === generationId);
-                    if (generation && selectedFileContent) {
-                      const updatedFiles = generatedFiles.map(file => 
-                        file.name === selectedFileContent.name 
-                          ? { ...file, content: generation.code }
-                          : file
-                      );
-                      setGeneratedFiles(updatedFiles);
-                    }
-                  },
-                  onFork: (generationId: string) => {
-                    const branchId = forkFrom(generationId);
-                  },
-                  onDelete: deleteGeneration,
-                  onPreview: (generationId: string) => {
-                    const generation = generations.find(g => g.id === generationId);
-                    if (generation) {
-                      startGeneration(generation.code);
-                    }
-                  },
-                  personality
-                }}
-                terminalProps={{
-                  session: terminalSession,
-                  onExecuteCommand: executeCommand,
-                  onClose: () => console.log('Terminal closed'),
-                  onMinimize: () => console.log('Terminal minimized')
-                }}
-              >
-                {selectedFileContent ? (
-                  <div className="h-full">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-400 font-mono text-sm">{selectedFileContent.name}</span>
-                        <Badge variant="outline" className="text-xs">{selectedFileContent.type}</Badge>
-                      </div>
-                    </div>
-                    
-                    {/* Code Mode Dial */}
-                    <div className="mb-4 p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
-                      <CodeModeDial
-                        currentMode={currentMode}
-                        onModeChange={handleCodeModeChange}
-                        personality={personality}
-                      />
-                    </div>
-
-                    <div className="bg-black/40 p-4 rounded border border-green-500/20 min-h-[400px] overflow-auto">
-                      {isGenerating && pendingCode ? (
-                        <GlitchPreview
-                          code={pendingCode}
-                          isGenerating={isGenerating}
-                          onSolidify={() => {
-                            solidify();
-                            // Update the file content with solidified code
-                            if (selectedFileContent) {
-                              const updatedFiles = generatedFiles.map(file => 
-                                file.name === selectedFileContent.name 
-                                  ? { ...file, content: solidifiedCode || pendingCode }
-                                  : file
-                              );
-                              setGeneratedFiles(updatedFiles);
-                            }
-                          }}
-                          personality={personality}
-                        />
-                      ) : (
-                        <div className="relative">
-                          <pre className="text-green-300 font-mono text-sm">
-                            <code>{selectedFileContent.content}</code>
-                          </pre>
-                          
-                          {/* Inline AI Completion */}
-                          <InlineAICompletion
-                            currentFile={{
-                              id: selectedFileContent.name,
-                              name: selectedFileContent.name,
-                              content: selectedFileContent.content,
-                              language: selectedFileContent.type
-                            }}
-                            cursorPosition={cursorPosition}
-                            onAcceptSuggestion={(suggestion) => {
-                              // Apply suggestion to the file
-                              const updatedFiles = generatedFiles.map(file => {
-                                if (file.name === selectedFileContent.name) {
-                                  const lines = file.content.split('\n');
-                                  const targetLine = lines[suggestion.startLine - 1];
-                                  if (targetLine) {
-                                    const newLine = targetLine.substring(0, suggestion.startColumn - 1) + 
-                                                  suggestion.text + 
-                                                  targetLine.substring(suggestion.endColumn - 1);
-                                    lines[suggestion.startLine - 1] = newLine;
-                                    return { ...file, content: lines.join('\n') };
-                                  }
-                                }
-                                return file;
-                              });
-                              setGeneratedFiles(updatedFiles);
-                            }}
-                            onRejectSuggestion={(suggestionId) => {
-                              // Handle rejected suggestion
-                              console.log('Rejected suggestion:', suggestionId);
-                            }}
-                            className="top-0 right-0"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-[400px] text-green-400/60">
-                    <div className="text-center">
-                      <Code className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p className="font-mono text-sm">No file selected</p>
-                      <p className="font-mono text-xs mt-1 opacity-60">Chat with AI to generate code</p>
-                    </div>
-                  </div>
-                )}
-              </HexLayoutSwitcher>
-
-              {/* DNA Threads Panel - Positioned separately */}
-              {showDNAThreads && (
-                <div className="mt-4">
-                  <DNAThreads
-                    generations={generations}
-                    branches={branches}
-                    currentGenerationId={currentGenerationId || undefined}
-                    onRewind={(generationId) => {
-                      rewindTo(generationId);
-                      // Find the generation and restore its code
-                      const generation = generations.find(g => g.id === generationId);
-                      if (generation && selectedFileContent) {
-                        const updatedFiles = generatedFiles.map(file => 
-                          file.name === selectedFileContent.name 
-                            ? { ...file, content: generation.code }
-                            : file
-                        );
-                        setGeneratedFiles(updatedFiles);
-                      }
-                    }}
-                    onFork={(generationId) => {
-                      const branchId = forkFrom(generationId);
-                      // Could add UI feedback here
-                    }}
-                    onDelete={deleteGeneration}
-                    onPreview={(generationId) => {
-                      const generation = generations.find(g => g.id === generationId);
-                      if (generation) {
-                        startGeneration(generation.code);
-                      }
-                    }}
-                    personality={personality}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* Split Panel Layout */}
+      <div className="h-[calc(100vh-80px)]">
+        <SplitPanelLayout
+          messages={messages}
+          onSendMessage={handleSendMessage}
+          isLoading={isLoading}
+          isConfigured={isConfigured}
+          onClearMessages={clearMessages}
+          settings={settings}
+          onSettingsChange={saveSettings}
+          generatedFiles={generatedFiles}
+          selectedFile={selectedFile}
+          onFileSelect={setSelectedFile}
+          onFileUpdate={(fileName, content) => {
+            const updatedFiles = generatedFiles.map(file => 
+              file.name === fileName ? { ...file, content } : file
+            );
+            setGeneratedFiles(updatedFiles);
+          }}
+          personality={personality}
+          showDevelopmentTools={showDevelopmentTools}
+          onDevelopmentToolsToggle={() => setShowDevelopmentTools(!showDevelopmentTools)}
+          collaborationService={collaborationService}
+        />
       </div>
       
-      {/* Context Suggestions */}
-      {selectedFileContent && activeTab === 'code' && (
-        <ContextSuggestions
-          code={selectedFileContent.content}
-          fileName={selectedFileContent.name}
-          cursorPosition={cursorPosition}
-          onApplySuggestion={handleApplySuggestion}
-          personality={personality}
-        />
-      )}
+
 
       {/* Summon Code Bar */}
       <SummonCodeBar
