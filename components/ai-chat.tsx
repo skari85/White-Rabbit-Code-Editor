@@ -9,6 +9,7 @@ import { Send, Trash2, Copy, Check, Bot, User, Loader2, ChevronDown, Settings2, 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
+
 interface AIChatProps {
   messages: AIMessage[];
   isLoading: boolean;
@@ -17,11 +18,14 @@ interface AIChatProps {
   isConfigured: boolean;
   settings: AISettings;
   onSettingsChange: (settings: AISettings) => void;
+  streamedMessage?: string;
 }
 
-export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, isConfigured, settings, onSettingsChange }: AIChatProps) {
+export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, isConfigured, settings, onSettingsChange, streamedMessage }: AIChatProps) {
   const [input, setInput] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [expandedBlocks, setExpandedBlocks] = useState<{ [key: string]: boolean }>({});
+  const [codeTheme, setCodeTheme] = useState<'dark' | 'light'>('dark');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [showProviderConfig, setShowProviderConfig] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
@@ -35,7 +39,7 @@ export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, is
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, streamedMessage]); // scroll on new streamed content
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -115,11 +119,74 @@ export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, is
     }
   };
 
-  const renderMessage = (message: AIMessage) => {
+  const copyAllCodeBlocks = async (codeParts: any[]) => {
+    const allCode = codeParts.map((part) => part.value).join('\n\n');
+    try {
+      await navigator.clipboard.writeText(allCode);
+      setCopiedCode('all');
+      setTimeout(() => setCopiedCode(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy all code:', error);
+    }
+  };
+
+  const downloadCodeBlock = (code: string, lang: string | undefined) => {
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `snippet.${lang || 'txt'}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const openInPlayground = (code: string, lang: string | undefined) => {
+    // Example: open in CodeSandbox for JS/TS, or generic playground for others
+    let url = '';
+    if (lang === 'js' || lang === 'javascript' || lang === 'ts' || lang === 'typescript') {
+      url = `https://codesandbox.io/s/new?file=/App.${lang === 'ts' || lang === 'typescript' ? 'tsx' : 'js'}&initialpath=%2F&code=${encodeURIComponent(code)}`;
+    } else if (lang === 'python' || lang === 'py') {
+      url = `https://replit.com/languages/python3?code=${encodeURIComponent(code)}`;
+    } else {
+      url = `https://carbon.now.sh/?code=${encodeURIComponent(code)}`;
+    }
+    window.open(url, '_blank');
+  };
+
+  const shareCodeLink = async (code: string) => {
+    // Use a pastebin or similar service API in production; here, fallback to clipboard
+    await copyToClipboard(code, 'share');
+    alert('Code copied to clipboard! Paste it anywhere to share.');
+  };
+
+  const renderMessage = (message: AIMessage, isStreamed = false) => {
     const isUser = message.role === 'user';
-    
+    // Parse content for code blocks and text
+    const parts = [];
+    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+    let lastIndex = 0;
+    let match;
+    let idx = 0;
+    while ((match = codeBlockRegex.exec(message.content)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push({ type: 'text', value: message.content.slice(lastIndex, match.index) });
+      }
+      parts.push({ type: 'code', value: match[2], lang: match[1] });
+      lastIndex = codeBlockRegex.lastIndex;
+      idx++;
+    }
+    if (lastIndex < message.content.length) {
+      parts.push({ type: 'text', value: message.content.slice(lastIndex) });
+    }
+
+    // Separate text and code blocks for rendering
+    const textParts = parts.filter(p => p.type === 'text' && p.value.trim() !== '');
+    const codeParts = parts.filter(p => p.type === 'code');
+
     return (
-      <div key={message.id} className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div key={message.id || (isStreamed ? 'streamed' : undefined)} className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
         {!isUser && (
           <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
             <img 
@@ -129,18 +196,122 @@ export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, is
             />
           </div>
         )}
-        
-        <div className={`max-w-[80%] ${isUser ? 'order-first' : ''}`}>
-          <div className={`rounded-lg px-4 py-3 ${
-            isUser 
-              ? 'bg-blue-600 text-white ml-auto' 
-              : 'bg-gray-800 text-white'
-          }`}>
-            <MessageContent content={message.content} onCopy={copyToClipboard} copiedCode={copiedCode} />
-          </div>
-          
-          <div className={`flex items-center gap-2 mt-1 text-xs text-gray-400 ${isUser ? 'justify-end' : 'justify-start'}`}>
-            <span>{message.timestamp.toLocaleTimeString()}</span>
+        <div className={`max-w-[80%] flex flex-col gap-2 ${isUser ? 'order-first items-end' : 'items-start'}`}> 
+          {/* Chat bubble for text only */}
+          {textParts.length > 0 && (
+            <div className={`rounded-lg px-4 py-3 ${
+              isUser 
+                ? 'bg-blue-600 text-white ml-auto' 
+                : 'bg-gray-800 text-white'
+            }`}>
+              {textParts.map((part, i) => (
+                <div key={i} className="whitespace-pre-wrap text-sm text-gray-200">{part.value}</div>
+              ))}
+              {isStreamed && (
+                <span className="animate-pulse text-green-400 ml-1">|</span>
+              )}
+            </div>
+          )}
+          {/* Code block features */}
+          {codeParts.length > 0 && (
+            <div className={`flex items-center gap-2 ${isUser ? 'justify-end' : 'justify-start'} w-full`}> 
+              <button
+                className="text-xs px-2 py-1 rounded border border-gray-700 bg-gray-800 hover:bg-gray-700"
+                onClick={() => copyAllCodeBlocks(codeParts)}
+                type="button"
+              >
+                {copiedCode === 'all' ? <Check className="inline w-4 h-4 text-green-400" /> : <Copy className="inline w-4 h-4" />} Copy All
+              </button>
+              <button
+                className="text-xs px-2 py-1 rounded border border-gray-700 bg-gray-800 hover:bg-gray-700"
+                onClick={() => setCodeTheme(codeTheme === 'dark' ? 'light' : 'dark')}
+                type="button"
+              >
+                Theme: {codeTheme === 'dark' ? 'Dark' : 'Light'}
+              </button>
+            </div>
+          )}
+          {/* Code blocks outside the chat bubble */}
+          {codeParts.map((part, i) => {
+            const isExpanded = expandedBlocks[`${message.id || 'msg'}-${i}`] || false;
+            const codeLines = part.value.split('\n');
+            const showExpand = codeLines.length > 12;
+            const displayLines = isExpanded ? codeLines : codeLines.slice(0, 12);
+            return (
+              <div
+                key={i}
+                className={`relative group mt-1 ${isUser ? 'self-end' : 'self-start'} w-full border border-gray-700 rounded-lg bg-[#0d1117]`}
+                style={{ maxWidth: '100%', resize: 'vertical', overflow: 'auto' }}
+              >
+                {/* Language label */}
+                <span className="absolute top-2 left-2 text-xs text-gray-400 bg-gray-900 px-2 py-0.5 rounded">
+                  {part.lang || 'text'}
+                </span>
+                {/* Download, Playground, Share */}
+                <div className="absolute top-2 right-2 flex gap-1 z-10">
+                  <button
+                    className="text-xs px-1 py-0.5 rounded border border-gray-700 bg-gray-800 hover:bg-gray-700"
+                    onClick={() => downloadCodeBlock(part.value, part.lang)}
+                    type="button"
+                  >
+                    Download
+                  </button>
+                  <button
+                    className="text-xs px-1 py-0.5 rounded border border-gray-700 bg-gray-800 hover:bg-gray-700"
+                    onClick={() => openInPlayground(part.value, part.lang)}
+                    type="button"
+                  >
+                    Playground
+                  </button>
+                  <button
+                    className="text-xs px-1 py-0.5 rounded border border-gray-700 bg-gray-800 hover:bg-gray-700"
+                    onClick={() => shareCodeLink(part.value)}
+                    type="button"
+                  >
+                    Share
+                  </button>
+                  <button
+                    className="text-xs px-1 py-0.5 rounded border border-gray-700 bg-gray-800 hover:bg-gray-700"
+                    onClick={() => copyToClipboard(part.value, `${i}`)}
+                    tabIndex={-1}
+                    type="button"
+                  >
+                    {copiedCode === `${i}` ? <Check className="inline w-4 h-4 text-green-400" /> : <Copy className="inline w-4 h-4" />} Copy
+                  </button>
+                </div>
+                {/* Expand/Collapse */}
+                {showExpand && (
+                  <button
+                    className="absolute bottom-2 right-2 text-xs px-2 py-0.5 rounded border border-gray-700 bg-gray-800 hover:bg-gray-700 z-10"
+                    onClick={() => setExpandedBlocks((prev) => ({ ...prev, [`${message.id || 'msg'}-${i}`]: !isExpanded }))}
+                    type="button"
+                  >
+                    {isExpanded ? 'Collapse' : 'Expand'}
+                  </button>
+                )}
+                {/* SyntaxHighlighter with line numbers and theme toggle */}
+                <SyntaxHighlighter
+                  language={part.lang || 'javascript'}
+                  style={codeTheme === 'dark' ? oneDark : undefined}
+                  showLineNumbers
+                  customStyle={{
+                    background: 'transparent',
+                    borderRadius: '0.5rem',
+                    fontSize: 14,
+                    margin: 0,
+                    padding: '2.5rem 1rem 1.5rem 3.5rem',
+                    overflowX: 'auto',
+                    minHeight: '3rem',
+                  }}
+                  codeTagProps={{ style: { fontFamily: 'var(--font-mono, monospace)' } }}
+                >
+                  {displayLines.join('\n')}
+                </SyntaxHighlighter>
+              </div>
+            );
+          })}
+          <div className={`flex items-center gap-2 mt-1 text-xs text-gray-400 ${isUser ? 'justify-end' : 'justify-start'}`}> 
+            <span>{message.timestamp ? message.timestamp.toLocaleTimeString() : ''}</span>
             {message.tokens && (
               <Badge variant="outline" className="text-xs border-gray-600 text-gray-400">
                 {message.tokens} tokens
@@ -148,7 +319,6 @@ export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, is
             )}
           </div>
         </div>
-        
         {isUser && (
           <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
             <User className="w-4 h-4 text-white" />
@@ -360,8 +530,17 @@ export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, is
             </div>
           ) : (
             <>
-              {messages.map(renderMessage)}
-              {isLoading && (
+              {messages.map(msg => renderMessage(msg))}
+              {/* Streamed AI reply (live) */}
+              {streamedMessage && !isLoading && (
+                renderMessage({
+                  id: 'streamed',
+                  role: 'assistant',
+                  content: streamedMessage,
+                  timestamp: new Date(),
+                }, true)
+              )}
+              {isLoading && !streamedMessage && (
                 <div className="flex gap-3">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
                     <img 
@@ -387,15 +566,15 @@ export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, is
       {/* Input with Plan/Act buttons */}
       <div className="border-t border-gray-700 p-3">
         <form onSubmit={handleSubmit} encType="application/x-www-form-urlencoded" className="space-y-2">
-          <Textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type your task here..."
-            className="w-full bg-gray-800 border-gray-600 text-white placeholder-gray-400 resize-none min-h-[60px] max-h-32"
-            disabled={isLoading}
-          />
+      <Textarea
+        ref={textareaRef}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Type your task here..."
+        className="w-full bg-gray-800 border-gray-600 text-white placeholder-gray-400 resize-none min-h-[60px] max-h-32 overflow-y-auto"
+        disabled={isLoading}
+      />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1 text-xs text-gray-400">
               <span>Type @ for context, / for slash commands</span>
@@ -504,20 +683,4 @@ export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, is
   );
 }
 
-// Component to render message content with syntax highlighting
-function MessageContent({ content, onCopy, copiedCode }: { 
-  content: string; 
-  onCopy: (text: string, id: string) => void;
-  copiedCode: string | null;
-}) {
-  // Remove code blocks from chat - only show text content
-  const textContent = content.replace(/```[\s\S]*?```/g, '[Code generated in right panel]');
-  
-  return (
-    <div className="space-y-2">
-      <div className="whitespace-pre-wrap text-sm">
-        {textContent}
-      </div>
-    </div>
-  );
-}
+// MessageContent is now inlined in renderMessage for layout control
