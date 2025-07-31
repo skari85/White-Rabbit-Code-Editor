@@ -14,6 +14,7 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 // @ts-ignore
 const { ocrText } = typeof window === 'undefined' ? require('../ocr-util.js') : { ocrText: null };
 
+
 interface AIChatProps {
   messages: AIMessage[];
   isLoading: boolean;
@@ -27,18 +28,7 @@ interface AIChatProps {
   personality?: 'hex' | 'kex'; // Optional, for visual mode
 }
 
-export function AIChat({ 
-  messages, 
-  isLoading, 
-  onSendMessage, 
-  onClearMessages, 
-  isConfigured, 
-  settings, 
-  onSettingsChange, 
-  streamedMessage, 
-  onCodeBlocks,
-  personality 
-}: AIChatProps) {
+export function AIChat({ messages, isLoading, onSendMessage, onClearMessages, isConfigured, settings, onSettingsChange, streamedMessage, onCodeBlocks }: AIChatProps) {
   const [input, setInput] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [expandedBlocks, setExpandedBlocks] = useState<{ [key: string]: boolean }>({});
@@ -49,72 +39,36 @@ export function AIChat({
   const [ocrResult, setOcrResult] = useState<string | null>(null);
   const [ocrLoading, setOcrLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [isNearBottom, setIsNearBottom] = useState(true);
-  const [showScrollButton, setShowScrollButton] = useState(false);
 
-  // Handle OCR
-  const handleFileUpload = async (file: File) => {
-    if (!file) return;
-    
-    setOcrLoading(true);
-    try {
-      const fileUrl = URL.createObjectURL(file);
-      
-      if (typeof window !== 'undefined' && ocrText) {
-        // Browser context, use dynamic import
-        const { ocrText: browserOcrText } = await import('../ocr-util.js');
-        const text = await browserOcrText(fileUrl);
-        setOcrResult(text);
-        setInput(prev => prev + (prev ? '\n' : '') + text);
-      } else {
-        // Server context or fallback
-        console.warn('OCR not available in this context');
-      }
-      
-      URL.revokeObjectURL(fileUrl);
-    } catch (error) {
-      console.error('OCR Error:', error);
-      alert('Failed to extract text from image');
-    } finally {
-      setOcrLoading(false);
+
+  // Only scroll if user is near the bottom
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = (smooth = true) => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
     }
   };
 
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
-    }
-  }, [input]);
-
-  // Auto-scroll logic
-  const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
-  };
-
+  // Detect if user is at bottom
   const handleScroll = () => {
-    if (scrollAreaRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
-      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-      const nearBottom = distanceFromBottom < 100;
-      setIsNearBottom(nearBottom);
-      setShowScrollButton(!nearBottom && messages.length > 0);
-    }
+    const el = scrollAreaRef.current;
+    if (!el) return;
+    const threshold = 80; // px
+    setIsAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < threshold);
   };
 
-  // Auto-scroll when new messages arrive if user is near bottom
+
   useEffect(() => {
-    if (isNearBottom && (messages.length > 0 || streamedMessage)) {
-      setTimeout(scrollToBottom, 100);
+    if (isAtBottom) {
+      scrollToBottom();
     }
-  }, [messages, streamedMessage, isNearBottom]);
+    // else, do not auto-scroll
+  }, [messages, streamedMessage]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -123,34 +77,13 @@ export function AIChat({
         setShowModelDropdown(false);
       }
     };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-    
-    const message = input.trim();
-    setInput('');
-    setOcrResult(null);
-    await onSendMessage(message);
-  };
-
   const getCurrentProvider = () => {
     return AI_PROVIDERS.find(p => p.id === settings.provider) || AI_PROVIDERS[0];
-  };
-
-  const handleProviderSelect = (providerId: string) => {
-    const provider = AI_PROVIDERS.find(p => p.id === providerId);
-    if (provider) {
-      onSettingsChange({
-        ...settings,
-        provider: providerId,
-        model: provider.models[0] || provider.defaultModel
-      });
-      setShowProviderConfig(provider.requiresApiKey && !settings.apiKey);
-    }
   };
 
   const handleModelSelect = (model: string) => {
@@ -158,17 +91,115 @@ export function AIChat({
     setShowModelDropdown(false);
   };
 
-  const copyToClipboard = async (text: string, type: string) => {
+  const handleProviderSelect = (providerId: string) => {
+    const provider = AI_PROVIDERS.find(p => p.id === providerId);
+    if (provider) {
+      onSettingsChange({ 
+        ...settings, 
+        provider: providerId, 
+        model: provider.models[0] 
+      });
+    }
+    setShowModelDropdown(false);
+  };
+
+  const handlePlanAction = () => {
+    if (!input.trim() || isLoading || !isConfigured) return;
+    const planMessage = `Plan: ${input.trim()}`;
+    setInput('');
+    onSendMessage(planMessage);
+  };
+
+  const handleActAction = () => {
+    if (!input.trim() || isLoading || !isConfigured) return;
+    const actMessage = `Act: ${input.trim()}`;
+    setInput('');
+    onSendMessage(actMessage);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading || !isConfigured) return;
+
+    const message = input.trim();
+    setInput('');
+    
     try {
-      await navigator.clipboard.writeText(text);
-      setCopiedCode(type);
-      setTimeout(() => setCopiedCode(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
+      await onSendMessage(message);
+    } catch (error) {
+      console.error('Failed to send message:', error);
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
+  // OCR handler
+  const handleOcrImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setOcrLoading(true);
+    setOcrResult(null);
+    try {
+      // Read file as data URL
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const imageUrl = e.target?.result as string;
+        if (ocrText) {
+          const text = await ocrText(imageUrl);
+          setOcrResult(text);
+          setInput(text); // Optionally fill input with OCR result
+        } else {
+          setOcrResult('OCR not available in browser.');
+        }
+        setOcrLoading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setOcrResult('OCR failed.');
+      setOcrLoading(false);
+    }
+  };
+
+  const copyToClipboard = async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedCode(id);
+      setTimeout(() => setCopiedCode(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy text:', error);
+    }
+  };
+
+  const copyAllCodeBlocks = async (codeParts: any[]) => {
+    const allCode = codeParts.map((part) => part.value).join('\n\n');
+    try {
+      await navigator.clipboard.writeText(allCode);
+      setCopiedCode('all');
+      setTimeout(() => setCopiedCode(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy all code:', error);
+    }
+  };
+
+  const downloadCodeBlock = (code: string, lang: string | undefined) => {
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `snippet.${lang || 'txt'}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const openInPlayground = (code: string, lang: string | undefined) => {
+    // Example: open in CodeSandbox for JS/TS, or generic playground for others
     let url = '';
     if (lang === 'js' || lang === 'javascript' || lang === 'ts' || lang === 'typescript') {
       url = `https://codesandbox.io/s/new?file=/App.${lang === 'ts' || lang === 'typescript' ? 'tsx' : 'js'}&initialpath=%2F&code=${encodeURIComponent(code)}`;
@@ -181,6 +212,7 @@ export function AIChat({
   };
 
   const shareCodeLink = async (code: string) => {
+    // Use a pastebin or similar service API in production; here, fallback to clipboard
     await copyToClipboard(code, 'share');
     alert('Code copied to clipboard! Paste it anywhere to share.');
   };
@@ -201,20 +233,19 @@ export function AIChat({
 
   const renderMessage = (message: AIMessage, isStreamed = false) => {
     const isUser = message.role === 'user';
-    const isKex = personality === 'kex' || settings?.personality === 'kex';
-    
     // Parse content for code blocks and text
     const parts = [];
     const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
     let lastIndex = 0;
     let match;
-    
+    let idx = 0;
     while ((match = codeBlockRegex.exec(message.content)) !== null) {
       if (match.index > lastIndex) {
         parts.push({ type: 'text', value: message.content.slice(lastIndex, match.index) });
       }
       parts.push({ type: 'code', value: match[2], lang: match[1] });
       lastIndex = codeBlockRegex.lastIndex;
+      idx++;
     }
     if (lastIndex < message.content.length) {
       parts.push({ type: 'text', value: message.content.slice(lastIndex) });
@@ -224,16 +255,7 @@ export function AIChat({
     const textParts = parts.filter(p => p.type === 'text' && p.value.trim() !== '');
 
     return (
-      <div 
-        key={message.id || (isStreamed ? 'streamed' : undefined)} 
-        className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
-        style={isKex && !isUser ? {
-          filter: 'drop-shadow(0 0 8px #00ffe155)',
-          background: 'linear-gradient(135deg, rgba(0, 255, 225, 0.05) 0%, rgba(0, 212, 170, 0.05) 100%)',
-          borderRadius: '12px',
-          padding: '8px'
-        } : {}}
-      >
+      <div key={message.id || (isStreamed ? 'streamed' : undefined)} className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
         {!isUser && (
           <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
             <img 
@@ -248,9 +270,7 @@ export function AIChat({
           {textParts.length > 0 && (
             <div className={`rounded-lg px-4 py-3 ${
               isUser 
-                ? isKex
-                  ? 'bg-gradient-to-r from-[#00ffe1] to-[#00d4aa] text-black font-medium'
-                  : 'bg-blue-600 text-white ml-auto'
+                ? 'bg-blue-600 text-white ml-auto' 
                 : 'bg-gray-800 text-white'
             }`}>
               {textParts.map((part, i) => (
@@ -280,7 +300,6 @@ export function AIChat({
     );
   };
 
-  // Return early if not configured
   if (!isConfigured) {
     return (
       <div className="flex flex-col h-full bg-[#1a1a1a] text-white">
@@ -389,6 +408,8 @@ export function AIChat({
 
   // Determine if KEX mode is active
   const isKex = personality === 'kex' || settings?.personality === 'kex';
+  const kexColor = PERSONALITIES.kex.color;
+  const kexBg = 'linear-gradient(90deg, #00ffe1 0%, #00d4aa 100%)';
 
   return (
     <div
@@ -406,7 +427,6 @@ export function AIChat({
           <span className="text-lg">⚡</span> KEX MODE ACTIVE <span className="text-lg">⚡</span>
         </div>
       )}
-      
       {/* Header with Model Dropdown */}
       <div className="flex items-center justify-between p-3 border-b border-gray-700">
         <div className="flex items-center gap-2">
@@ -482,6 +502,7 @@ export function AIChat({
 
       {/* Messages */}
       <ScrollArea className="flex-1">
+        {/* Attach scroll ref and handler to the viewport */}
         <div
           className="p-4 space-y-6 h-full w-full"
           ref={scrollAreaRef}
@@ -498,106 +519,203 @@ export function AIChat({
                 />
               </div>
               <h3 className="text-lg font-medium mb-2">
-                How can I help you today?
+                Hex & Kex - One step at a time
               </h3>
               <p className="text-gray-400 text-sm">
-                Ask me anything about coding, debugging, or project ideas.
+                Transform your ideas into powerful web applications with precision and style.
               </p>
             </div>
           ) : (
             <>
-              {messages.map(message => renderMessage(message))}
-              {streamedMessage && renderMessage({
-                id: 'streaming',
-                role: 'assistant',
-                content: streamedMessage,
-                timestamp: new Date()
-              }, true)}
-            </>
-          )}
-        </div>
-      </ScrollArea>
+              {messages.map(msg => renderMessage(msg))}
+              {/* Streamed AI reply (live) */}
+              {streamedMessage && !isLoading && (
+                renderMessage({
+                  id: 'streamed',
+    // KEX accent for assistant bubbles
+    const isKex = personality === 'kex' || settings?.personality === 'kex';
 
-      {/* Scroll to bottom button */}
-      {showScrollButton && (
-        <Button
-          onClick={scrollToBottom}
-          size="sm"
-          className="absolute bottom-20 right-4 z-10 bg-gray-700 hover:bg-gray-600 border border-gray-600"
-        >
-          Scroll to latest
-        </Button>
-      )}
-
-      {/* Input */}
-      <div className="border-t border-gray-700 p-3">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <div className="flex-1 relative">
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
-              placeholder="Ask me anything..."
-              className="min-h-[40px] max-h-[120px] resize-none bg-gray-800 border-gray-600 pr-20"
-              disabled={isLoading}
+    return (
+      <div key={message.id || (isStreamed ? 'streamed' : undefined)} className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`} style={isKex && !isUser ? {filter:'drop-shadow(0 0 8px #00ffe1)'} : {}}>
+        {!isUser && (
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+            <img 
+              src="/hexkexlogo.png" 
+              alt="Hex & Kex" 
+              className="w-8 h-8 object-contain"
+              style={isKex ? {boxShadow:'0 0 0 2px #00ffe1, 0 0 12px 2px #00ffe155'} : {}}
             />
-            
-            {/* OCR Button */}
-            <div className="absolute right-2 top-2 flex gap-1">
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFileUpload(file);
-                }}
-                className="hidden"
-              />
+          </div>
+        )}
+        <div className={`max-w-[80%] flex flex-col gap-2 ${isUser ? 'order-first items-end' : 'items-start'}`}> 
+          {/* Chat bubble for text only */}
+          {textParts.length > 0 && (
+            <div className={`rounded-lg px-4 py-3 ${
+              isUser 
+                ? 'bg-blue-600 text-white ml-auto' 
+                : isKex ? 'bg-[#00ffe1] text-black border-2 border-[#00d4aa] animate-pulse' : 'bg-gray-800 text-white'
+            }`} style={isKex && !isUser ? {boxShadow:'0 0 0 2px #00ffe1, 0 0 16px 2px #00ffe155'} : {}}>
+              {textParts.map((part, i) => (
+                <div key={i} className="whitespace-pre-wrap text-sm text-gray-900">{part.value}</div>
+              ))}
+              {isStreamed && (
+                <span className="animate-pulse text-green-400 ml-1">|</span>
+              )}
+            </div>
+          )}
+          {/* Code blocks are now handled by the Code Editor, not shown in chat */}
+          <div className={`flex items-center gap-2 mt-1 text-xs text-gray-400 ${isUser ? 'justify-end' : 'justify-start'}`}> 
+            <span>{message.timestamp ? message.timestamp.toLocaleTimeString() : ''}</span>
+            {message.tokens && (
+              <Badge variant="outline" className="text-xs border-gray-600 text-gray-400">
+                {message.tokens} tokens
+              </Badge>
+            )}
+          </div>
+        </div>
+        {isUser && (
+          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+            <User className="w-4 h-4 text-white" />
+          </div>
+        )}
+      </div>
+    );
+  };
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Type your task here..."
+        className="w-full bg-gray-800 border-gray-600 text-white placeholder-gray-400 resize-none min-h-[60px] max-h-32 overflow-y-auto"
+        disabled={isLoading}
+      />
+      <div className="flex items-center gap-2 mt-2">
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleOcrImage}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="bg-gray-800 border-gray-600 hover:bg-gray-700 text-xs"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={ocrLoading}
+        >
+          {ocrLoading ? 'OCR...' : 'Image to Text (OCR)'}
+        </Button>
+        {ocrResult && (
+          <span className="text-xs text-green-400 truncate max-w-xs">{ocrResult.slice(0, 80)}...</span>
+        )}
+      </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1 text-xs text-gray-400">
+              <span>Type @ for context, / for slash commands</span>
+            </div>
+            <div className="flex gap-1">
               <Button
                 type="button"
+                variant="outline"
                 size="sm"
-                variant="ghost"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={ocrLoading}
-                className="h-6 w-6 p-0 text-gray-400 hover:text-white"
-                title="Image to Text (OCR)"
+                onClick={handlePlanAction}
+                disabled={!input.trim() || isLoading}
+                className="bg-gray-800 border-gray-600 hover:bg-gray-700 text-xs"
               >
-                {ocrLoading ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <Target className="w-3 h-3" />
-                )}
+                <Target className="w-3 h-3 mr-1" />
+                Plan
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={handleActAction}
+                disabled={!input.trim() || isLoading}
+                className="bg-blue-600 hover:bg-blue-700 text-xs"
+              >
+                <Zap className="w-3 h-3 mr-1" />
+                Act
               </Button>
             </div>
           </div>
-          
-          <Button 
-            type="submit" 
-            disabled={!input.trim() || isLoading}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-          </Button>
         </form>
+      </div>
+
+      {/* BYOK Footer */}
+      <div className="border-t border-gray-700 p-3 bg-gray-900">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">Auto-approve:</span>
+            <div className="flex items-center gap-1">
+              <input type="checkbox" className="w-3 h-3" defaultChecked />
+              <span className="text-xs text-gray-400">All</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <input type="checkbox" className="w-3 h-3" defaultChecked />
+              <span className="text-xs text-gray-400">Read</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">{getCurrentProvider().name}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowProviderConfig(!showProviderConfig)}
+              className="h-6 px-2 text-xs hover:bg-gray-800"
+            >
+              <Settings2 className="w-3 h-3" />
+            </Button>
+          </div>
+        </div>
         
-        {ocrResult && (
-          <div className="mt-2 p-2 bg-gray-800 rounded text-sm">
-            <div className="text-gray-400 text-xs mb-1">OCR Result:</div>
-            <div className="text-gray-200">{ocrResult}</div>
+        {showProviderConfig && getCurrentProvider().requiresApiKey && (
+          <div className="mt-2 pt-2 border-t border-gray-700">
+            <Input
+              type="password"
+              placeholder={`Enter ${getCurrentProvider().name} API Key`}
+              value={tempApiKey}
+              onChange={(e) => setTempApiKey(e.target.value)}
+              className="bg-gray-800 border-gray-600 text-sm mb-2"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  onSettingsChange({ ...settings, apiKey: tempApiKey });
+                  setTempApiKey('');
+                  setShowProviderConfig(false);
+                }
+              }}
+            />
+            <div className="flex gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onSettingsChange({ ...settings, apiKey: tempApiKey });
+                  setTempApiKey('');
+                  setShowProviderConfig(false);
+                }}
+                className="text-xs bg-gray-800 border-gray-600 hover:bg-gray-700"
+              >
+                Save
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setTempApiKey('');
+                  setShowProviderConfig(false);
+                }}
+                className="text-xs"
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
         )}
       </div>
     </div>
   );
 }
+
+// MessageContent is now inlined in renderMessage for layout control

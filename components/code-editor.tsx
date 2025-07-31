@@ -8,6 +8,7 @@ import { useCodeBuilder, useCodeExport } from "@/hooks/use-code-builder"
 import { useAIAssistantEnhanced } from "@/hooks/use-ai-assistant-enhanced"
 import { TerminalComponent } from "@/components/terminal"
 import { AIChat } from "@/components/ai-chat"
+import { AICodeSpace } from "./ai-code-space"
 import { AISettingsPanel } from "@/components/ai-settings-panel"
 import { useTerminal } from "@/hooks/use-terminal"
 import {
@@ -53,6 +54,9 @@ export default function CodeEditor() {
 
   const [viewMode, setViewMode] = useState<"code" | "ai" | "terminal">("code")
   const [aiPanelMode, setAIPanelMode] = useState<"chat" | "settings">("chat")
+  // Store code blocks extracted from AIChat
+  const [aiCodeBlocks, setAICodeBlocks] = useState<{ code: string; lang?: string; messageId?: string }[]>([]);
+  const [selectedAICodeIdx, setSelectedAICodeIdx] = useState<number>(0);
 
   // Enhanced AI integration
   const handleSendMessage = useCallback(async (message: string) => {
@@ -345,15 +349,42 @@ export default function CodeEditor() {
               {/* AI Content */}
               <div className="flex-1">
                 {aiPanelMode === "chat" ? (
-                  <AIChat
-                    messages={aiMessages}
-                    onSendMessage={handleSendMessage}
-                    isLoading={aiLoading}
-                    isConfigured={aiConfigured}
-                    onClearMessages={clearAIMessages}
-                    settings={aiSettings}
-                    onSettingsChange={saveAISettings}
-                  />
+                  <>
+                    <AIChat
+                      messages={aiMessages}
+                      onSendMessage={handleSendMessage}
+                      isLoading={aiLoading}
+                      isConfigured={aiConfigured}
+                      onClearMessages={clearAIMessages}
+                      settings={aiSettings}
+                      onSettingsChange={saveAISettings}
+                      onCodeBlocks={setAICodeBlocks}
+                    />
+                    {/* AI Code Space: tabbed, color-coded, navigable, editable */}
+                    {aiCodeBlocks.length > 0 && (
+                      <div className="p-4 bg-gray-100 border-t overflow-auto max-h-96 flex flex-col">
+                        <h4 className="font-semibold text-xs mb-2 text-gray-700">AI Code Space</h4>
+                        <AICodeSpace codeBlocks={aiCodeBlocks} />
+                        <div className="flex gap-2 mt-2 flex-wrap">
+                          {aiCodeBlocks.map((block, idx) => (
+                            <button
+                              key={idx}
+                              className={`px-2 py-1 rounded text-xs border ${selectedAICodeIdx === idx ? 'bg-blue-100 border-blue-400' : 'bg-white border-gray-300'}`}
+                              onClick={() => {
+                                setSelectedAICodeIdx(idx);
+                                // Load code into main editor (if a file is selected)
+                                if (selectedFile && block && block.code) {
+                                  updateFileContent(selectedFile, block.code);
+                                }
+                              }}
+                            >
+                              Edit in Main Editor: {block.lang || 'text'} #{idx + 1}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <AISettingsPanel
                     settings={aiSettings}

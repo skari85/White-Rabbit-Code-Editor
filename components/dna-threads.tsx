@@ -219,30 +219,31 @@ export function DNAThreads({
   const { tree, roots } = buildGenerationTree();
 
   return (
-    <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-full">
+    <div className="w-80 bg-white/30 backdrop-blur border-l border-gray-200/40 flex flex-col h-full shadow-none" style={{boxShadow:'none', background:'rgba(255,255,255,0.12)'}}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200/40">
         <div className="flex items-center gap-2 mb-3">
           <div
-            className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+            className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold opacity-70 border border-gray-300/30 bg-white/40 backdrop-blur"
             style={{
-              background: personality === 'hex' ? '#6c2fff' : '#00ffe1',
-              color: personality === 'hex' ? 'white' : 'black'
+              background: personality === 'hex' ? 'rgba(108,47,255,0.18)' : 'rgba(0,255,225,0.18)',
+              color: personality === 'hex' ? '#6c2fff' : '#00ffe1',
+              boxShadow: 'none'
             }}
           >
             🧬
           </div>
-          <h3 className="font-semibold">DNA Threads</h3>
+          <h3 className="font-semibold text-gray-700/80">DNA Threads</h3>
         </div>
         
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-gray-500/80">
           {generations.length} generations • {branches.length} branches
         </div>
       </div>
       
       {/* Branch selector */}
       {branches.length > 1 && (
-        <div className="p-3 border-b border-gray-200">
+        <div className="p-3 border-b border-gray-200/40 bg-white/20">
           <div className="text-xs font-medium text-gray-700 mb-2">Branches</div>
           <div className="flex flex-wrap gap-1">
             {branches.map(branch => (
