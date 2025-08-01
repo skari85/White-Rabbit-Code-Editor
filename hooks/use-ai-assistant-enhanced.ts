@@ -64,6 +64,8 @@ export function useAIAssistantEnhanced() {
   const [isLoading, setIsLoading] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
   const [aiService, setAIService] = useState<AIService | null>(null);
+  const [streamedMessage, setStreamedMessage] = useState<string>('');
+  const [isStreaming, setIsStreaming] = useState(false);
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -193,6 +195,85 @@ Please help me with this request in the context of my project.`;
     }
   }, [aiService, isConfigured, messages, saveMessages]);
 
+  // Send streaming message to AI
+  const sendStreamingMessage = useCallback(async (
+    content: string, 
+    context?: { 
+      files: any[], 
+      selectedFile: string, 
+      appSettings: any
+    }
+  ) => {
+    if (!aiService || !isConfigured) {
+      throw new Error('AI service not configured. Please set up your API key in Settings.');
+    }
+
+    setIsLoading(true);
+    setIsStreaming(true);
+    setStreamedMessage('');
+
+    try {
+      // Create user message
+      const userMessage: AIMessage = {
+        id: Date.now().toString(),
+        role: 'user',
+        content,
+        timestamp: new Date()
+      };
+
+      // Add context if provided
+      let contextualContent = content;
+      if (context) {
+        contextualContent = `${content}
+
+CURRENT PROJECT CONTEXT:
+- Current file: ${context.selectedFile}
+- App name: ${context.appSettings.name}
+- Files in project: ${context.files.map(f => f.name).join(', ')}
+
+Current file content:
+\`\`\`${context.files.find(f => f.name === context.selectedFile)?.type || 'text'}
+${context.files.find(f => f.name === context.selectedFile)?.content || ''}
+\`\`\`
+
+Please help me with this request in the context of my project.`;
+        
+        userMessage.content = contextualContent;
+      }
+
+      const updatedMessages = [...messages, userMessage];
+      saveMessages(updatedMessages);
+
+      // Stream response
+      let fullContent = '';
+      for await (const chunk of aiService.sendMessageStream(updatedMessages)) {
+        fullContent += chunk;
+        setStreamedMessage(fullContent);
+      }
+
+      // Create final assistant message
+      const assistantMessage: AIMessage = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: fullContent,
+        timestamp: new Date()
+      };
+
+      const finalMessages = [...updatedMessages, assistantMessage];
+      saveMessages(finalMessages);
+      
+      return assistantMessage;
+      
+    } catch (error) {
+      console.error('AI service error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+      setIsStreaming(false);
+      setStreamedMessage('');
+    }
+  }, [aiService, isConfigured, messages, saveMessages]);
+
   // Clear conversation
   const clearMessages = useCallback(() => {
     setMessages([]);
@@ -229,7 +310,10 @@ Please help me with this request in the context of my project.`;
     isConfigured,
     saveSettings,
     sendMessage,
+    sendStreamingMessage,
     clearMessages,
-    testConnection
+    testConnection,
+    streamedMessage,
+    isStreaming
   };
 }

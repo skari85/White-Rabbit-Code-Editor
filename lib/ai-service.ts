@@ -31,6 +31,26 @@ export class AIService {
     }
   }
 
+  async *sendMessageStream(messages: AIMessage[]): AsyncGenerator<string, void, unknown> {
+    const provider = AI_PROVIDERS.find(p => p.id === this.settings.provider);
+    if (!provider) {
+      throw new Error(`Provider ${this.settings.provider} not found`);
+    }
+
+    switch (provider.id) {
+      case 'openai':
+        yield* this.sendOpenAIMessageStream(messages);
+        break;
+      case 'groq':
+        yield* this.sendGroqMessageStream(messages);
+        break;
+      default:
+        // Fallback to non-streaming for unsupported providers
+        const response = await this.sendMessage(messages);
+        yield response.content;
+    }
+  }
+
   private async sendOpenAIMessage(messages: AIMessage[]): Promise<AIMessage> {
     if (!this.settings.apiKey) {
       throw new Error('OpenAI API key is required');
@@ -68,6 +88,136 @@ export class AIService {
       timestamp: new Date(),
       tokens: data.usage?.total_tokens
     };
+  }
+
+  private async *sendOpenAIMessageStream(messages: AIMessage[]): AsyncGenerator<string, void, unknown> {
+    if (!this.settings.apiKey) {
+      throw new Error('OpenAI API key is required');
+    }
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.settings.apiKey}`
+      },
+      body: JSON.stringify({
+        model: this.settings.model,
+        messages: [
+          { role: 'system', content: this.settings.systemPrompt },
+          ...messages.map(m => ({ role: m.role, content: m.content }))
+        ],
+        temperature: this.settings.temperature,
+        max_tokens: this.settings.maxTokens,
+        stream: true
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('No response body');
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') return;
+
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                yield content;
+              }
+            } catch (e) {
+              // Skip invalid JSON lines
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+
+  private async *sendGroqMessageStream(messages: AIMessage[]): AsyncGenerator<string, void, unknown> {
+    if (!this.settings.apiKey) {
+      throw new Error('Groq API key is required');
+    }
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.settings.apiKey}`
+      },
+      body: JSON.stringify({
+        model: this.settings.model,
+        messages: [
+          { role: 'system', content: this.settings.systemPrompt },
+          ...messages.map(m => ({ role: m.role, content: m.content }))
+        ],
+        temperature: this.settings.temperature,
+        max_tokens: this.settings.maxTokens,
+        stream: true
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Groq API error: ${error.error?.message || 'Unknown error'}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('No response body');
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') return;
+
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                yield content;
+              }
+            } catch (e) {
+              // Skip invalid JSON lines
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
   }
 
   private async sendAnthropicMessage(messages: AIMessage[]): Promise<AIMessage> {

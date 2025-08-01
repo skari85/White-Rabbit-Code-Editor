@@ -147,7 +147,7 @@ export function AIChat({
       onSettingsChange({
         ...settings,
         provider: providerId,
-        model: provider.models[0] || provider.defaultModel
+        model: provider.models[0] || 'gpt-3.5-turbo'
       });
       setShowProviderConfig(provider.requiresApiKey && !settings.apiKey);
     }
@@ -481,7 +481,7 @@ export function AIChat({
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1" style={{ maxHeight: '500px', overflowY: 'auto' }}>
         <div
           className="p-4 space-y-6 h-full w-full"
           ref={scrollAreaRef}

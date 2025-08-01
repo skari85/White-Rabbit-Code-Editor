@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { setupSimpleMonacoEnvironment } from '@/lib/monaco-setup';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, MessageSquare, Code, Download, Play, HardDrive, X } from 'lucide-react';
+import { Settings, MessageSquare, Code, Download, Play, HardDrive, X, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AIChat } from '@/components/ai-chat';
 import { AISettingsPanel } from '@/components/ai-settings-panel';
@@ -21,13 +22,18 @@ import { GitHubAuth } from '@/components/github-auth';
 import { CodeModeDial, useCodeMode, CodeMode } from '@/components/code-mode-dial';
 import { SummonCodeBar, useSummonCodeBar, CommandParser } from '@/components/summon-code-bar';
 import { useTerminal } from '@/hooks/use-terminal';
-import MonacoEditor from '@/components/monaco-editor-client';
 import HexLayoutSwitcher from '@/components/hex-layout-switcher';
 import DevelopmentToolsPanel from '@/components/development-tools-panel';
 
 import { FileExplorer } from '@/components/file-explorer';
 import { EditorTabs } from '@/components/editor-tabs';
-import InlineAICompletion from '@/components/inline-ai-completion';
+import { AICodeSpace } from '@/components/ai-code-space';
+import { AIDebugPanel } from '@/components/ai-debug-panel';
+
+// Setup Monaco Environment early
+if (typeof window !== 'undefined') {
+  setupSimpleMonacoEnvironment();
+}
 
 interface GeneratedFile {
   name: string;
@@ -46,6 +52,8 @@ export default function CodeConsole() {
   const [showSettings, setShowSettings] = useState(false);
   const [showDevelopmentTools, setShowDevelopmentTools] = useState(false);
   const [openFiles, setOpenFiles] = useState<string[]>([]);
+  const [aiCodeBlocks, setAICodeBlocks] = useState<{ code: string; lang?: string; messageId?: string }[]>([]);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
   
   // Code Mode Dial hook
   const { currentMode, transformCode, setMode } = useCodeMode();
@@ -66,8 +74,11 @@ export default function CodeConsole() {
     isConfigured,
     saveSettings,
     sendMessage,
+    sendStreamingMessage,
     clearMessages,
-    testConnection
+    testConnection,
+    streamedMessage,
+    isStreaming
   } = useAIAssistantEnhanced();
 
   // Local storage hook
@@ -147,7 +158,7 @@ export default function CodeConsole() {
   // Handle AI message and extract files
   const handleSendMessage = async (message: string) => {
     try {
-      const response = await sendMessage(message);
+      const response = await sendStreamingMessage(message);
       
       // Extract files from the response
       const newFiles = extractFilesFromMessage(response.content);
@@ -437,6 +448,17 @@ export default function CodeConsole() {
               <span className="hidden md:inline">Settings</span>
             </Button>
 
+            {/* Debug Button */}
+            <Button
+              onClick={() => setShowDebugPanel(true)}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              <span className="hidden md:inline">Debug AI</span>
+            </Button>
+
             {/* GitHub Authentication */}
             <GitHubAuth />
             
@@ -538,6 +560,10 @@ export default function CodeConsole() {
               onClearMessages={clearMessages}
               settings={settings}
               onSettingsChange={saveSettings}
+              personality={personality}
+              onCodeBlocks={setAICodeBlocks}
+              streamedMessage={streamedMessage}
+              isStreaming={isStreaming}
             />
           </div>
         </div>
@@ -548,10 +574,10 @@ export default function CodeConsole() {
           <div className="p-4 border-b border-gray-800 bg-gray-900">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Code className="w-5 h-5 text-green-400" />
-                <h3 className="font-medium text-sm text-gray-300">Code Space</h3>
+                <Code className="w-5 h-5 text-blue-400" />
+                <h3 className="font-medium text-sm text-gray-300">AI Code Space</h3>
                 <Badge variant="outline" className="text-xs">
-                  {generatedFiles.length} files
+                  {aiCodeBlocks.length} blocks
                 </Badge>
               </div>
               
@@ -614,34 +640,20 @@ export default function CodeConsole() {
             </div>
           </div>
 
-          {/* Generated Files Bar */}
-          {generatedFiles.length > 0 && (
+          {/* AI Code Blocks Bar */}
+          {aiCodeBlocks.length > 0 && (
             <div className="p-2 border-b border-gray-800 bg-gray-900/50">
               <div className="flex gap-1 overflow-x-auto">
-                {generatedFiles.map((file) => (
+                {aiCodeBlocks.map((block, index) => (
                   <button
-                    key={file.name}
-                    className={`flex items-center gap-2 px-3 py-1 rounded text-sm whitespace-nowrap ${
-                      selectedFile === file.name 
-                        ? 'bg-green-600 text-white' 
-                        : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                    }`}
-                    onClick={() => setSelectedFile(file.name)}
+                    key={index}
+                    className={`flex items-center gap-2 px-3 py-1 rounded text-sm whitespace-nowrap bg-blue-800 text-white`}
                   >
-                    <div className="w-2 h-2 rounded-full bg-current opacity-60" />
-                    {file.name}
-                    <Badge variant="outline" className="text-xs px-1 py-0 ml-1">
-                      {file.type}
+                    <div className="w-2 h-2 rounded-full bg-blue-400 opacity-60" />
+                    {block.lang || 'code'} #{index + 1}
+                    <Badge variant="outline" className="text-xs px-1 py-0 ml-1 border-blue-400 text-blue-400">
+                      {block.lang || 'text'}
                     </Badge>
-                    {file.type === 'html' && (
-                      <Play 
-                        className="w-3 h-3 ml-1 cursor-pointer hover:text-blue-400" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          previewFile(file);
-                        }}
-                      />
-                    )}
                   </button>
                 ))}
               </div>
@@ -694,111 +706,22 @@ export default function CodeConsole() {
                   onMinimize: () => console.log('Terminal minimized')
                 }}
               >
-                {selectedFileContent ? (
-                  <div className="h-full">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-400 font-mono text-sm">{selectedFileContent.name}</span>
-                        <Badge variant="outline" className="text-xs">{selectedFileContent.type}</Badge>
-                      </div>
-                    </div>
-                    
-                    {/* Code Mode Dial */}
-                    <div className="mb-4 p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
-                      <CodeModeDial
-                        currentMode={currentMode}
-                        onModeChange={handleCodeModeChange}
-                        personality={personality}
-                      />
-                    </div>
-
-                    <div className="bg-black/40 p-4 rounded border border-green-500/20 min-h-[400px] overflow-auto">
-                      {isGenerating && pendingCode ? (
-                        <GlitchPreview
-                          code={pendingCode}
-                          isGenerating={isGenerating}
-                          onSolidify={() => {
-                            solidify();
-                            // Update the file content with solidified code
-                            if (selectedFileContent) {
-                              const updatedFiles = generatedFiles.map(file => 
-                                file.name === selectedFileContent.name 
-                                  ? { ...file, content: solidifiedCode || pendingCode }
-                                  : file
-                              );
-                              setGeneratedFiles(updatedFiles);
-                            }
-                          }}
-                          personality={personality}
-                        />
-                      ) : (
-                        <div className="relative">
-                          <MonacoEditor
-                            value={selectedFileContent.content}
-                            language={selectedFileContent.type}
-                            onChange={(value) => {
-                              // Update the file content when the editor changes
-                              if (value !== undefined && selectedFileContent) {
-                                const updatedFiles = generatedFiles.map(file => 
-                                  file.name === selectedFileContent.name 
-                                    ? { ...file, content: value }
-                                    : file
-                                );
-                                setGeneratedFiles(updatedFiles);
-                              }
-                            }}
-                            onCursorPositionChange={(position) => {
-                              setCursorPosition({ lineNumber: position.line, column: position.column });
-                            }}
-                            className="min-h-[400px]"
-                          />
-                          
-                          {/* Inline AI Completion */}
-                          <InlineAICompletion
-                            currentFile={{
-                              id: selectedFileContent.name,
-                              name: selectedFileContent.name,
-                              content: selectedFileContent.content,
-                              language: selectedFileContent.type
-                            }}
-                            cursorPosition={{ line: cursorPosition.lineNumber, column: cursorPosition.column }}
-                            onAcceptSuggestion={(suggestion) => {
-                              // Apply suggestion to the file
-                              const updatedFiles = generatedFiles.map(file => {
-                                if (file.name === selectedFileContent.name) {
-                                  const lines = file.content.split('\n');
-                                  const targetLine = lines[suggestion.startLine - 1];
-                                  if (targetLine) {
-                                    const newLine = targetLine.substring(0, suggestion.startColumn - 1) + 
-                                                  suggestion.text + 
-                                                  targetLine.substring(suggestion.endColumn - 1);
-                                    lines[suggestion.startLine - 1] = newLine;
-                                    return { ...file, content: lines.join('\n') };
-                                  }
-                                }
-                                return file;
-                              });
-                              setGeneratedFiles(updatedFiles);
-                            }}
-                            onRejectSuggestion={(suggestionId) => {
-                              // Handle rejected suggestion
-                              console.log('Rejected suggestion:', suggestionId);
-                            }}
-                            className="top-0 right-0"
-                          />
-                        </div>
-                      )}
+                {/* AI Code Space - Replace the old Code Space */}
+                <div className="h-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Code className="w-5 h-5 text-blue-400" />
+                      <h3 className="font-medium text-sm text-gray-300">AI Code Space</h3>
+                      <Badge variant="outline" className="text-xs">
+                        {aiCodeBlocks.length} blocks
+                      </Badge>
                     </div>
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center h-[400px] text-green-400/60">
-                    <div className="text-center">
-                      <Code className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p className="font-mono text-sm">No file selected</p>
-                      <p className="font-mono text-xs mt-1 opacity-60">Chat with AI to generate code</p>
-                    </div>
+                  
+                  <div className="bg-black/40 p-4 rounded border border-blue-500/20 min-h-[500px] h-full overflow-auto">
+                    <AICodeSpace codeBlocks={aiCodeBlocks} personality={personality} />
                   </div>
-                )}
+                </div>
               </HexLayoutSwitcher>
 
               {/* DNA Threads Panel - Positioned separately */}
@@ -898,6 +821,21 @@ export default function CodeConsole() {
                 />
               </TabsContent>
             </Tabs>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Debug Panel Dialog */}
+      <Dialog open={showDebugPanel} onOpenChange={setShowDebugPanel}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>AI Connection Debug</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <AIDebugPanel 
+              settings={settings} 
+              isConfigured={isConfigured} 
+            />
           </div>
         </DialogContent>
       </Dialog>

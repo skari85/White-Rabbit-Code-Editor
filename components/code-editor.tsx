@@ -1,5 +1,4 @@
-"use client"
-
+// Import necessary libraries
 import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -23,6 +22,8 @@ import {
   Play,
   Server
 } from "lucide-react"
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 export default function CodeEditor() {
   // Code Builder hooks
@@ -58,6 +59,27 @@ export default function CodeEditor() {
   const [aiCodeBlocks, setAICodeBlocks] = useState<{ code: string; lang?: string; messageId?: string }[]>([]);
   const [selectedAICodeIdx, setSelectedAICodeIdx] = useState<number>(0);
 
+  // Define the getLanguageFromFileName function
+  const getLanguageFromFileName = (fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase()
+    switch (ext) {
+      case 'html': return 'html'
+      case 'css': return 'css'
+      case 'js': return 'javascript'
+      case 'tsx': return 'typescript'
+      case 'ts': return 'typescript'
+      case 'py': return 'python'
+      case 'json': return 'json'
+      case 'md': return 'markdown'
+      default: return 'text'
+    }
+  }
+
+  // Define the getSelectedFileContent function
+  const getSelectedFileContent = () => {
+    return getSelectedFileContent()
+  }
+
   // Enhanced AI integration
   const handleSendMessage = useCallback(async (message: string) => {
     try {
@@ -80,73 +102,7 @@ export default function CodeEditor() {
     }
   }, [sendAIMessage, files, selectedFile, parseAndApplyAIResponse, currentProject]);
 
-  const addFile = () => {
-    const fileName = prompt("Enter file name (with extension):")
-    if (fileName) {
-      const extension = fileName.split('.').pop()?.toLowerCase()
-      let fileType: 'html' | 'css' | 'js' | 'json' | 'md' | 'tsx' | 'ts' | 'py' | 'txt' = 'txt'
-      
-      if (extension === 'html') fileType = 'html'
-      else if (extension === 'css') fileType = 'css'
-      else if (extension === 'js') fileType = 'js'
-      else if (extension === 'json') fileType = 'json'
-      else if (extension === 'md') fileType = 'md'
-      else if (extension === 'tsx') fileType = 'tsx'
-      else if (extension === 'ts') fileType = 'ts'
-      else if (extension === 'py') fileType = 'py'
-      
-      addNewFile(fileName, fileType)
-    }
-  }
-
-  const handleExport = () => {
-    exportAsZip(files, currentProject?.name || "project")
-  }
-
-  const handlePreview = () => {
-    previewInNewTab(files)
-  }
-
-  const startDevServer = async () => {
-    if (!terminal.getActiveSession()) {
-      terminal.createSession("Dev Server");
-    }
-    await terminal.executeCommand("npm run dev");
-  }
-
-  const handleTerminalCommand = async (command: string) => {
-    await terminal.executeCommand(command);
-  }
-
-  const getFileIcon = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase()
-    switch (ext) {
-      case 'html': return '🌐'
-      case 'css': return '🎨'
-      case 'js': return '⚡'
-      case 'tsx': 
-      case 'ts': return '🔷'
-      case 'py': return '🐍'
-      case 'json': return '📋'
-      case 'md': return '📝'
-      default: return '📄'
-    }
-  }
-
-  const getLanguageFromFileName = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase()
-    switch (ext) {
-      case 'html': return 'html'
-      case 'css': return 'css'
-      case 'js': return 'javascript'
-      case 'tsx': return 'typescript'
-      case 'ts': return 'typescript'
-      case 'py': return 'python'
-      case 'json': return 'json'
-      case 'md': return 'markdown'
-      default: return 'text'
-    }
-  }
+  // ... rest of the code ...
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -168,7 +124,7 @@ export default function CodeEditor() {
         {/* Action Buttons */}
         <div className="p-3 space-y-2">
           <Button
-            onClick={addFile}
+            onClick={() => addNewFile('newfile.txt', 'txt')}
             className="w-full bg-green-500 hover:bg-green-600 text-white"
             size="sm"
           >
@@ -177,7 +133,7 @@ export default function CodeEditor() {
           </Button>
           
           <Button
-            onClick={handleExport}
+            onClick={() => exportAsZip(files, currentProject?.name || "My Project")}
             variant="outline"
             className="w-full"
             size="sm"
@@ -187,7 +143,7 @@ export default function CodeEditor() {
           </Button>
 
           <Button
-            onClick={startDevServer}
+            onClick={() => terminal.createSession("Dev Server") && terminal.executeCommand("npm run dev")}
             variant="outline"
             className="w-full"
             size="sm"
@@ -214,7 +170,7 @@ export default function CodeEditor() {
                       : "hover:bg-gray-50"
                   }`}
                 >
-                  <span className="text-sm">{getFileIcon(file.name)}</span>
+                  <span className="text-sm">{getFileTypeIcon(file.name)}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{file.name}</p>
                     <p className="text-xs text-gray-500">
@@ -273,7 +229,7 @@ export default function CodeEditor() {
 
             <div className="flex items-center gap-2">
               <Button
-                onClick={handlePreview}
+                onClick={previewInNewTab}
                 variant="outline"
                 size="sm"
               >
@@ -294,7 +250,7 @@ export default function CodeEditor() {
                 {selectedFile && (
                   <div className="bg-gray-100 px-4 py-2 border-b">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm">{getFileIcon(selectedFile)}</span>
+                      <span className="text-sm">{getFileTypeIcon(selectedFile)}</span>
                       <span className="text-sm font-medium">{selectedFile}</span>
                       <Badge variant="secondary" className="text-xs">
                         {getLanguageFromFileName(selectedFile)}
@@ -305,13 +261,12 @@ export default function CodeEditor() {
                 
                 {/* Code Editor */}
                 <div className="flex-1 p-0">
-                  <Textarea
-                    value={getSelectedFileContent()}
-                    onChange={(e) => updateFileContent(selectedFile, e.target.value)}
-                    className="w-full h-full resize-none border-0 rounded-none font-mono text-sm leading-relaxed"
-                    placeholder={selectedFile ? `Edit ${selectedFile}...` : "Select a file to edit"}
-                    style={{ minHeight: '100%' }}
-                  />
+                  <SyntaxHighlighter
+                    language={getLanguageFromFileName(selectedFile)}
+                    style={oneDark}
+                  >
+                    {getSelectedFileContent()}
+                  </SyntaxHighlighter>
                 </div>
               </div>
             </div>
@@ -350,40 +305,42 @@ export default function CodeEditor() {
               <div className="flex-1">
                 {aiPanelMode === "chat" ? (
                   <>
-                    <AIChat
-                      messages={aiMessages}
-                      onSendMessage={handleSendMessage}
-                      isLoading={aiLoading}
-                      isConfigured={aiConfigured}
-                      onClearMessages={clearAIMessages}
-                      settings={aiSettings}
-                      onSettingsChange={saveAISettings}
-                      onCodeBlocks={setAICodeBlocks}
-                    />
-                    {/* AI Code Space: tabbed, color-coded, navigable, editable */}
-                    {aiCodeBlocks.length > 0 && (
-                      <div className="p-4 bg-gray-100 border-t overflow-auto max-h-96 flex flex-col">
-                        <h4 className="font-semibold text-xs mb-2 text-gray-700">AI Code Space</h4>
-                        <AICodeSpace codeBlocks={aiCodeBlocks} />
-                        <div className="flex gap-2 mt-2 flex-wrap">
-                          {aiCodeBlocks.map((block, idx) => (
-                            <button
-                              key={idx}
-                              className={`px-2 py-1 rounded text-xs border ${selectedAICodeIdx === idx ? 'bg-blue-100 border-blue-400' : 'bg-white border-gray-300'}`}
-                              onClick={() => {
-                                setSelectedAICodeIdx(idx);
-                                // Load code into main editor (if a file is selected)
-                                if (selectedFile && block && block.code) {
-                                  updateFileContent(selectedFile, block.code);
-                                }
-                              }}
-                            >
-                              Edit in Main Editor: {block.lang || 'text'} #{idx + 1}
-                            </button>
-                          ))}
+                    <div style={{ height: '300px', overflowY: 'auto' }}>
+                      <AIChat
+                        messages={aiMessages}
+                        onSendMessage={handleSendMessage}
+                        isLoading={aiLoading}
+                        isConfigured={aiConfigured}
+                        onClearMessages={clearAIMessages}
+                        settings={aiSettings}
+                        onSettingsChange={saveAISettings}
+                        onCodeBlocks={setAICodeBlocks}
+                      />
+                      {/* AI Code Space: tabbed, color-coded, navigable, editable */}
+                      {aiCodeBlocks.length > 0 && (
+                        <div className="p-4 bg-gray-100 border-t overflow-auto max-h-96 flex flex-col">
+                          <h4 className="font-semibold text-xs mb-2 text-gray-700">AI Code Space</h4>
+                          <AICodeSpace codeBlocks={aiCodeBlocks} />
+                          <div className="flex gap-2 mt-2 flex-wrap">
+                            {aiCodeBlocks.map((block, idx) => (
+                              <button
+                                key={idx}
+                                className={`px-2 py-1 rounded text-xs border ${selectedAICodeIdx === idx ? 'bg-blue-100 border-blue-400' : 'bg-white border-gray-300'`}
+                                onClick={() => {
+                                  setSelectedAICodeIdx(idx);
+                                  // Load code into main editor (if a file is selected)
+                                  if (selectedFile && block && block.code) {
+                                    updateFileContent(selectedFile, block.code);
+                                  }
+                                }}
+                              >
+                                Edit in Main Editor: {block.lang || 'text'} #{idx + 1}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </>
                 ) : (
                   <AISettingsPanel
@@ -408,7 +365,7 @@ export default function CodeEditor() {
                   workingDirectory: '/Users/georgalbert/pwa-code',
                   environment: {}
                 }}
-                onExecuteCommand={handleTerminalCommand}
+                onExecuteCommand={(command) => terminal.executeCommand(command)}
                 onClose={() => {}}
                 onMinimize={() => {}}
               />
@@ -418,4 +375,19 @@ export default function CodeEditor() {
       </div>
     </div>
   )
+}
+
+const getFileTypeIcon = (fileName) => {
+  const ext = fileName.split('.').pop()?.toLowerCase()
+  switch (ext) {
+    case 'html': return '🌐'
+    case 'css': return '🎨'
+    case 'js': return '⚡'
+    case 'tsx': 
+    case 'ts': return '🔷'
+    case 'py': return '🐍'
+    case 'json': return '📋'
+    case 'md': return '📝'
+    default: return '📄'
+  }
 }

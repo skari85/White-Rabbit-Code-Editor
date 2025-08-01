@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { setupSimpleMonacoEnvironment } from '@/lib/monaco-setup';
 import { 
   Search, 
   Replace, 
@@ -45,6 +46,11 @@ import {
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Setup Monaco Environment
+if (typeof window !== 'undefined') {
+  setupSimpleMonacoEnvironment();
+}
 
 // Monaco Editor types and imports
 interface MonacoEditor {
@@ -347,7 +353,7 @@ const EnhancedMonacoEditor = React.forwardRef<MonacoEditorRef, EnhancedMonacoEdi
   width = '100%',
   enableDiagnostics = true,
   enableIntelliSense = true,
-  enableMinimap = true,
+  enableMinimap = false,
   enableBreadcrumbs = true,
   enableLineNumbers = true,
   enableFolding = true,

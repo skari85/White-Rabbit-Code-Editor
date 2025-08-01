@@ -1,4 +1,6 @@
-import * as monaco from 'monaco-editor';
+// Monaco configuration types and utilities
+// Import only types to avoid SSR issues
+type Monaco = typeof import('monaco-editor');
 
 export interface MonacoConfig {
   theme: 'vs-dark' | 'vs-light' | 'hc-black';
@@ -15,117 +17,82 @@ export const defaultMonacoConfig: MonacoConfig = {
   theme: 'vs-dark',
   fontSize: 14,
   fontFamily: 'JetBrains Mono, Fira Code, Monaco, Consolas, monospace',
-  minimap: true,
+  minimap: false, // Disable minimap by default to prevent memory issues
   wordWrap: 'on',
   lineNumbers: 'on',
   folding: true,
-  renderWhitespace: 'selection'
+  renderWhitespace: 'selection',
 };
 
-export const getLanguageFromFileName = (fileName: string): string => {
-  const extension = fileName.split('.').pop()?.toLowerCase();
+// Configuration functions that only work on client side
+export const configureMonacoThemes = async (monaco: Monaco) => {
+  if (typeof window === 'undefined') return;
   
-  const languageMap: Record<string, string> = {
-    'js': 'javascript',
-    'jsx': 'javascript',
-    'ts': 'typescript',
-    'tsx': 'typescript',
-    'html': 'html',
-    'htm': 'html',
-    'css': 'css',
-    'scss': 'scss',
-    'sass': 'sass',
-    'less': 'less',
-    'json': 'json',
-    'xml': 'xml',
-    'md': 'markdown',
-    'py': 'python',
-    'java': 'java',
-    'c': 'c',
-    'cpp': 'cpp',
-    'cxx': 'cpp',
-    'cc': 'cpp',
-    'cs': 'csharp',
-    'php': 'php',
-    'rb': 'ruby',
-    'go': 'go',
-    'rs': 'rust',
-    'swift': 'swift',
-    'kt': 'kotlin',
-    'scala': 'scala',
-    'sh': 'shell',
-    'bash': 'shell',
-    'zsh': 'shell',
-    'fish': 'shell',
-    'ps1': 'powershell',
-    'sql': 'sql',
-    'yaml': 'yaml',
-    'yml': 'yaml',
-    'toml': 'toml',
-    'ini': 'ini',
-    'dockerfile': 'dockerfile',
-    'vue': 'html',
-    'svelte': 'html'
-  };
-
-  return languageMap[extension || ''] || 'plaintext';
-};
-
-export const configureMonaco = () => {
-  // Configure Monaco Editor themes and languages
+  // HEX Dark Theme
   monaco.editor.defineTheme('hex-dark', {
     base: 'vs-dark',
     inherit: true,
     rules: [
-      { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
+      { token: 'comment', foreground: '6A9955' },
       { token: 'keyword', foreground: '569CD6' },
       { token: 'string', foreground: 'CE9178' },
       { token: 'number', foreground: 'B5CEA8' },
+      { token: 'regexp', foreground: 'D16969' },
       { token: 'type', foreground: '4EC9B0' },
+      { token: 'class', foreground: '4EC9B0' },
       { token: 'function', foreground: 'DCDCAA' },
       { token: 'variable', foreground: '9CDCFE' },
+      { token: 'constant', foreground: '4FC1FF' },
     ],
     colors: {
-      'editor.background': '#0D1117',
-      'editor.foreground': '#E6EDF3',
-      'editor.lineHighlightBackground': '#161B22',
-      'editor.selectionBackground': '#264F78',
-      'editor.inactiveSelectionBackground': '#3A3D41',
-      'editorCursor.foreground': '#AEAFAD',
-      'editorWhitespace.foreground': '#404040',
-      'editorIndentGuide.background': '#404040',
-      'editorIndentGuide.activeBackground': '#707070',
-      'editor.selectionHighlightBackground': '#ADD6FF26'
-    }
+      'editor.background': '#0d1117',
+      'editor.foreground': '#e6edf3',
+      'editorLineNumber.foreground': '#6e7681',
+      'editorLineNumber.activeForeground': '#e6edf3',
+      'editor.selectionBackground': '#264f78',
+      'editor.inactiveSelectionBackground': '#264f7840',
+      'editorCursor.foreground': '#10b981',
+      'editor.lineHighlightBackground': '#21262d40',
+      'editorIndentGuide.background': '#21262d',
+      'editorIndentGuide.activeBackground': '#30363d',
+    },
   });
 
+  // KEX Light Theme  
   monaco.editor.defineTheme('kex-light', {
     base: 'vs',
     inherit: true,
     rules: [
-      { token: 'comment', foreground: '008000', fontStyle: 'italic' },
+      { token: 'comment', foreground: '008000' },
       { token: 'keyword', foreground: '0000FF' },
       { token: 'string', foreground: 'A31515' },
       { token: 'number', foreground: '098658' },
+      { token: 'regexp', foreground: 'D16969' },
       { token: 'type', foreground: '267F99' },
+      { token: 'class', foreground: '267F99' },
       { token: 'function', foreground: '795E26' },
       { token: 'variable', foreground: '001080' },
+      { token: 'constant', foreground: '0070C1' },
     ],
     colors: {
-      'editor.background': '#FFFFFF',
+      'editor.background': '#ffffff',
       'editor.foreground': '#000000',
-      'editor.lineHighlightBackground': '#F7F7F7',
-      'editor.selectionBackground': '#ADD6FF',
-      'editor.inactiveSelectionBackground': '#E5EBF1',
-      'editorCursor.foreground': '#000000',
-      'editorWhitespace.foreground': '#BFBFBF',
+      'editorLineNumber.foreground': '#237893',
+      'editorLineNumber.activeForeground': '#0B216F',
+      'editor.selectionBackground': '#ADD6FF80',
+      'editor.inactiveSelectionBackground': '#E5EBF180',
+      'editorCursor.foreground': '#ff6b6b',
+      'editor.lineHighlightBackground': '#F5F5F5',
       'editorIndentGuide.background': '#D3D3D3',
       'editorIndentGuide.activeBackground': '#939393',
-      'editor.selectionHighlightBackground': '#ADD6FF4D'
-    }
+    },
   });
+};
 
-  // Configure TypeScript compiler options
+export const configureMonacoLanguages = async (monaco: Monaco) => {
+  if (typeof window === 'undefined') return;
+  
+  // TypeScript configuration
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
     target: monaco.languages.typescript.ScriptTarget.ES2020,
     allowNonTsExtensions: true,
@@ -136,37 +103,54 @@ export const configureMonaco = () => {
     jsx: monaco.languages.typescript.JsxEmit.React,
     reactNamespace: 'React',
     allowJs: true,
-    typeRoots: ['node_modules/@types']
+    typeRoots: ['node_modules/@types'],
   });
 
-  // Configure JavaScript compiler options
+  // JavaScript configuration
   monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
     target: monaco.languages.typescript.ScriptTarget.ES2020,
     allowNonTsExtensions: true,
-    allowJs: true,
-    checkJs: false
   });
-
-  // Add common type definitions
-  const reactTypes = `
-    declare module 'react' {
-      export interface Component<P = {}, S = {}> {}
-      export function useState<T>(initialState: T | (() => T)): [T, (value: T | ((prev: T) => T)) => void];
-      export function useEffect(effect: () => void | (() => void), deps?: any[]): void;
-      export function useCallback<T extends (...args: any[]) => any>(callback: T, deps: any[]): T;
-      export function useMemo<T>(factory: () => T, deps: any[]): T;
-      export const Fragment: any;
-      export default React;
-    }
-  `;
-
-  monaco.languages.typescript.typescriptDefaults.addExtraLib(
-    reactTypes,
-    'file:///node_modules/@types/react/index.d.ts'
-  );
 };
 
-export const getEditorOptions = (config: Partial<MonacoConfig> = {}): monaco.editor.IStandaloneEditorConstructionOptions => {
+// Language detection utility
+export const getLanguageFromFileName = (fileName: string): string => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  
+  switch (extension) {
+    case 'js': return 'javascript';
+    case 'jsx': return 'javascript';
+    case 'ts': return 'typescript';
+    case 'tsx': return 'typescript';
+    case 'html': return 'html';
+    case 'css': return 'css';
+    case 'scss': case 'sass': return 'scss';
+    case 'less': return 'less';
+    case 'json': return 'json';
+    case 'md': return 'markdown';
+    case 'py': return 'python';
+    case 'java': return 'java';
+    case 'cpp': case 'cc': case 'cxx': return 'cpp';
+    case 'c': return 'c';
+    case 'cs': return 'csharp';
+    case 'php': return 'php';
+    case 'rb': return 'ruby';
+    case 'go': return 'go';
+    case 'rs': return 'rust';
+    case 'kt': return 'kotlin';
+    case 'swift': return 'swift';
+    case 'sh': case 'bash': return 'shell';
+    case 'sql': return 'sql';
+    case 'xml': return 'xml';
+    case 'yaml': case 'yml': return 'yaml';
+    case 'toml': return 'toml';
+    case 'ini': return 'ini';
+    case 'dockerfile': return 'dockerfile';
+    default: return 'plaintext';
+  }
+};
+
+export const getEditorOptions = (config: Partial<MonacoConfig> = {}): any => {
   const finalConfig = { ...defaultMonacoConfig, ...config };
   
   return {
@@ -178,31 +162,27 @@ export const getEditorOptions = (config: Partial<MonacoConfig> = {}): monaco.edi
     lineNumbers: finalConfig.lineNumbers,
     folding: finalConfig.folding,
     renderWhitespace: finalConfig.renderWhitespace,
-    automaticLayout: true,
     scrollBeyondLastLine: false,
-    smoothScrolling: true,
-    cursorBlinking: 'smooth',
-    cursorSmoothCaretAnimation: 'on',
-    renderLineHighlight: 'all',
-    selectOnLineNumbers: true,
-    roundedSelection: false,
-    readOnly: false,
-    cursorStyle: 'line',
+    automaticLayout: true,
+    tabSize: 2,
+    insertSpaces: true,
+    contextmenu: true,
     mouseWheelZoom: true,
+    cursorBlinking: 'blink',
+    cursorSmoothCaretAnimation: 'on',
+    bracketPairColorization: { enabled: true },
+    guides: {
+      bracketPairs: true,
+      indentation: true,
+    },
+    suggest: {
+      showKeywords: true,
+      showSnippets: true,
+    },
     quickSuggestions: {
       other: true,
-      comments: false,
-      strings: false
+      comments: true,
+      strings: true,
     },
-    parameterHints: {
-      enabled: true
-    },
-    autoIndent: 'full',
-    formatOnType: true,
-    formatOnPaste: true,
-    suggestOnTriggerCharacters: true,
-    acceptSuggestionOnEnter: 'on',
-    tabCompletion: 'on',
-    wordBasedSuggestions: 'matchingDocuments'
   };
 };

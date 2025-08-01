@@ -12,10 +12,34 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import MonacoEditor, { MonacoEditorRef, MonacoEditorLoading } from '@/components/monaco-editor';
 import { useSimpleLocalStorage } from '@/hooks/use-simple-local-storage';
 import { PersonalityMode } from '@/lib/personality-system';
-import { getLanguageFromFileName } from '@/lib/monaco-config';
+
+// Extend HTMLInputElement to support webkitdirectory
+declare module 'react' {
+  interface HTMLAttributes<T> {
+    webkitdirectory?: string;
+  }
+}
+
+// Simple language detection utility
+const getLanguageFromFileName = (fileName: string): string => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  
+  switch (extension) {
+    case 'js': return 'javascript';
+    case 'jsx': return 'javascript';
+    case 'ts': return 'typescript';
+    case 'tsx': return 'typescript';
+    case 'html': return 'html';
+    case 'css': return 'css';
+    case 'json': return 'json';
+    case 'md': return 'markdown';
+    case 'py': return 'python';
+    case 'txt': return 'plaintext';
+    default: return 'plaintext';
+  }
+};
 import { 
   FileText, 
   Plus, 
@@ -244,7 +268,6 @@ const EnhancedFileSystemManager: React.FC<FileSystemManagerProps> = ({
   const [recentFiles, setRecentFiles] = useSimpleLocalStorage<string[]>('recent-files', []);
   const [fileHistory, setFileHistory] = useSimpleLocalStorage<Record<string, FileItem['history']>>('file-history', {});
   
-  const editorRef = useRef<MonacoEditorRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -505,7 +528,7 @@ const EnhancedFileSystemManager: React.FC<FileSystemManagerProps> = ({
       const file = files[i];
       try {
         const content = await file.text();
-        createFile(file.name, selectedFolderId, content);
+        createFile(file.name, selectedFolderId || undefined, content);
         setUploadProgress(((i + 1) / files.length) * 100);
       } catch (error) {
         console.error('Error uploading file:', error);
@@ -555,7 +578,7 @@ const EnhancedFileSystemManager: React.FC<FileSystemManagerProps> = ({
         if (!isFile && !createdFolders[currentPath]) {
           const parentPath = parts.slice(0, index).join('/');
           const parentId = parentPath ? createdFolders[parentPath] : selectedFolderId;
-          const folderId = createFolder(part, parentId);
+          const folderId = createFolder(part, parentId || undefined);
           createdFolders[currentPath] = folderId;
         }
       });
@@ -568,7 +591,7 @@ const EnhancedFileSystemManager: React.FC<FileSystemManagerProps> = ({
       const folderPath = parts.slice(0, -1).join('/');
       const parentId = folderPath ? createdFolders[folderPath] : selectedFolderId;
       
-      createFile(fileName, parentId, content);
+      createFile(fileName, parentId || undefined, content);
     });
 
     setIsUploading(false);
@@ -864,33 +887,18 @@ const EnhancedFileSystemManager: React.FC<FileSystemManagerProps> = ({
                   </div>
                 </div>
                 
-                <MonacoEditor
-                  ref={editorRef}
-                  language={activeFile.language || 'plaintext'}
-                  value={activeFile.content}
-                  onChange={(value) => updateFileContent(activeFile.id, value || '')}
-                  className="flex-1"
-                  options={{
-                    readOnly: activeFile.isReadOnly,
-                    minimap: { enabled: true },
-                    lineNumbers: 'on',
-                    rulers: [80, 120],
-                    wordWrap: 'on',
-                    bracketPairColorization: { enabled: true },
-                    inlineSuggest: { enabled: true },
-                    suggest: { preview: true },
-                    quickSuggestions: true,
-                    folding: true,
-                    foldingStrategy: 'indentation',
-                    showFoldingControls: 'always'
-                  }}
-                />
+                {/* File Content Preview */}
+                <div className="flex-1 p-4 overflow-auto">
+                  <pre className="text-sm whitespace-pre-wrap font-mono bg-muted/10 p-4 rounded">
+                    {activeFile.content || 'Empty file'}
+                  </pre>
+                </div>
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Select a file to start editing</p>
+                  <p>Select a file to preview</p>
                   <p className="text-sm mt-1">Or create a new file to get started</p>
                 </div>
               </div>
@@ -928,7 +936,7 @@ const EnhancedFileSystemManager: React.FC<FileSystemManagerProps> = ({
               onChange={(e) => setNewFileName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && newFileName.trim()) {
-                  createFile(newFileName.trim(), selectedFolderId);
+                  createFile(newFileName.trim(), selectedFolderId || undefined);
                   setNewFileName('');
                   setIsNewFileDialogOpen(false);
                 }
@@ -938,7 +946,7 @@ const EnhancedFileSystemManager: React.FC<FileSystemManagerProps> = ({
               <Button
                 onClick={() => {
                   if (newFileName.trim()) {
-                    createFile(newFileName.trim(), selectedFolderId);
+                    createFile(newFileName.trim(), selectedFolderId || undefined);
                     setNewFileName('');
                     setIsNewFileDialogOpen(false);
                   }

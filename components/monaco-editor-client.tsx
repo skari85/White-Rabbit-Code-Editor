@@ -2,6 +2,12 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { setupSimpleMonacoEnvironment } from '@/lib/monaco-setup';
+
+// Setup Monaco Environment before importing
+if (typeof window !== 'undefined') {
+  setupSimpleMonacoEnvironment();
+}
 
 // Dynamically import Monaco Editor with no SSR
 const Editor = dynamic(
