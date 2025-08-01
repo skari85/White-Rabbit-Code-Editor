@@ -4,6 +4,20 @@ export class AIService {
   private settings: AISettings;
   
   constructor(settings: AISettings) {
+    // If no API key is provided, try to get it from environment variables
+    if (!settings.apiKey) {
+      switch (settings.provider) {
+        case 'groq':
+          settings.apiKey = process.env.GROQ_API_KEY || '';
+          break;
+        case 'openai':
+          settings.apiKey = process.env.OPENAI_API_KEY || '';
+          break;
+        case 'anthropic':
+          settings.apiKey = process.env.ANTHROPIC_API_KEY || '';
+          break;
+      }
+    }
     this.settings = settings;
   }
 
@@ -179,8 +193,19 @@ export class AIService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Groq API error: ${error.error?.message || 'Unknown error'}`);
+      let errorMessage = 'Unknown error';
+      try {
+        const error = await response.json();
+        errorMessage = error.error?.message || error.message || `HTTP ${response.status}: ${response.statusText}`;
+      } catch (e) {
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      
+      if (response.status === 401) {
+        errorMessage = 'Invalid API Key. Please check your Groq API key is correct and has the proper permissions.';
+      }
+      
+      throw new Error(`Groq API error: ${errorMessage}`);
     }
 
     const reader = response.body?.getReader();
@@ -318,8 +343,19 @@ export class AIService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Groq API error: ${error.error?.message || 'Unknown error'}`);
+      let errorMessage = 'Unknown error';
+      try {
+        const error = await response.json();
+        errorMessage = error.error?.message || error.message || `HTTP ${response.status}: ${response.statusText}`;
+      } catch (e) {
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      
+      if (response.status === 401) {
+        errorMessage = 'Invalid API Key. Please check your Groq API key is correct and has the proper permissions.';
+      }
+      
+      throw new Error(`Groq API error: ${errorMessage}`);
     }
 
     const data = await response.json();

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings, MessageSquare, Code, Download, Play, HardDrive, X, AlertTriangle } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AIChat } from '@/components/ai-chat';
 import { AISettingsPanel } from '@/components/ai-settings-panel';
 import { LocalStorageManager } from '@/components/local-storage-manager';
@@ -792,6 +792,9 @@ export default function CodeConsole() {
               <Settings className="w-5 h-5" />
               AI Settings & Configuration
             </DialogTitle>
+            <DialogDescription className="text-gray-300">
+              Configure AI providers, manage local storage, and customize your coding environment.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="mt-4">
@@ -830,6 +833,9 @@ export default function CodeConsole() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>AI Connection Debug</DialogTitle>
+            <DialogDescription>
+              Debug information for AI provider connections and API configuration.
+            </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
             <AIDebugPanel 
