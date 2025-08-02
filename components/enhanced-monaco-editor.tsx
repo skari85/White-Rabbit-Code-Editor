@@ -366,6 +366,7 @@ const EnhancedMonacoEditor = React.forwardRef<MonacoEditorRef, EnhancedMonacoEdi
   const editorRef = useRef<MonacoEditor | null>(null);
   const monacoRef = useRef<MonacoModule | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [monacoError, setMonacoError] = useState<Error | null>(null);
   const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -391,8 +392,24 @@ const EnhancedMonacoEditor = React.forwardRef<MonacoEditorRef, EnhancedMonacoEdi
   useEffect(() => {
     const initMonaco = async () => {
       try {
-        // Dynamic import of Monaco Editor
-        const monaco = await import('monaco-editor');
+        setIsLoading(true);
+        // Dynamic import of Monaco Editor with retry logic
+        let monaco;
+        let retries = 3;
+
+        while (retries > 0) {
+          try {
+            monaco = await import('monaco-editor');
+            break;
+          } catch (error) {
+            console.warn(`Monaco import failed, retries left: ${retries - 1}`, error);
+            retries--;
+            if (retries === 0) throw error;
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+
         monacoRef.current = monaco as any;
 
         // Register custom themes
@@ -512,6 +529,7 @@ const EnhancedMonacoEditor = React.forwardRef<MonacoEditorRef, EnhancedMonacoEdi
         console.error('Failed to initialize Monaco Editor:', error);
         onError?.(error);
         setIsLoading(false);
+        setMonacoError(error as Error);
       }
     };
 
@@ -524,6 +542,11 @@ const EnhancedMonacoEditor = React.forwardRef<MonacoEditorRef, EnhancedMonacoEdi
       editorRef.current.setValue(value);
     }
   }, [value]);
+
+  // Update currentTheme when theme prop changes
+  useEffect(() => {
+    setCurrentTheme(theme);
+  }, [theme]);
 
   // Update theme
   useEffect(() => {
@@ -757,11 +780,29 @@ const EnhancedMonacoEditor = React.forwardRef<MonacoEditorRef, EnhancedMonacoEdi
 
       {/* Editor Container */}
       <div className="flex-1 relative">
-        {isLoading && (
+        {isLoading && !monacoError && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
             <div className="flex items-center gap-2">
               <RefreshCw className="w-4 h-4 animate-spin" />
               <span className="text-sm">Loading editor...</span>
+            </div>
+          </div>
+        )}
+
+        {monacoError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+            <div className="text-center p-4">
+              <AlertTriangle className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
+              <h3 className="text-sm font-medium mb-2">Editor Failed to Load</h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Monaco Editor could not be loaded. Using fallback text editor.
+              </p>
+              <textarea
+                value={value}
+                onChange={(e) => onChange?.(e.target.value)}
+                className="w-full h-64 p-2 text-xs font-mono border rounded resize-none bg-background"
+                placeholder="Enter your code here..."
+              />
             </div>
           </div>
         )}

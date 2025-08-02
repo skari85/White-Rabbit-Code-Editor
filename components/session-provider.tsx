@@ -8,5 +8,13 @@ interface Props {
 }
 
 export function AuthSessionProvider({ children }: Props) {
-  return <SessionProvider>{children}</SessionProvider>;
+  return (
+    <SessionProvider
+      // Disable automatic session fetching to prevent 500 errors
+      refetchInterval={0}
+      refetchOnWindowFocus={false}
+    >
+      {children}
+    </SessionProvider>
+  );
 }

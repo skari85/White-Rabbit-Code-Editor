@@ -352,11 +352,72 @@ export function useCodeExport() {
   }, []);
 
   const previewInNewTab = useCallback((files: FileContent[]) => {
-    const indexFile = files.find(f => f.name === 'index.html');
-    if (!indexFile) return;
+    console.log('Preview called with files:', files.map(f => ({ name: f.name, type: f.type, contentLength: f.content.length })));
 
-    const blob = new Blob([indexFile.content], { type: 'text/html' });
+    // Try to find an HTML file to preview
+    let htmlFile = files.find(f => f.name === 'index.html');
+    if (!htmlFile) {
+      htmlFile = files.find(f => f.type === 'html');
+    }
+
+    console.log('Found HTML file:', htmlFile ? { name: htmlFile.name, type: htmlFile.type, contentPreview: htmlFile.content.substring(0, 200) + '...' } : null);
+
+    if (!htmlFile) {
+      // If no HTML file, create a simple preview with the first file
+      const firstFile = files[0];
+      if (!firstFile) {
+        alert('No files to preview');
+        return;
+      }
+
+      console.log('Using first file for preview:', firstFile);
+
+      // Create a simple HTML wrapper for non-HTML files
+      const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview: ${firstFile.name}</title>
+    <style>
+        body {
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+          padding: 20px;
+          background: #1e1e1e;
+          color: #d4d4d4;
+          margin: 0;
+        }
+        pre {
+          background: #2d2d2d;
+          padding: 15px;
+          border-radius: 5px;
+          overflow: auto;
+          white-space: pre-wrap;
+          word-wrap: break-word;
+        }
+        h1 { color: #00d4aa; }
+    </style>
+</head>
+<body>
+    <h1>Preview: ${firstFile.name}</h1>
+    <p><strong>File Type:</strong> ${firstFile.type}</p>
+    <p><strong>Last Modified:</strong> ${new Date(firstFile.lastModified).toLocaleString()}</p>
+    <pre><code>${firstFile.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>
+</body>
+</html>`;
+
+      console.log('Generated HTML content length:', htmlContent.length);
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      console.log('Generated blob URL:', url);
+      window.open(url, '_blank');
+      return;
+    }
+
+    console.log('Using HTML file content length:', htmlFile.content.length);
+    const blob = new Blob([htmlFile.content], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
+    console.log('Generated blob URL for HTML:', url);
     window.open(url, '_blank');
   }, []);
 

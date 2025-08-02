@@ -7,93 +7,10 @@ import { Input } from '@/components/ui/input';
 import { AIMessage, AI_PROVIDERS, AISettings } from '@/lib/ai-config';
 import { PERSONALITIES } from '@/lib/personality-system';
 import { Send, Trash2, Copy, Check, Bot, User, Loader2, ChevronDown, Settings2, Zap, Target } from 'lucide-react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 // Import OCR utility (Node.js require for demo; use dynamic import or API in production)
 // @ts-ignore
 const { ocrText } = typeof window === 'undefined' ? require('../ocr-util.js') : { ocrText: null };
-
-// Enhanced Hex/Kex themed color scheme for code blocks
-const getHexKexStyle = (isKex: boolean) => ({
-  ...oneDark,
-  'pre[class*="language-"]': {
-    ...oneDark['pre[class*="language-"]'],
-    background: isKex ? '#0F1419' : '#0d1117',
-    borderRadius: '0',
-    border: 'none',
-    margin: 0,
-    padding: 0,
-  },
-  'code[class*="language-"]': {
-    ...oneDark['code[class*="language-"]'],
-    color: isKex ? '#BFBDB6' : '#e6edf3',
-    fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace',
-    fontSize: '13px',
-    lineHeight: '1.4',
-  },
-  // Enhanced syntax highlighting for Hex/Kex
-  '.token.keyword': { 
-    color: isKex ? '#00FFE1' : '#569CD6', 
-    fontWeight: 'bold' 
-  },
-  '.token.string': { 
-    color: isKex ? '#CE9178' : '#a5d6ff' 
-  },
-  '.token.function': { 
-    color: isKex ? '#DCDCAA' : '#d2a8ff' 
-  },
-  '.token.number': { 
-    color: isKex ? '#B5CEA8' : '#79c0ff' 
-  },
-  '.token.operator': { 
-    color: isKex ? '#00D4AA' : '#ff7b72' 
-  },
-  '.token.comment': { 
-    color: isKex ? '#6A9955' : '#8b949e', 
-    fontStyle: 'italic' 
-  },
-  '.token.variable': { 
-    color: isKex ? '#9CDCFE' : '#ffa657' 
-  },
-  '.token.class-name': { 
-    color: isKex ? '#4EC9B0' : '#f0883e' 
-  },
-  '.token.builtin': { 
-    color: isKex ? '#4FC1FF' : '#f69d50' 
-  },
-  '.token.boolean': { 
-    color: isKex ? '#569CD6' : '#79c0ff' 
-  },
-  '.token.punctuation': { 
-    color: isKex ? '#D4D4D4' : '#e6edf3' 
-  },
-  '.token.property': { 
-    color: isKex ? '#9CDCFE' : '#79c0ff' 
-  },
-  '.token.tag': { 
-    color: isKex ? '#569CD6' : '#7ee787' 
-  },
-  '.token.attr-name': { 
-    color: isKex ? '#92C5F8' : '#79c0ff' 
-  },
-  '.token.attr-value': { 
-    color: isKex ? '#CE9178' : '#a5d6ff' 
-  },
-  '.token.selector': { 
-    color: isKex ? '#D7BA7D' : '#ffa657' 
-  },
-  '.token.important': { 
-    color: isKex ? '#569CD6' : '#ff7b72',
-    fontWeight: 'bold'
-  },
-  '.token.regex': { 
-    color: isKex ? '#D16969' : '#7ee787' 
-  },
-  '.token.constant': { 
-    color: isKex ? '#4FC1FF' : '#79c0ff' 
-  }
-});
 
 interface AIChatProps {
   messages: AIMessage[];
@@ -106,6 +23,7 @@ interface AIChatProps {
   streamedMessage?: string;
   onCodeBlocks?: (blocks: { code: string; lang?: string; messageId?: string }[]) => void;
   personality?: 'hex' | 'kex'; // Optional, for visual mode
+  isStreaming?: boolean;
 }
 
 export function AIChat({ 
@@ -118,7 +36,8 @@ export function AIChat({
   onSettingsChange, 
   streamedMessage, 
   onCodeBlocks,
-  personality 
+  personality,
+  isStreaming
 }: AIChatProps) {
   const [input, setInput] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -219,7 +138,7 @@ export function AIChat({
   };
 
   const getCurrentProvider = () => {
-    return AI_PROVIDERS.find(p => p.id === settings.provider) || AI_PROVIDERS[0];
+    return AI_PROVIDERS.find(p => p.id === settings?.provider) || AI_PROVIDERS[0];
   };
 
   const handleProviderSelect = (providerId: string) => {
@@ -230,7 +149,7 @@ export function AIChat({
         provider: providerId,
         model: provider.models[0] || 'gpt-3.5-turbo'
       });
-      setShowProviderConfig(provider.requiresApiKey && !settings.apiKey);
+      setShowProviderConfig(provider.requiresApiKey && !settings?.apiKey);
     }
   };
 
@@ -342,87 +261,7 @@ export function AIChat({
               )}
             </div>
           )}
-
-          {/* Render code blocks inline with syntax highlighting */}
-          {parts.filter(p => p.type === 'code').map((codePart, index) => (
-            <div key={`code-${index}`} className="w-full mt-2">
-              <div className="relative rounded-lg overflow-hidden border border-gray-600">
-                {/* Code header with language badge and copy button */}
-                <div className="flex items-center justify-between px-4 py-2 bg-gray-700 border-b border-gray-600">
-                  <Badge variant="secondary" className="text-xs">
-                    {codePart.lang || 'text'}
-                  </Badge>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyToClipboard(codePart.value, `code-${index}`)}
-                      className="h-6 w-6 p-0 text-gray-400 hover:text-white"
-                      title="Copy code"
-                    >
-                      {copiedCode === `code-${index}` ? (
-                        <Check className="w-3 h-3 text-green-400" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Code content with syntax highlighting */}
-                <div className="relative">
-                  <SyntaxHighlighter
-                    language={codePart.lang || 'text'}
-                    style={getHexKexStyle(isKex)}
-                    showLineNumbers={true}
-                    lineNumberStyle={{
-                      minWidth: '3em',
-                      paddingRight: '1em',
-                      color: isKex ? '#495162' : '#6e7681',
-                      backgroundColor: isKex ? '#0F1419' : '#0d1117',
-                      borderRight: isKex ? '1px solid #00ffe120' : '1px solid #30363d',
-                      textAlign: 'right',
-                      userSelect: 'none',
-                      fontSize: '12px',
-                      fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-                    }}
-                    customStyle={{
-                      background: isKex ? '#0F1419' : '#0d1117',
-                      margin: 0,
-                      padding: '1rem',
-                      fontSize: '13px',
-                      fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace',
-                      lineHeight: '1.4',
-                      borderRadius: '0',
-                      boxShadow: isKex ? '0 0 10px rgba(0, 255, 225, 0.1)' : 'none',
-                    }}
-                    codeTagProps={{
-                      style: {
-                        fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace',
-                        fontSize: '13px',
-                        lineHeight: '1.4',
-                      }
-                    }}
-                    wrapLines={true}
-                    wrapLongLines={true}
-                  >
-                    {codePart.value}
-                  </SyntaxHighlighter>
-                  
-                  {/* KEX enhancement effects */}
-                  {isKex && (
-                    <div 
-                      className="absolute inset-0 pointer-events-none"
-                      style={{
-                        background: 'linear-gradient(135deg, transparent 0%, rgba(0, 255, 225, 0.02) 50%, transparent 100%)',
-                        borderRadius: '0',
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+          {/* Code blocks are displayed in the AI Code Space panel, not inline */}
           <div className={`flex items-center gap-2 mt-1 text-xs text-gray-400 ${isUser ? 'justify-end' : 'justify-start'}`}> 
             <span>{message.timestamp ? message.timestamp.toLocaleTimeString() : ''}</span>
             {message.tokens && (
@@ -479,9 +318,9 @@ export function AIChat({
             <span className="text-xs text-gray-400">BYOK (Bring Your Own Key)</span>
           </div>
           <div className="flex gap-2">
-            <select 
+            <select
               className="flex-1 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm"
-              value={settings.provider}
+              value={settings?.provider || 'openai'}
               onChange={(e) => handleProviderSelect(e.target.value)}
             >
               {AI_PROVIDERS.map(provider => (
@@ -588,7 +427,7 @@ export function AIChat({
               onClick={() => setShowModelDropdown(!showModelDropdown)}
               className="bg-gray-800 border-gray-600 hover:bg-gray-700 text-xs gap-1"
             >
-              <span className="max-w-24 truncate">{settings.model}</span>
+              <span className="max-w-24 truncate">{settings?.model || 'gpt-3.5-turbo'}</span>
               <ChevronDown className="w-3 h-3" />
             </Button>
             
@@ -598,7 +437,7 @@ export function AIChat({
                   <div className="text-xs text-gray-400 mb-2">Provider</div>
                   <select 
                     className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
-                    value={settings.provider}
+                    value={settings?.provider || 'openai'}
                     onChange={(e) => handleProviderSelect(e.target.value)}
                   >
                     {AI_PROVIDERS.map(provider => (
@@ -616,7 +455,7 @@ export function AIChat({
                         key={model}
                         onClick={() => handleModelSelect(model)}
                         className={`w-full text-left px-2 py-1 rounded text-sm hover:bg-gray-700 ${
-                          settings.model === model ? 'bg-gray-700 text-blue-400' : ''
+                          settings?.model === model ? 'bg-gray-700 text-blue-400' : ''
                         }`}
                       >
                         {model}
