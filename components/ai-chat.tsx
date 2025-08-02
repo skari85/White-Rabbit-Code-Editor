@@ -6,7 +6,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { AIMessage, AI_PROVIDERS, AISettings } from '@/lib/ai-config';
 import { PERSONALITIES } from '@/lib/personality-system';
-import { Send, Trash2, Copy, Check, Bot, User, Loader2, ChevronDown, Settings2, Zap, Target } from 'lucide-react';
+import { Send, Trash2, Copy, Check, Bot, User, Loader2, ChevronDown, Settings2, Zap, Target, Wand2 } from 'lucide-react';
+import PromptOptimizerComponent from './prompt-optimizer';
 
 // Import OCR utility (Node.js require for demo; use dynamic import or API in production)
 // @ts-ignore
@@ -48,6 +49,7 @@ export function AIChat({
   const [tempApiKey, setTempApiKey] = useState('');
   const [ocrResult, setOcrResult] = useState<string | null>(null);
   const [ocrLoading, setOcrLoading] = useState(false);
+  const [showPromptOptimizer, setShowPromptOptimizer] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -156,6 +158,15 @@ export function AIChat({
   const handleModelSelect = (model: string) => {
     onSettingsChange({ ...settings, model });
     setShowModelDropdown(false);
+  };
+
+  const handleOptimizedPrompt = (optimizedPrompt: string) => {
+    setInput(optimizedPrompt);
+    setShowPromptOptimizer(false);
+    // Auto-focus the textarea after setting the optimized prompt
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 100);
   };
 
   const copyToClipboard = async (text: string, type: string) => {
@@ -548,7 +559,7 @@ export function AIChat({
               disabled={isLoading}
             />
             
-            {/* OCR Button */}
+            {/* Action Buttons */}
             <div className="absolute right-2 top-2 flex gap-1">
               <input
                 type="file"
@@ -560,6 +571,20 @@ export function AIChat({
                 }}
                 className="hidden"
               />
+
+              {/* Prompt Optimizer Button */}
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowPromptOptimizer(!showPromptOptimizer)}
+                className="h-6 w-6 p-0 text-gray-400 hover:text-purple-400"
+                title="Optimize Prompt"
+              >
+                <Wand2 className="w-3 h-3" />
+              </Button>
+
+              {/* OCR Button */}
               <Button
                 type="button"
                 size="sm"
@@ -595,6 +620,16 @@ export function AIChat({
           <div className="mt-2 p-2 bg-gray-800 rounded text-sm">
             <div className="text-gray-400 text-xs mb-1">OCR Result:</div>
             <div className="text-gray-200">{ocrResult}</div>
+          </div>
+        )}
+
+        {/* Prompt Optimizer */}
+        {showPromptOptimizer && (
+          <div className="mt-2">
+            <PromptOptimizerComponent
+              onOptimizedPrompt={handleOptimizedPrompt}
+              className="bg-gray-800 border-gray-600"
+            />
           </div>
         )}
       </div>

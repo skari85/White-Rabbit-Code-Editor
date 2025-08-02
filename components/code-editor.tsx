@@ -10,6 +10,7 @@ import { AIChat } from "@/components/ai-chat"
 import { AICodeSpace } from "./ai-code-space"
 
 import { useTerminal } from "@/hooks/use-terminal"
+import { useSession, signIn, signOut } from "next-auth/react"
 import {
   Download,
   ExternalLink,
@@ -26,6 +27,8 @@ import {
 // import EnhancedMonacoEditor from './enhanced-monaco-editor'; // Temporarily disabled
 import SimpleCodeEditor from './simple-code-editor';
 import LivePreview from './live-preview';
+import AISettingsSidebar from './ai-settings-sidebar';
+import GitHubIntegration from './github-integration';
 
 export default function CodeEditor() {
   // Code Builder hooks
@@ -67,8 +70,15 @@ export default function CodeEditor() {
 
   const [codeColor, setCodeColor] = useState(false);
 
+  // GitHub integration
+  const { data: session, status } = useSession();
+
   const handleCodeColorToggle = () => {
     setCodeColor(!codeColor);
+  }
+
+  const handleTestAIConnection = async () => {
+    return await testAIConnection(aiSettings);
   }
 
   // Define the getLanguageFromFileName function
@@ -117,13 +127,48 @@ export default function CodeEditor() {
       <div className="w-80 bg-white border-r flex flex-col h-screen overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
-              <span className="text-white font-bold text-sm">H&K</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
+                <span className="text-white font-bold text-sm">H&K</span>
+              </div>
+              <div>
+                <h2 className="font-semibold text-sm">Hex & Kex</h2>
+                <p className="text-xs text-gray-500">Code Editor</p>
+              </div>
             </div>
-            <div>
-              <h2 className="font-semibold text-sm">Hex & Kex</h2>
-              <p className="text-xs text-gray-500">Code Editor</p>
+
+            {/* User Profile */}
+            <div className="flex items-center gap-2">
+              {session?.user ? (
+                <div className="flex items-center gap-2">
+                  {session.user.image && (
+                    <img
+                      src={session.user.image}
+                      alt={session.user.name || 'User'}
+                      className="w-6 h-6 rounded-full"
+                    />
+                  )}
+                  <div className="text-right">
+                    <p className="text-xs font-medium">{session.user.name}</p>
+                    <button
+                      onClick={() => signOut()}
+                      className="text-xs text-gray-500 hover:text-red-500"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => signIn('github')}
+                  size="sm"
+                  variant="outline"
+                  className="text-xs"
+                >
+                  Sign in
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -427,8 +472,32 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
 
+        {/* AI Settings Section */}
+        <div className="border-t bg-gray-50 flex flex-col min-h-0">
+          <div className="p-2">
+            <AISettingsSidebar
+              settings={aiSettings}
+              onSettingsChange={saveAISettings}
+              onTestConnection={handleTestAIConnection}
+              isConfigured={aiConfigured}
+            />
+          </div>
+        </div>
+
+        {/* GitHub Integration Section */}
+        {session?.user && (
+          <div className="border-t bg-gray-50 flex flex-col min-h-0">
+            <div className="p-2">
+              <GitHubIntegration
+                files={files}
+                projectName={currentProject?.name || "My Project"}
+              />
+            </div>
+          </div>
+        )}
+
         {/* AI Chat Section */}
-        <div className="border-t bg-gray-50 flex flex-col h-96 min-h-0">
+        <div className="border-t bg-gray-50 flex flex-col flex-1 min-h-0">
           <div className="p-3 border-b bg-white">
             <div className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-blue-500" />
