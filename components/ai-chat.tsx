@@ -8,6 +8,7 @@ import { AIMessage, AI_PROVIDERS, AISettings } from '@/lib/ai-config';
 import { PERSONALITIES } from '@/lib/personality-system';
 import { Send, Trash2, Copy, Check, Bot, User, Loader2, ChevronDown, Settings2, Zap, Target, Wand2 } from 'lucide-react';
 import PromptOptimizerComponent from './prompt-optimizer';
+import LiveAIResponse from './live-ai-response';
 
 // Import OCR utility (Node.js require for demo; use dynamic import or API in production)
 // @ts-ignore
@@ -23,20 +24,22 @@ interface AIChatProps {
   onSettingsChange: (settings: AISettings) => void;
   streamedMessage?: string;
   onCodeBlocks?: (blocks: { code: string; lang?: string; messageId?: string }[]) => void;
+  onCodeGenerated?: (filename: string, content: string, language: string) => void;
   personality?: 'hex' | 'kex'; // Optional, for visual mode
   isStreaming?: boolean;
 }
 
-export function AIChat({ 
-  messages, 
-  isLoading, 
-  onSendMessage, 
-  onClearMessages, 
-  isConfigured, 
-  settings, 
-  onSettingsChange, 
-  streamedMessage, 
+export function AIChat({
+  messages,
+  isLoading,
+  onSendMessage,
+  onClearMessages,
+  isConfigured,
+  settings,
+  onSettingsChange,
+  streamedMessage,
   onCodeBlocks,
+  onCodeGenerated,
   personality,
   isStreaming
 }: AIChatProps) {
@@ -213,67 +216,39 @@ export function AIChat({
   const renderMessage = (message: AIMessage, isStreamed = false) => {
     const isUser = message.role === 'user';
     const isKex = personality === 'kex' || settings?.personality === 'kex';
-    
-    // Parse content for code blocks and text
-    const parts: Array<{ type: 'text' | 'code'; value: string; lang?: string }> = [];
-    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-    let lastIndex = 0;
-    let match;
-    
-    while ((match = codeBlockRegex.exec(message.content)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push({ type: 'text', value: message.content.slice(lastIndex, match.index) });
-      }
-      parts.push({ type: 'code', value: match[2], lang: match[1] });
-      lastIndex = codeBlockRegex.lastIndex;
-    }
-    if (lastIndex < message.content.length) {
-      parts.push({ type: 'text', value: message.content.slice(lastIndex) });
+
+    // For assistant messages, use LiveAIResponse component
+    if (!isUser) {
+      return (
+        <div key={message.id || (isStreamed ? 'streamed' : undefined)} className="mb-4">
+          <LiveAIResponse
+            response={message.content}
+            onCodeGenerated={onCodeGenerated}
+            className="w-full"
+          />
+        </div>
+      );
     }
 
-    // Only show text parts in chat, code blocks are handled by CodeEditor
-    const textParts = parts.filter(p => p.type === 'text' && p.value.trim() !== '');
-
+    // For user messages, use the original rendering
     return (
-      <div 
-        key={message.id || (isStreamed ? 'streamed' : undefined)} 
-        className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
-        style={isKex && !isUser ? {
-          filter: 'drop-shadow(0 0 8px #00ffe155)',
-          background: 'linear-gradient(135deg, rgba(0, 255, 225, 0.05) 0%, rgba(0, 212, 170, 0.05) 100%)',
-          borderRadius: '12px',
-          padding: '8px'
-        } : {}}
+      <div
+        key={message.id || (isStreamed ? 'streamed' : undefined)}
+        className={`flex gap-3 justify-end`}
       >
-        {!isUser && (
-          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-            <img 
-              src="/hexkexlogo.png" 
-              alt="Hex & Kex" 
-              className="w-8 h-8 object-contain"
-            />
+        <div className="max-w-[80%] flex flex-col gap-2 items-end">
+          {/* Chat bubble for user message */}
+          <div className={`rounded-lg px-4 py-3 ${
+            isKex
+              ? 'bg-gradient-to-r from-[#00ffe1] to-[#00d4aa] text-black font-medium'
+              : 'bg-blue-600 text-white'
+          }`}>
+            <div className="whitespace-pre-wrap text-sm">{message.content}</div>
+            {isStreamed && (
+              <span className="animate-pulse text-green-400 ml-1">|</span>
+            )}
           </div>
-        )}
-        <div className={`max-w-[80%] flex flex-col gap-2 ${isUser ? 'order-first items-end' : 'items-start'}`}> 
-          {/* Chat bubble for text only */}
-          {textParts.length > 0 && (
-            <div className={`rounded-lg px-4 py-3 ${
-              isUser 
-                ? isKex
-                  ? 'bg-gradient-to-r from-[#00ffe1] to-[#00d4aa] text-black font-medium'
-                  : 'bg-blue-600 text-white ml-auto'
-                : 'bg-gray-800 text-white'
-            }`}>
-              {textParts.map((part, i) => (
-                <div key={i} className="whitespace-pre-wrap text-sm text-gray-200">{part.value}</div>
-              ))}
-              {isStreamed && (
-                <span className="animate-pulse text-green-400 ml-1">|</span>
-              )}
-            </div>
-          )}
-          {/* Code blocks are displayed in the AI Code Space panel, not inline */}
-          <div className={`flex items-center gap-2 mt-1 text-xs text-gray-400 ${isUser ? 'justify-end' : 'justify-start'}`}> 
+          <div className="flex items-center gap-2 mt-1 text-xs text-gray-400 justify-end">
             <span>{message.timestamp ? message.timestamp.toLocaleTimeString() : ''}</span>
             {message.tokens && (
               <Badge variant="outline" className="text-xs border-gray-600 text-gray-400">
@@ -323,77 +298,7 @@ export function AIChat({
           </div>
         </div>
 
-        {/* BYOK Footer */}
-        <div className="border-t border-gray-700 p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs text-gray-400">BYOK (Bring Your Own Key)</span>
-          </div>
-          <div className="flex gap-2">
-            <select
-              className="flex-1 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm"
-              value={settings?.provider || 'openai'}
-              onChange={(e) => handleProviderSelect(e.target.value)}
-            >
-              {AI_PROVIDERS.map(provider => (
-                <option key={provider.id} value={provider.id}>
-                  {provider.name}
-                </option>
-              ))}
-            </select>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowProviderConfig(!showProviderConfig)}
-              className="bg-gray-800 border-gray-600 hover:bg-gray-700"
-            >
-              <Settings2 className="w-4 h-4" />
-            </Button>
-          </div>
-          
-          {showProviderConfig && getCurrentProvider().requiresApiKey && (
-            <div className="mt-2">
-              <Input
-                type="password"
-                placeholder={`Enter ${getCurrentProvider().name} API Key`}
-                value={tempApiKey}
-                onChange={(e) => setTempApiKey(e.target.value)}
-                className="bg-gray-800 border-gray-600 text-sm"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    onSettingsChange({ ...settings, apiKey: tempApiKey });
-                    setTempApiKey('');
-                    setShowProviderConfig(false);
-                  }
-                }}
-              />
-              <div className="flex gap-1 mt-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    onSettingsChange({ ...settings, apiKey: tempApiKey });
-                    setTempApiKey('');
-                    setShowProviderConfig(false);
-                  }}
-                  className="text-xs bg-gray-800 border-gray-600 hover:bg-gray-700"
-                >
-                  Save
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setTempApiKey('');
-                    setShowProviderConfig(false);
-                  }}
-                  className="text-xs"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
+
       </div>
     );
   }
@@ -430,6 +335,18 @@ export function AIChat({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Settings Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowProviderConfig(!showProviderConfig)}
+            className="bg-gray-800 border-gray-600 hover:bg-gray-700 text-xs gap-1"
+            title="AI Settings"
+          >
+            <Settings2 className="w-3 h-3" />
+            <span className="hidden sm:inline">Settings</span>
+          </Button>
+
           {/* Model Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <Button
@@ -491,8 +408,123 @@ export function AIChat({
         </div>
       </div>
 
+      {/* Settings Modal */}
+      {showProviderConfig && (
+        <div className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-lg border border-gray-600 w-full max-w-md max-h-[80vh] overflow-y-auto">
+            <div className="p-4 border-b border-gray-600">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-white">AI Settings</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowProviderConfig(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  ×
+                </Button>
+              </div>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {/* Provider Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  AI Provider
+                </label>
+                <select
+                  className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"
+                  value={settings?.provider || 'openai'}
+                  onChange={(e) => handleProviderSelect(e.target.value)}
+                >
+                  {AI_PROVIDERS.map(provider => (
+                    <option key={provider.id} value={provider.id}>
+                      {provider.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">
+                  Choose your preferred AI provider. BYOK (Bring Your Own Key) required.
+                </p>
+              </div>
+
+              {/* Model Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Model
+                </label>
+                <select
+                  className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"
+                  value={settings?.model || getCurrentProvider().models[0]}
+                  onChange={(e) => handleModelSelect(e.target.value)}
+                >
+                  {getCurrentProvider().models.map(model => (
+                    <option key={model} value={model}>
+                      {model}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">
+                  Select the specific model to use with {getCurrentProvider().name}.
+                </p>
+              </div>
+
+              {/* API Key */}
+              {getCurrentProvider().requiresApiKey && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    API Key
+                  </label>
+                  <Input
+                    type="password"
+                    placeholder={`Enter your ${getCurrentProvider().name} API Key`}
+                    value={tempApiKey || settings?.apiKey || ''}
+                    onChange={(e) => setTempApiKey(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Your API key is stored locally and never sent to our servers.
+                  </p>
+                  {settings?.apiKey && (
+                    <p className="text-xs text-green-400 mt-1">
+                      ✓ API key configured
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Save Button */}
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={() => {
+                    if (tempApiKey) {
+                      onSettingsChange({ ...settings, apiKey: tempApiKey });
+                      setTempApiKey('');
+                    }
+                    setShowProviderConfig(false);
+                  }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Save Settings
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setTempApiKey('');
+                    setShowProviderConfig(false);
+                  }}
+                  className="bg-gray-700 border-gray-600 hover:bg-gray-600 text-white"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Messages */}
-      <ScrollArea className="flex-1" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+      <ScrollArea className="flex-1 min-h-0">
         <div
           className="p-4 space-y-6 h-full w-full"
           ref={scrollAreaRef}

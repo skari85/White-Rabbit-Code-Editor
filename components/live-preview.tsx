@@ -34,25 +34,58 @@ export default function LivePreview({ files, selectedFile, className }: LivePrev
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Preview - No HTML File</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            padding: 40px; 
-            text-align: center; 
-            background: #f5f5f5; 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            padding: 40px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .message { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        .message {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            max-width: 500px;
+            width: 100%;
+        }
+        .message h2 {
+            color: #1f2937;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .message p {
+            color: #6b7280;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        .files-list {
+            background: #f3f4f6;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+        .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
         }
     </style>
 </head>
 <body>
     <div class="message">
+        <div class="icon">📄</div>
         <h2>No HTML File Found</h2>
-        <p>Create an HTML file to see the preview.</p>
-        <p>Available files: ${files.map(f => f.name).join(', ')}</p>
+        <p>Create an <strong>index.html</strong> file or any HTML file to see the live preview.</p>
+        ${files.length > 0 ? `
+        <p>Available files:</p>
+        <div class="files-list">${files.map(f => f.name).join(', ')}</div>
+        ` : '<p>No files created yet. Start by adding some files!</p>'}
     </div>
 </body>
 </html>`;
@@ -94,9 +127,25 @@ export default function LivePreview({ files, selectedFile, className }: LivePrev
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
     <style>
-      /* Preview frame styles */
-      body { margin: 0; }
-      * { box-sizing: border-box; }
+      /* Preview frame styles - ensure white background */
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #ffffff !important;
+        color: #000000;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      /* Ensure iframe content is visible */
+      body:empty::before {
+        content: "Loading preview...";
+        display: block;
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+      }
     </style>`;
 
     if (htmlContent.includes('<head>')) {
@@ -193,17 +242,21 @@ export default function LivePreview({ files, selectedFile, className }: LivePrev
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-96'}`}>
+        <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-96 bg-white'}`}>
           {previewUrl ? (
             <iframe
               ref={iframeRef}
               src={previewUrl}
-              className="w-full h-full border-0"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+              className="w-full h-full border-0 bg-white"
+              // Security: Removed 'allow-same-origin' to prevent sandbox escape
+              // when combined with 'allow-scripts'. This maintains functionality
+              // while ensuring proper security isolation.
+              sandbox="allow-scripts allow-forms allow-popups allow-modals"
               title="Live Preview"
+              style={{ backgroundColor: '#ffffff' }}
             />
           ) : (
-            <div className="flex items-center justify-center h-full bg-gray-50">
+            <div className="flex items-center justify-center h-full bg-white border border-gray-200 rounded">
               <p className="text-gray-500">Loading preview...</p>
             </div>
           )}

@@ -88,8 +88,8 @@ const API_SERVICES = [
       'Go to GitHub Settings: https://github.com/settings/applications/new',
       'Create a new OAuth App',
       'Application name: "Hex & Kex PWA Builder"',
-      'Homepage URL: http://localhost:3015',
-      'Authorization callback URL: http://localhost:3015/api/auth/callback/github',
+      'Homepage URL: http://localhost:3012',
+      'Authorization callback URL: http://localhost:3012/api/auth/callback/github',
       'Click "Register application"',
       'Copy Client ID and generate Client Secret'
     ],

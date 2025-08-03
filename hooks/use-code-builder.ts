@@ -56,17 +56,68 @@ export function useCodeBuilder() {
         content: `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>My Project</title>
+  <title>Modern Web App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app">
-    <header class="header">
-      <h1>My Web Project</h1>
-    </header>
-    <main class="main">
-      <p>Welcome to your new project! Start building something amazing.</p>
+  <div class="app-container">
+    <!-- Navigation -->
+    <nav class="navbar">
+      <div class="nav-brand">
+        <h2>My App</h2>
+      </div>
+      <div class="nav-links">
+        <a href="#" class="nav-link active">Dashboard</a>
+        <a href="#" class="nav-link">Projects</a>
+        <a href="#" class="nav-link">Settings</a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="content-header">
+        <h1 class="page-title">Welcome to Your Modern App</h1>
+        <p class="page-subtitle">Start building something amazing with modern design</p>
+      </div>
+
+      <div class="content-grid">
+        <div class="card">
+          <div class="card-header">
+            <h3>Getting Started</h3>
+          </div>
+          <div class="card-body">
+            <p>This is a modern, professional template with contemporary design patterns.</p>
+            <button class="btn btn-primary">Get Started</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Features</h3>
+          </div>
+          <div class="card-body">
+            <ul class="feature-list">
+              <li>Modern UI Components</li>
+              <li>Responsive Design</li>
+              <li>Interactive Elements</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Analytics</h3>
+          </div>
+          <div class="card-body">
+            <div class="stat">
+              <div class="stat-number">1,234</div>
+              <div class="stat-label">Total Users</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
   <script src="script.js"></script>
@@ -77,46 +128,422 @@ export function useCodeBuilder() {
       },
       {
         name: 'style.css',
-        content: `* {
+        content: `/* Modern CSS Reset */
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* Base Styles */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   line-height: 1.6;
-  color: #333;
-  background: #f5f5f5;
+  color: #1f2937;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
 }
 
-.app {
+/* App Container */
+.app-container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-.header {
-  background: #3B82F6;
+/* Navigation */
+.navbar {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nav-brand h2 {
+  color: #4f46e5;
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #6b7280;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #4f46e5;
+  background: rgba(79, 70, 229, 0.1);
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 3rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.content-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.page-title {
+  font-size: 3rem;
+  font-weight: 800;
   color: white;
-  padding: 1rem;
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+}
+
+/* Grid Layout */
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+/* Card Components */
+.card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+  padding: 1.5rem 2rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.card-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.card-body {
+  padding: 1rem 2rem 2rem;
+}
+
+.card-body p {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Feature List */
+.feature-list {
+  list-style: none;
+}
+
+.feature-list li {
+  padding: 0.5rem 0;
+  color: #6b7280;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.feature-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #10b981;
+  font-weight: bold;
+}
+
+/* Stats */
+.stat {
   text-align: center;
 }
 
-.main {
-  flex: 1;
-  padding: 2rem;
-  max-width: 800px;
-  margin: 0 auto;
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #4f46e5;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: #6b7280;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .nav-links {
+    gap: 1rem;
+  }
+
+  .main-content {
+    padding: 2rem 1rem;
+  }
+
+  .page-title {
+    font-size: 2rem;
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
 }`,
         type: 'css',
         lastModified: new Date()
       },
       {
         name: 'script.js',
-        content: `// JavaScript code
+        content: `// Modern JavaScript with interactive features
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('Project loaded successfully!');
+  console.log('🚀 Modern app loaded successfully!');
+
+  // Initialize app
+  initializeApp();
+});
+
+function initializeApp() {
+  // Add smooth scrolling
+  document.documentElement.style.scrollBehavior = 'smooth';
+
+  // Initialize navigation
+  initializeNavigation();
+
+  // Initialize interactive elements
+  initializeButtons();
+
+  // Initialize animations
+  initializeAnimations();
+
+  // Update stats with animation
+  animateStats();
+}
+
+function initializeNavigation() {
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  navLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      // Remove active class from all links
+      navLinks.forEach(l => l.classList.remove('active'));
+
+      // Add active class to clicked link
+      this.classList.add('active');
+
+      // Add ripple effect
+      createRipple(e, this);
+    });
+  });
+}
+
+function initializeButtons() {
+  const buttons = document.querySelectorAll('.btn');
+
+  buttons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      // Add click animation
+      this.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        this.style.transform = '';
+      }, 150);
+
+      // Create ripple effect
+      createRipple(e, this);
+
+      // Show success message
+      showNotification('Action completed successfully!', 'success');
+    });
+  });
+}
+
+function createRipple(event, element) {
+  const ripple = document.createElement('span');
+  const rect = element.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  const x = event.clientX - rect.left - size / 2;
+  const y = event.clientY - rect.top - size / 2;
+
+  ripple.style.cssText = \`
+    position: absolute;
+    width: \${size}px;
+    height: \${size}px;
+    left: \${x}px;
+    top: \${y}px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple 0.6s ease-out;
+    pointer-events: none;
+  \`;
+
+  // Add ripple animation CSS if not exists
+  if (!document.querySelector('#ripple-styles')) {
+    const style = document.createElement('style');
+    style.id = 'ripple-styles';
+    style.textContent = \`
+      @keyframes ripple {
+        to {
+          transform: scale(2);
+          opacity: 0;
+        }
+      }
+    \`;
+    document.head.appendChild(style);
+  }
+
+  element.style.position = 'relative';
+  element.style.overflow = 'hidden';
+  element.appendChild(ripple);
+
+  setTimeout(() => {
+    ripple.remove();
+  }, 600);
+}
+
+function initializeAnimations() {
+  // Intersection Observer for scroll animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  });
+
+  // Observe cards for animation
+  document.querySelectorAll('.card').forEach(card => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(card);
+  });
+}
+
+function animateStats() {
+  const statNumbers = document.querySelectorAll('.stat-number');
+
+  statNumbers.forEach(stat => {
+    const finalValue = parseInt(stat.textContent.replace(/,/g, ''));
+    let currentValue = 0;
+    const increment = finalValue / 50;
+
+    const timer = setInterval(() => {
+      currentValue += increment;
+      if (currentValue >= finalValue) {
+        currentValue = finalValue;
+        clearInterval(timer);
+      }
+      stat.textContent = Math.floor(currentValue).toLocaleString();
+    }, 30);
+  });
+}
+
+function showNotification(message, type = 'info') {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = \`notification notification-\${type}\`;
+  notification.textContent = message;
+
+  // Add notification styles
+  notification.style.cssText = \`
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: \${type === 'success' ? '#10b981' : '#3b82f6'};
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  \`;
+
+  document.body.appendChild(notification);
+
+  // Animate in
+  setTimeout(() => {
+    notification.style.transform = 'translateX(0)';
+  }, 100);
+
+  // Remove after 3 seconds
+  setTimeout(() => {
+    notification.style.transform = 'translateX(100%)';
+    setTimeout(() => {
+      notification.remove();
+    }, 300);
+  }, 3000);
+}
+
+// Add some interactive features
+document.addEventListener('mousemove', function(e) {
+  // Subtle parallax effect for background
+  const x = e.clientX / window.innerWidth;
+  const y = e.clientY / window.innerHeight;
+
+  document.body.style.backgroundPosition = \`\${50 + x * 5}% \${50 + y * 5}%\`;
 });`,
         type: 'js',
         lastModified: new Date()
@@ -320,7 +747,8 @@ export default function Component() {
     parseAndApplyAIResponse,
     // Project management
     currentProject,
-    saveProject
+    saveProject,
+    initializeDefaultProject
   };
 }
 

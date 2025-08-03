@@ -1,0 +1,159 @@
+/* Monaco Editor Visual Fixes */
+
+/* Prevent blinking cursor animations that can cause visual glitches */
+.monaco-editor .cursors-layer .cursor {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Prevent blinking line highlights */
+.monaco-editor .view-overlays .current-line {
+  animation: none !important;
+  transition: opacity 0.1s ease !important;
+}
+
+/* Fix scrollbar blinking issues */
+.monaco-scrollable-element > .scrollbar > .slider {
+  animation: none !important;
+  transition: background-color 0.1s ease !important;
+}
+
+/* Prevent minimap blinking */
+.monaco-editor .minimap {
+  animation: none !important;
+}
+
+.monaco-editor .minimap .minimap-slider {
+  animation: none !important;
+  transition: opacity 0.1s ease !important;
+}
+
+/* Fix overview ruler blinking */
+.monaco-editor .overview-ruler {
+  animation: none !important;
+}
+
+/* Prevent suggestion widget blinking */
+.monaco-editor .suggest-widget {
+  animation: none !important;
+}
+
+/* Fix bracket matching highlights */
+.monaco-editor .bracket-match {
+  animation: none !important;
+  transition: background-color 0.1s ease !important;
+}
+
+/* Prevent find widget blinking */
+.monaco-editor .find-widget {
+  animation: none !important;
+}
+
+/* Fix hover widget stability */
+.monaco-editor .monaco-hover {
+  animation: none !important;
+}
+
+/* Prevent parameter hints blinking */
+.monaco-editor .parameter-hints-widget {
+  animation: none !important;
+}
+
+/* Fix line number blinking */
+.monaco-editor .line-numbers {
+  animation: none !important;
+}
+
+/* Prevent glyph margin blinking */
+.monaco-editor .glyph-margin {
+  animation: none !important;
+}
+
+/* Fix folding controls */
+.monaco-editor .folding {
+  animation: none !important;
+}
+
+/* Prevent selection blinking */
+.monaco-editor .selected-text {
+  animation: none !important;
+}
+
+/* Fix word highlight blinking */
+.monaco-editor .wordHighlight,
+.monaco-editor .wordHighlightStrong {
+  animation: none !important;
+  transition: background-color 0.1s ease !important;
+}
+
+/* Prevent ruler blinking */
+.monaco-editor .rulers {
+  animation: none !important;
+}
+
+/* Fix indent guides */
+.monaco-editor .indent-guides {
+  animation: none !important;
+}
+
+/* Prevent margin blinking */
+.monaco-editor .margin {
+  animation: none !important;
+}
+
+/* Fix editor container stability */
+.monaco-editor {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Prevent any webkit animations that might cause blinking */
+.monaco-editor * {
+  -webkit-animation: none !important;
+  -moz-animation: none !important;
+  -o-animation: none !important;
+  animation: none !important;
+}
+
+/* Ensure stable rendering */
+.monaco-editor .view-lines {
+  animation: none !important;
+}
+
+.monaco-editor .view-line {
+  animation: none !important;
+}
+
+/* Fix any potential blinking in the editor viewport */
+.monaco-editor .editor-scrollable {
+  animation: none !important;
+}
+
+.monaco-editor .lines-content {
+  animation: none !important;
+}
+
+/* Prevent decorations from blinking */
+.monaco-editor .view-overlays {
+  animation: none !important;
+}
+
+/* Fix any blinking in the editor zones */
+.monaco-editor .view-zones {
+  animation: none !important;
+}
+
+/* Ensure stable editor widget rendering */
+.monaco-editor .editor-widget {
+  animation: none !important;
+}
+
+/* Fix any potential blinking in content widgets */
+.monaco-editor .contentWidgets {
+  animation: none !important;
+}
+
+/* Prevent overlay widgets from blinking */
+.monaco-editor .overlayWidgets {
+  animation: none !important;
+}

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCodeBuilder } from "@/hooks/use-code-builder";
@@ -22,6 +22,7 @@ import {
 import LazyMonacoEditor from './lazy-monaco-editor';
 import { ErrorBoundary } from './error-boundary';
 import { useAutoSave } from '@/hooks/use-debounced-auto-save';
+import FileTabs from './file-tabs';
 
 import LivePreview from './live-preview';
 import AISettingsSidebar from './ai-settings-sidebar';
@@ -41,7 +42,8 @@ export default function CodeEditor() {
     addNewFile,
     deleteFile,
     getSelectedFileContent,
-    parseAndApplyAIResponse
+    parseAndApplyAIResponse,
+    initializeDefaultProject
   } = useCodeBuilder();
 
   // AI Assistant
@@ -131,12 +133,38 @@ export default function CodeEditor() {
     setCodeColor(!codeColor);
   };
 
+  // Memoize the onCodeGenerated callback to prevent infinite re-renders
+  const handleCodeGenerated = useCallback((filename: string, content: string, language: string) => {
+    // Determine file type from extension
+    const getFileType = (name: string): 'html' | 'css' | 'js' | 'json' | 'md' | 'tsx' | 'ts' | 'py' | 'txt' => {
+      const ext = name.split('.').pop()?.toLowerCase();
+      switch (ext) {
+        case 'html': case 'htm': return 'html';
+        case 'css': return 'css';
+        case 'js': case 'jsx': return 'js';
+        case 'ts': return 'ts';
+        case 'tsx': return 'tsx';
+        case 'json': return 'json';
+        case 'md': return 'md';
+        case 'py': return 'py';
+        default: return 'txt';
+      }
+    };
+
+    // Add the generated file to the project
+    addNewFile(filename, getFileType(filename));
+    // Update the file content
+    updateFileContent(filename, content);
+    // Select the newly created file
+    setSelectedFile(filename);
+  }, [addNewFile, updateFileContent, setSelectedFile]);
+
 
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Left Sidebar - File Explorer & AI Chat */}
-      <div className="w-80 bg-white border-r flex flex-col h-screen overflow-hidden">
+      <div className="w-96 bg-white border-r flex flex-col h-screen overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
@@ -166,9 +194,22 @@ export default function CodeEditor() {
                   </span>
                 </div>
               ) : (
-                <Button variant="ghost" size="sm">
-                  Sign In
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => window.location.href = '/setup'}
+                  >
+                    Setup GitHub
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => window.location.href = '/auth/signin'}
+                  >
+                    Sign In
+                  </Button>
+                </div>
               )}
             </div>
           </div>
@@ -179,14 +220,26 @@ export default function CodeEditor() {
           <div className="p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium">Files</h3>
-              <Button
-                onClick={() => addNewFile('new-file.js')}
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-              >
-                <Plus className="w-3 h-3" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  onClick={() => initializeDefaultProject()}
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  title="New Project"
+                >
+                  <FileText className="w-3 h-3" />
+                </Button>
+                <Button
+                  onClick={() => addNewFile('new-file.js')}
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  title="Add File"
+                >
+                  <Plus className="w-3 h-3" />
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -233,8 +286,8 @@ export default function CodeEditor() {
           </div>
         </div>
 
-        {/* AI Chat */}
-        <div className="border-t h-64">
+        {/* AI Chat - Expanded */}
+        <div className="border-t flex-1 min-h-0">
           <AIChat
             messages={aiMessages || []}
             onSendMessage={handleSendMessage}
@@ -243,6 +296,7 @@ export default function CodeEditor() {
             isConfigured={aiConfigured}
             settings={aiSettings}
             onSettingsChange={updateAISettings}
+            onCodeGenerated={handleCodeGenerated}
           />
         </div>
       </div>
@@ -339,23 +393,22 @@ export default function CodeEditor() {
               />
 
               <div className="flex-1 flex flex-col">
-                {/* File Tab */}
-                {selectedFile && (
-                  <div className="bg-gray-100 px-4 py-2 border-b">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">{getFileTypeIcon(selectedFile)}</span>
-                      <span className="text-sm font-medium">{selectedFile}</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {getLanguageFromFileName(selectedFile)}
-                      </Badge>
-                      {autoSave.hasUnsavedChanges && (
-                        <Badge variant="outline" className="text-xs">
-                          Unsaved
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {/* File Tabs */}
+                <FileTabs
+                  files={files}
+                  selectedFile={selectedFile}
+                  onSelectFile={setSelectedFile}
+                  onCloseFile={useCallback((filename: string) => {
+                    // If closing the selected file, select another file first
+                    if (filename === selectedFile && files.length > 1) {
+                      const remainingFiles = files.filter(f => f.name !== filename);
+                      setSelectedFile(remainingFiles[0].name);
+                    }
+                    // Delete the file
+                    deleteFile(filename);
+                  }, [selectedFile, files, setSelectedFile, deleteFile])}
+                  hasUnsavedChanges={autoSave.hasUnsavedChanges}
+                />
 
                 {/* Code Editor */}
                 <div className="flex-1">

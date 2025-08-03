@@ -76,9 +76,27 @@ export default function LazyMonacoEditor(props: LazyMonacoEditorProps) {
     return <MonacoEditorError error={loadError} retry={handleRetry} />;
   }
 
+  // Map custom themes to Monaco themes
+  const getMonacoTheme = (customTheme: string) => {
+    switch (customTheme) {
+      case 'hex-light':
+        return 'light';
+      case 'kex-dark':
+        return 'vs-dark';
+      default:
+        return customTheme;
+    }
+  };
+
+  // Update props with proper theme mapping
+  const updatedProps = {
+    ...props,
+    theme: getMonacoTheme(props.theme || 'vs-dark')
+  };
+
   return (
     <Suspense key={retryKey} fallback={<MonacoEditorLoading />}>
-      <MonacoEditor {...props} />
+      <MonacoEditor {...updatedProps} />
     </Suspense>
   );
 }

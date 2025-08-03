@@ -16,8 +16,8 @@ export interface MonacoConfig {
 export const defaultMonacoConfig: MonacoConfig = {
   theme: 'vs-dark',
   fontSize: 14,
-  fontFamily: 'JetBrains Mono, Fira Code, Monaco, Consolas, monospace',
-  minimap: false, // Disable minimap by default to prevent memory issues
+  fontFamily: '"Fira Code", "JetBrains Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace',
+  minimap: true, // Enable minimap for better navigation
   wordWrap: 'on',
   lineNumbers: 'on',
   folding: true,
