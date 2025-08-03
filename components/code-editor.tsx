@@ -1,113 +1,121 @@
-// Import necessary libraries
-import { useState, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { useCodeBuilder, useCodeExport } from "@/hooks/use-code-builder"
-import { useAIAssistantEnhanced } from "@/hooks/use-ai-assistant-enhanced"
-import { TerminalComponent } from "@/components/terminal"
-import { AIChat } from "@/components/ai-chat"
-import { AICodeSpace } from "./ai-code-space"
-
-import { useTerminal } from "@/hooks/use-terminal"
-import { useSession, signIn, signOut } from "next-auth/react"
+import React, { useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useCodeBuilder } from "@/hooks/use-code-builder";
+import { useAIAssistantEnhanced } from "@/hooks/use-ai-assistant-enhanced";
+import { TerminalComponent } from "@/components/terminal";
+import { AIChat } from "@/components/ai-chat";
+import { useTerminal } from "@/hooks/use-terminal";
+import { useSession } from "next-auth/react";
 import {
   Download,
   ExternalLink,
   Plus,
   FileText,
   Bot,
-  Settings,
   Terminal,
   X,
-  Play,
   Server,
-  RefreshCw
-} from "lucide-react"
-// import EnhancedMonacoEditor from './enhanced-monaco-editor'; // Temporarily disabled
-import SimpleCodeEditor from './simple-code-editor';
+  RefreshCw,
+  Package
+} from "lucide-react";
+import LazyMonacoEditor from './lazy-monaco-editor';
+import { ErrorBoundary } from './error-boundary';
+import { useAutoSave } from '@/hooks/use-debounced-auto-save';
+
 import LivePreview from './live-preview';
 import AISettingsSidebar from './ai-settings-sidebar';
 import GitHubIntegration from './github-integration';
+import VercelIntegrationComponent from './vercel-integration';
+import Marketplace from './marketplace';
+import CodeAnalysisPanel from './code-analysis-panel';
+import AdvancedEditorToolbar from './advanced-editor-toolbar';
 
 export default function CodeEditor() {
   // Code Builder hooks
-  const { 
-    files, 
-    selectedFile, 
-    setSelectedFile, 
-    updateFileContent, 
-    addNewFile, 
-    deleteFile, 
+  const {
+    files,
+    selectedFile,
+    setSelectedFile,
+    updateFileContent,
+    addNewFile,
+    deleteFile,
     getSelectedFileContent,
-    parseAndApplyAIResponse,
-    currentProject
+    parseAndApplyAIResponse
   } = useCodeBuilder();
-  
-  const { exportAsZip, previewInNewTab } = useCodeExport();
-  const { 
-    settings: aiSettings, 
-    messages: aiMessages, 
-    isLoading: aiLoading, 
-    isConfigured: aiConfigured,
-    saveSettings: saveAISettings,
+
+  // AI Assistant
+  const {
     sendMessage: sendAIMessage,
+    isLoading: aiLoading,
+    settings: aiSettings,
+    messages: aiMessages,
     clearMessages: clearAIMessages,
-    testConnection: testAIConnection
+    isConfigured: aiConfigured,
+    saveSettings: updateAISettings
   } = useAIAssistantEnhanced();
 
   const terminal = useTerminal();
 
-  const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview">("code")
-  // Store code blocks extracted from AIChat
-  const [aiCodeBlocks, setAICodeBlocks] = useState<{ code: string; lang?: string; messageId?: string }[]>([
-    // Test data to debug rendering issues
-    { code: 'console.log("Hello World!");', lang: 'javascript', messageId: 'test-1' },
-    { code: 'function test() {\n  return "test";\n}', lang: 'javascript', messageId: 'test-2' },
-    { code: '<div class="container">\n  <p>Hello HTML</p>\n</div>', lang: 'html', messageId: 'test-3' }
-  ]);
-  const [selectedAICodeIdx, setSelectedAICodeIdx] = useState<number>(0);
-
+  const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace">("code");
   const [codeColor, setCodeColor] = useState(false);
 
   // GitHub integration
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
-  const handleCodeColorToggle = () => {
-    setCodeColor(!codeColor);
-  }
-
-  const handleTestAIConnection = async () => {
-    return await testAIConnection(aiSettings);
-  }
-
-  // Define the getLanguageFromFileName function
-  const getLanguageFromFileName = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase()
-    switch (ext) {
-      case 'html': return 'html'
-      case 'css': return 'css'
-      case 'js': return 'javascript'
-      case 'tsx': return 'typescript'
-      case 'ts': return 'typescript'
-      case 'py': return 'python'
-      case 'json': return 'json'
-      case 'md': return 'markdown'
-      default: return 'text'
+  // Auto-save functionality
+  const autoSave = useAutoSave({
+    delay: 2000,
+    onSave: async (data) => {
+      console.log('Auto-saving:', data);
     }
-  }
+  });
 
-  // Enhanced AI integration
+  // Helper functions
+  const getFileTypeIcon = (fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'html': return '🌐';
+      case 'css': return '🎨';
+      case 'js': return '⚡';
+      case 'tsx': 
+      case 'ts': return '🔷';
+      case 'jsx': return '⚛️';
+      case 'py': return '🐍';
+      case 'json': return '📋';
+      case 'md': return '📝';
+      default: return '📄';
+    }
+  };
+
+  const getLanguageFromFileName = (fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'html': return 'html';
+      case 'css': return 'css';
+      case 'js': return 'javascript';
+      case 'jsx': return 'javascript';
+      case 'ts': return 'typescript';
+      case 'tsx': return 'typescript';
+      case 'json': return 'json';
+      case 'py': return 'python';
+      case 'md': return 'markdown';
+      default: return 'text';
+    }
+  };
+
+  // Enhanced AI integration with context awareness
   const handleSendMessage = useCallback(async (message: string) => {
     try {
+      // Simple context for AI
       const context = {
         files: files,
         selectedFile: selectedFile,
-        appSettings: { name: currentProject?.name || "My Project" }
+        appSettings: aiSettings
       };
-      
+
       const response = await sendAIMessage(message, context);
-      
+
       if (response) {
         const changesApplied = parseAndApplyAIResponse(response.content);
         if (changesApplied > 0) {
@@ -117,9 +125,13 @@ export default function CodeEditor() {
     } catch (error) {
       console.error('Error sending message to AI:', error);
     }
-  }, [sendAIMessage, files, selectedFile, parseAndApplyAIResponse, currentProject]);
+  }, [sendAIMessage, files, selectedFile, parseAndApplyAIResponse, aiSettings]);
 
-  // ... rest of the code ...
+  const handleCodeColorToggle = () => {
+    setCodeColor(!codeColor);
+  };
+
+
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -149,302 +161,40 @@ export default function CodeEditor() {
                       className="w-6 h-6 rounded-full"
                     />
                   )}
-                  <div className="text-right">
-                    <p className="text-xs font-medium">{session.user.name}</p>
-                    <button
-                      onClick={() => signOut()}
-                      className="text-xs text-gray-500 hover:text-red-500"
-                    >
-                      Sign out
-                    </button>
-                  </div>
+                  <span className="text-xs text-gray-600">
+                    {session.user.name || session.user.email}
+                  </span>
                 </div>
               ) : (
-                <Button
-                  onClick={() => signIn('github')}
-                  size="sm"
-                  variant="outline"
-                  className="text-xs"
-                >
-                  Sign in
+                <Button variant="ghost" size="sm">
+                  Sign In
                 </Button>
               )}
             </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="p-3 space-y-2">
-          <Button
-            onClick={() => addNewFile('newfile.txt', 'txt')}
-            className="w-full bg-green-500 hover:bg-green-600 text-white"
-            size="sm"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New File
-          </Button>
-
-          <Button
-            onClick={handleCodeColorToggle}
-            className="w-full"
-            variant="outline"
-            size="sm"
-          >
-            {codeColor ? 'Light Theme' : 'Dark Theme'}
-          </Button>
-
-
-
-          <Button
-            onClick={() => {
-              // Create a comprehensive demo with HTML, CSS, and JS
-
-              // Create HTML file
-              addNewFile('index.html', 'html');
-              const htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hex & Kex Demo</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="container">
-        <header class="header">
-            <h1>🚀 Hex & Kex Live Preview Demo</h1>
-            <p>This demo shows the live preview feature in action!</p>
-        </header>
-
-        <main class="content">
-            <div class="card">
-                <h2>Interactive Demo</h2>
-                <p>Current time: <span id="time">${new Date().toLocaleString()}</span></p>
-                <button id="updateBtn" class="btn">Update Time</button>
-                <div id="counter">Clicks: <span id="count">0</span></div>
+        {/* File Explorer */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium">Files</h3>
+              <Button
+                onClick={() => addNewFile('new-file.js')}
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+              >
+                <Plus className="w-3 h-3" />
+              </Button>
             </div>
 
-            <div class="card">
-                <h2>Features</h2>
-                <ul>
-                    <li>✅ Live HTML/CSS/JS bundling</li>
-                    <li>✅ Sandboxed iframe preview</li>
-                    <li>✅ Real-time updates</li>
-                    <li>✅ Fullscreen mode</li>
-                    <li>✅ External link support</li>
-                </ul>
-            </div>
-        </main>
-    </div>
-    <script src="script.js"></script>
-</body>
-</html>`;
-
-              // Create CSS file
-              addNewFile('style.css', 'css');
-              const cssContent = `* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding: 20px;
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.header {
-    text-align: center;
-    color: white;
-    margin-bottom: 30px;
-}
-
-.header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-}
-
-.content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-}
-
-.card {
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-}
-
-.card h2 {
-    color: #4a5568;
-    margin-bottom: 15px;
-    font-size: 1.5rem;
-}
-
-.btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: all 0.3s ease;
-    margin: 10px 0;
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-#counter {
-    margin-top: 15px;
-    font-size: 18px;
-    font-weight: bold;
-    color: #2d3748;
-}
-
-ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-li {
-    padding: 8px 0;
-    font-size: 16px;
-}
-
-#time {
-    font-weight: bold;
-    color: #667eea;
-}`;
-
-              // Create JS file
-              addNewFile('script.js', 'js');
-              const jsContent = `// Interactive demo script
-let clickCount = 0;
-
-document.addEventListener('DOMContentLoaded', function() {
-    const updateBtn = document.getElementById('updateBtn');
-    const timeSpan = document.getElementById('time');
-    const countSpan = document.getElementById('count');
-
-    // Update time function
-    function updateTime() {
-        timeSpan.textContent = new Date().toLocaleString();
-        clickCount++;
-        countSpan.textContent = clickCount;
-
-        // Add some visual feedback
-        updateBtn.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            updateBtn.style.transform = 'scale(1)';
-        }, 150);
-    }
-
-    // Attach event listener
-    updateBtn.addEventListener('click', updateTime);
-
-    // Auto-update time every 30 seconds
-    setInterval(() => {
-        timeSpan.textContent = new Date().toLocaleString();
-    }, 30000);
-
-    console.log('Hex & Kex Demo loaded successfully!');
-});`;
-
-              // Update file contents
-              updateFileContent('index.html', htmlContent);
-              updateFileContent('style.css', cssContent);
-              updateFileContent('script.js', jsContent);
-
-              // Switch to preview mode
-              setSelectedFile('index.html');
-              setViewMode('preview');
-            }}
-            className="w-full"
-            variant="outline"
-            size="sm"
-          >
-            <FileText className="w-4 h-4 mr-2" />
-            Create Live Demo
-          </Button>
-
-          <Button
-            onClick={() => {
-              // Clear localStorage and reinitialize
-              localStorage.removeItem('hex-kex-project');
-              localStorage.removeItem('hex-kex-projects-list');
-              window.location.reload();
-            }}
-            className="w-full"
-            variant="outline"
-            size="sm"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Reset Project
-          </Button>
-
-          <Button
-            onClick={() => exportAsZip(files, currentProject?.name || "My Project")}
-            variant="outline"
-            className="w-full"
-            size="sm"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export Project
-          </Button>
-
-          <Button
-            onClick={async () => {
-              try {
-                const sessionId = terminal.createSession("Dev Server");
-                if (sessionId) {
-                  await terminal.executeCommand("npm run dev");
-                }
-              } catch (error) {
-                console.error('Failed to start dev server:', error);
-              }
-            }}
-            variant="outline"
-            className="w-full"
-            size="sm"
-          >
-            <Server className="w-4 h-4 mr-2" />
-            Start Server
-          </Button>
-        </div>
-
-        {/* File List */}
-        <div className="flex-1 overflow-y-auto min-h-0">
-          <div className="p-2">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-              Files ({files.length})
-            </h3>
             <div className="space-y-1">
               {files.map((file) => (
-                <div
+                <button
                   key={file.name}
                   onClick={() => setSelectedFile(file.name)}
-                  className={`flex items-center gap-2 p-2 rounded cursor-pointer group ${
+                  className={`w-full text-left p-2 rounded text-sm flex items-center gap-2 ${
                     selectedFile === file.name
                       ? "bg-blue-50 text-blue-700"
                       : "hover:bg-gray-50"
@@ -457,75 +207,49 @@ document.addEventListener('DOMContentLoaded', function() {
                       {new Date(file.lastModified).toLocaleDateString()}
                     </p>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      deleteFile(file.name)
-                    }}
-                    className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+                  {selectedFile === file.name && (
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteFile(file.name);
+                      }}
+                      className="h-4 w-4 p-0 opacity-50 hover:opacity-100 cursor-pointer inline-flex items-center justify-center rounded hover:bg-gray-200"
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          deleteFile(file.name);
+                        }
+                      }}
+                    >
+                      <X className="w-3 h-3" />
+                    </span>
+                  )}
+                </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* AI Settings Section */}
-        <div className="border-t bg-gray-50 flex flex-col min-h-0">
-          <div className="p-2">
-            <AISettingsSidebar
-              settings={aiSettings}
-              onSettingsChange={saveAISettings}
-              onTestConnection={handleTestAIConnection}
-              isConfigured={aiConfigured}
-            />
-          </div>
-        </div>
-
-        {/* GitHub Integration Section */}
-        {session?.user && (
-          <div className="border-t bg-gray-50 flex flex-col min-h-0">
-            <div className="p-2">
-              <GitHubIntegration
-                files={files}
-                projectName={currentProject?.name || "My Project"}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* AI Chat Section */}
-        <div className="border-t bg-gray-50 flex flex-col flex-1 min-h-0">
-          <div className="p-3 border-b bg-white">
-            <div className="flex items-center gap-2">
-              <Bot className="w-5 h-5 text-blue-500" />
-              <h3 className="font-semibold text-sm">AI Assistant</h3>
-              {aiConfigured && (
-                <div className="w-2 h-2 bg-green-500 rounded-full" title="AI Connected" />
-              )}
-            </div>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <div className="h-full">
-              <AIChat
-                messages={aiMessages}
-                onSendMessage={handleSendMessage}
-                isLoading={aiLoading}
-                onClearMessages={clearAIMessages}
-                isConfigured={aiConfigured}
-                settings={aiSettings}
-                onSettingsChange={saveAISettings}
-              />
-            </div>
-          </div>
+        {/* AI Chat */}
+        <div className="border-t h-64">
+          <AIChat
+            messages={aiMessages || []}
+            onSendMessage={handleSendMessage}
+            onClearMessages={clearAIMessages}
+            isLoading={aiLoading}
+            isConfigured={aiConfigured}
+            settings={aiSettings}
+            onSettingsChange={updateAISettings}
+          />
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Top Navigation */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Bar */}
         <div className="bg-white border-b px-4 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -555,17 +279,35 @@ document.addEventListener('DOMContentLoaded', function() {
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Preview
                 </Button>
+                <Button
+                  variant={viewMode === "marketplace" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("marketplace")}
+                >
+                  <Package className="w-4 h-4 mr-2" />
+                  Extensions
+                </Button>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
               <Button
-                onClick={() => previewInNewTab(files)}
+                onClick={handleCodeColorToggle}
                 variant="outline"
                 size="sm"
               >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Preview
+                <RefreshCw className="w-4 h-4 mr-2" />
+                {codeColor ? 'Light' : 'Dark'}
+              </Button>
+              
+              <Button variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
+              
+              <Button variant="outline" size="sm">
+                <Server className="w-4 h-4 mr-2" />
+                Deploy
               </Button>
             </div>
           </div>
@@ -574,8 +316,28 @@ document.addEventListener('DOMContentLoaded', function() {
         {/* Content Area */}
         <div className="flex-1 overflow-hidden">
           {viewMode === "code" && (
-            <div className="h-full flex">
-              {/* Editor */}
+            <div className="h-full flex flex-col">
+              {/* Advanced Editor Toolbar */}
+              <AdvancedEditorToolbar
+                files={files}
+                selectedFile={selectedFile}
+                onNavigateToResult={(file) => {
+                  setSelectedFile(file);
+                }}
+                onReplaceInFile={(fileName, searchText, replaceText) => {
+                  // Implement replace functionality
+                  const file = files.find(f => f.name === fileName);
+                  if (file) {
+                    const newContent = file.content.replace(new RegExp(searchText, 'g'), replaceText);
+                    updateFileContent(fileName, newContent);
+                  }
+                }}
+                onFormatCode={(fileName) => {
+                  // Implement format functionality
+                  console.log('Format code for:', fileName);
+                }}
+              />
+
               <div className="flex-1 flex flex-col">
                 {/* File Tab */}
                 {selectedFile && (
@@ -586,44 +348,52 @@ document.addEventListener('DOMContentLoaded', function() {
                       <Badge variant="secondary" className="text-xs">
                         {getLanguageFromFileName(selectedFile)}
                       </Badge>
+                      {autoSave.hasUnsavedChanges && (
+                        <Badge variant="outline" className="text-xs">
+                          Unsaved
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 )}
-                
+
                 {/* Code Editor */}
-                <div className="flex-1 p-0">
-                  <SimpleCodeEditor
-                    value={getSelectedFileContent()}
-                    onChange={(content) => updateFileContent(selectedFile, content)}
-                    language={getLanguageFromFileName(selectedFile)}
-                    theme={codeColor ? "hex-light" : "kex-dark"}
-                    height="100%"
-                  />
+                <div className="flex-1">
+                  <ErrorBoundary>
+                    <LazyMonacoEditor
+                      value={getSelectedFileContent() || ''}
+                      onChange={(content) => {
+                        if (selectedFile && content !== undefined) {
+                          updateFileContent(selectedFile, content);
+                          autoSave.save({
+                            file: selectedFile,
+                            content
+                          });
+                        }
+                      }}
+                      language={getLanguageFromFileName(selectedFile)}
+                      theme={codeColor ? "hex-light" : "kex-dark"}
+                      height="100%"
+                    />
+                  </ErrorBoundary>
                 </div>
               </div>
             </div>
           )}
 
-
-
-          {viewMode === "terminal" && (
+          {(viewMode as string) === "terminal" && (
             <div className="h-full">
               <TerminalComponent
-                session={terminal.getActiveSession() || (() => {
-                  // Create a default session if none exists
-                  const sessionId = terminal.createSession('Default Terminal');
-                  return terminal.getActiveSession() || {
-                    id: 'default',
-                    name: 'Terminal',
-                    commands: [],
-                    isActive: true,
-                    workingDirectory: '/Users/georgalbert/pwa-code-3',
-                    environment: {}
-                  };
-                })()}
+                session={terminal.getActiveSession() || {
+                  id: 'default',
+                  name: 'Terminal',
+                  commands: [],
+                  isActive: true,
+                  workingDirectory: '/Users/georgalbert/pwa-code-3',
+                  environment: {}
+                }}
                 onExecuteCommand={async (command) => {
                   try {
-                    // Ensure we have an active session
                     if (!terminal.getActiveSession()) {
                       terminal.createSession('Default Terminal');
                     }
@@ -638,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
           )}
 
-          {viewMode === "preview" && (
+          {(viewMode as string) === "preview" && (
             <div className="h-full p-4">
               <LivePreview
                 files={files}
@@ -647,23 +417,14 @@ document.addEventListener('DOMContentLoaded', function() {
               />
             </div>
           )}
+
+          {(viewMode as string) === "marketplace" && (
+            <div className="h-full p-4">
+              <Marketplace className="h-full" />
+            </div>
+          )}
         </div>
       </div>
     </div>
-  )
-}
-
-const getFileTypeIcon = (fileName: string) => {
-  const ext = fileName.split('.').pop()?.toLowerCase()
-  switch (ext) {
-    case 'html': return '🌐'
-    case 'css': return '🎨'
-    case 'js': return '⚡'
-    case 'tsx': 
-    case 'ts': return '🔷'
-    case 'py': return '🐍'
-    case 'json': return '📋'
-    case 'md': return '📝'
-    default: return '📄'
-  }
+  );
 }

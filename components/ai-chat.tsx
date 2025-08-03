@@ -107,13 +107,13 @@ export function AIChat({
       const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
       const nearBottom = distanceFromBottom < 100;
       setIsNearBottom(nearBottom);
-      setShowScrollButton(!nearBottom && messages.length > 0);
+      setShowScrollButton(!nearBottom && (messages?.length || 0) > 0);
     }
   };
 
   // Auto-scroll when new messages arrive if user is near bottom
   useEffect(() => {
-    if (isNearBottom && (messages.length > 0 || streamedMessage)) {
+    if (isNearBottom && ((messages?.length || 0) > 0 || streamedMessage)) {
       setTimeout(scrollToBottom, 100);
     }
   }, [messages, streamedMessage, isNearBottom]);
@@ -478,7 +478,7 @@ export function AIChat({
             )}
           </div>
           
-          {messages.length > 0 && (
+          {(messages?.length || 0) > 0 && (
             <Button 
               variant="outline" 
               size="sm" 
@@ -499,7 +499,7 @@ export function AIChat({
           onScroll={handleScroll}
           style={{ overflow: 'auto' }}
         >
-          {messages.length === 0 ? (
+          {(messages?.length || 0) === 0 ? (
             <div className="text-center py-8">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <img 
