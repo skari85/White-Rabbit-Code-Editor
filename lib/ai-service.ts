@@ -4,20 +4,8 @@ export class AIService {
   private settings: AISettings;
   
   constructor(settings: AISettings) {
-    // If no API key is provided, try to get it from environment variables
-    if (!settings.apiKey) {
-      switch (settings.provider) {
-        case 'groq':
-          settings.apiKey = process.env.GROQ_API_KEY || '';
-          break;
-        case 'openai':
-          settings.apiKey = process.env.OPENAI_API_KEY || '';
-          break;
-        case 'anthropic':
-          settings.apiKey = process.env.ANTHROPIC_API_KEY || '';
-          break;
-      }
-    }
+    // Client-side environment variables are not available in browsers
+    // Users must provide their own API keys (BYOK - Bring Your Own Key)
     this.settings = settings;
   }
 
@@ -70,38 +58,49 @@ export class AIService {
       throw new Error('OpenAI API key is required');
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.settings.apiKey}`
-      },
-      body: JSON.stringify({
-        model: this.settings.model,
-        messages: [
-          { role: 'system', content: this.settings.systemPrompt },
-          ...messages.map(m => ({ role: m.role, content: m.content }))
-        ],
-        temperature: this.settings.temperature,
-        max_tokens: this.settings.maxTokens
-      })
-    });
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.settings.apiKey}`,
+          // Add Chrome compatibility headers
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        body: JSON.stringify({
+          model: this.settings.model,
+          messages: [
+            { role: 'system', content: this.settings.systemPrompt },
+            ...messages.map(m => ({ role: m.role, content: m.content }))
+          ],
+          temperature: this.settings.temperature,
+          max_tokens: this.settings.maxTokens
+        })
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+        throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
+      }
+
+      const data = await response.json();
+      const choice = data.choices[0];
+
+      return {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: choice.message.content,
+        timestamp: new Date(),
+        tokens: data.usage?.total_tokens
+      };
+    } catch (error) {
+      // Enhanced error handling for Chrome compatibility
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network error: Please check your internet connection and API key');
+      }
+      throw error;
     }
-
-    const data = await response.json();
-    const choice = data.choices[0];
-    
-    return {
-      id: Date.now().toString(),
-      role: 'assistant',
-      content: choice.message.content,
-      timestamp: new Date(),
-      tokens: data.usage?.total_tokens
-    };
   }
 
   private async *sendOpenAIMessageStream(messages: AIMessage[]): AsyncGenerator<string, void, unknown> {
@@ -113,7 +112,10 @@ export class AIService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.settings.apiKey}`
+        'Authorization': `Bearer ${this.settings.apiKey}`,
+        // Add Chrome compatibility headers
+        'Accept': 'text/event-stream',
+        'Cache-Control': 'no-cache'
       },
       body: JSON.stringify({
         model: this.settings.model,
@@ -128,12 +130,12 @@ export class AIService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
       throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
     }
 
     const reader = response.body?.getReader();
-    if (!reader) throw new Error('No response body');
+    if (!reader) throw new Error('No response body - streaming not supported');
 
     const decoder = new TextDecoder();
     let buffer = '';
@@ -164,6 +166,12 @@ export class AIService {
           }
         }
       }
+    } catch (error) {
+      // Enhanced error handling for Chrome compatibility
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network error: Please check your internet connection and API key');
+      }
+      throw error;
     } finally {
       reader.releaseLock();
     }

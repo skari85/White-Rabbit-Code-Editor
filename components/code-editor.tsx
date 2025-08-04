@@ -17,7 +17,8 @@ import {
   X,
   Server,
   RefreshCw,
-  Package
+  Package,
+  Settings
 } from "lucide-react";
 import LazyMonacoEditor from './lazy-monaco-editor';
 import { ErrorBoundary } from './error-boundary';
@@ -31,6 +32,7 @@ import VercelIntegrationComponent from './vercel-integration';
 import Marketplace from './marketplace';
 import CodeAnalysisPanel from './code-analysis-panel';
 import AdvancedEditorToolbar from './advanced-editor-toolbar';
+import BYOKAISettings from './byok-ai-settings';
 
 export default function CodeEditor() {
   // Code Builder hooks
@@ -61,6 +63,7 @@ export default function CodeEditor() {
 
   const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace">("code");
   const [codeColor, setCodeColor] = useState(false);
+  const [showAISettings, setShowAISettings] = useState(false);
 
   // GitHub integration
   const { data: session } = useSession();
@@ -189,8 +192,20 @@ export default function CodeEditor() {
               </div>
             </div>
 
-            {/* User Profile */}
+            {/* Settings and User Profile */}
             <div className="flex items-center gap-2">
+              {/* Settings Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAISettings(!showAISettings)}
+                className="h-8 w-8 p-0"
+                title="AI Settings (BYOK)"
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+
+              {/* User Profile */}
               {session?.user ? (
                 <div className="flex items-center gap-2">
                   {session.user.image && (
@@ -499,6 +514,14 @@ export default function CodeEditor() {
           )}
         </div>
       </div>
+
+      {/* BYOK AI Settings Modal */}
+      <BYOKAISettings
+        isOpen={showAISettings}
+        onClose={() => setShowAISettings(false)}
+        currentSettings={aiSettings}
+        onSaveSettings={updateAISettings}
+      />
     </div>
   );
 }

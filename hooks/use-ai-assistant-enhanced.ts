@@ -160,30 +160,52 @@ export function useAIAssistantEnhanced() {
   const [streamedMessage, setStreamedMessage] = useState<string>('');
   const [isStreaming, setIsStreaming] = useState(false);
 
-  // Load settings from localStorage on mount
+  // Load settings from localStorage on mount (prioritize BYOK settings)
   useEffect(() => {
+    // First check for BYOK settings
+    const byokSettings = localStorage.getItem('byok-ai-settings');
     const savedSettings = localStorage.getItem(STORAGE_KEY);
     const savedMessages = localStorage.getItem(MESSAGES_STORAGE_KEY);
-    
-    if (savedSettings) {
+
+    let finalSettings = {
+      ...DEFAULT_AI_SETTINGS,
+      systemPrompt: ENHANCED_SYSTEM_PROMPT
+    };
+
+    // Load BYOK settings first (highest priority)
+    if (byokSettings) {
+      try {
+        const parsed = JSON.parse(byokSettings);
+        finalSettings = {
+          ...finalSettings,
+          ...parsed,
+          systemPrompt: ENHANCED_SYSTEM_PROMPT // Always use enhanced system prompt
+        };
+      } catch (error) {
+        console.error('Error loading BYOK AI settings:', error);
+      }
+    }
+    // Fallback to legacy settings if no BYOK settings
+    else if (savedSettings) {
       try {
         const parsed = JSON.parse(savedSettings);
-        const enhancedSettings = {
+        finalSettings = {
           ...parsed,
-          systemPrompt: parsed.systemPrompt?.includes('Hex & Kex code editor') 
-            ? parsed.systemPrompt 
+          systemPrompt: parsed.systemPrompt?.includes('Hex & Kex code editor')
+            ? parsed.systemPrompt
             : ENHANCED_SYSTEM_PROMPT
         };
-        setSettings(enhancedSettings);
-        
-        // Check if API key is valid
-        if (enhancedSettings.apiKey && validateApiKey(enhancedSettings.provider, enhancedSettings.apiKey)) {
-          setIsConfigured(true);
-          setAIService(new AIService(enhancedSettings));
-        }
       } catch (error) {
         console.error('Error loading AI settings:', error);
       }
+    }
+
+    setSettings(finalSettings);
+
+    // Check if API key is valid and configure service
+    if (finalSettings.apiKey && validateApiKey(finalSettings.provider, finalSettings.apiKey)) {
+      setIsConfigured(true);
+      setAIService(new AIService(finalSettings));
     }
 
     if (savedMessages) {
@@ -199,18 +221,20 @@ export function useAIAssistantEnhanced() {
     }
   }, []);
 
-  // Save settings to localStorage
+  // Save settings to localStorage (both BYOK and legacy)
   const saveSettings = useCallback((newSettings: AISettings) => {
     const enhancedSettings = {
       ...newSettings,
-      systemPrompt: newSettings.systemPrompt?.includes('Hex & Kex code editor') 
-        ? newSettings.systemPrompt 
+      systemPrompt: newSettings.systemPrompt?.includes('Hex & Kex code editor')
+        ? newSettings.systemPrompt
         : ENHANCED_SYSTEM_PROMPT
     };
-    
+
+    // Save to both BYOK and legacy storage for compatibility
+    localStorage.setItem('byok-ai-settings', JSON.stringify(enhancedSettings));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(enhancedSettings));
     setSettings(enhancedSettings);
-    
+
     if (enhancedSettings.apiKey && validateApiKey(enhancedSettings.provider, enhancedSettings.apiKey)) {
       setIsConfigured(true);
       setAIService(new AIService(enhancedSettings));
