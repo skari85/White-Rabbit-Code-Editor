@@ -73,6 +73,17 @@ export default function CodeEditor() {
     }
   });
 
+  // Handle file closing
+  const handleCloseFile = useCallback((filename: string) => {
+    // If closing the selected file, select another file first
+    if (filename === selectedFile && files.length > 1) {
+      const remainingFiles = files.filter(f => f.name !== filename);
+      setSelectedFile(remainingFiles[0].name);
+    }
+    // Delete the file
+    deleteFile(filename);
+  }, [selectedFile, files, setSelectedFile, deleteFile]);
+
   // Helper functions
   const getFileTypeIcon = (fileName: string) => {
     const ext = fileName.split('.').pop()?.toLowerCase();
@@ -398,15 +409,7 @@ export default function CodeEditor() {
                   files={files}
                   selectedFile={selectedFile}
                   onSelectFile={setSelectedFile}
-                  onCloseFile={useCallback((filename: string) => {
-                    // If closing the selected file, select another file first
-                    if (filename === selectedFile && files.length > 1) {
-                      const remainingFiles = files.filter(f => f.name !== filename);
-                      setSelectedFile(remainingFiles[0].name);
-                    }
-                    // Delete the file
-                    deleteFile(filename);
-                  }, [selectedFile, files, setSelectedFile, deleteFile])}
+                  onCloseFile={handleCloseFile}
                   hasUnsavedChanges={autoSave.hasUnsavedChanges}
                 />
 
@@ -453,6 +456,24 @@ export default function CodeEditor() {
                     await terminal.executeCommand(command);
                   } catch (error) {
                     console.error('Terminal command failed:', error);
+                  }
+                }}
+                onOpenFile={(filePath, lineNumber, columnNumber) => {
+                  // Check if file exists in current project
+                  const existingFile = files.find(f => f.name === filePath || f.name.endsWith(filePath));
+                  if (existingFile) {
+                    setSelectedFile(existingFile.name);
+                    // TODO: Navigate to specific line number in Monaco editor
+                    console.log(`Opening file: ${existingFile.name} at line ${lineNumber}:${columnNumber}`);
+                  } else {
+                    // Try to create a new file if it doesn't exist
+                    const fileName = filePath.split('/').pop() || filePath;
+                    addNewFile(fileName, 'txt');
+                    // Update the content after creation
+                    setTimeout(() => {
+                      updateFileContent(fileName, `// File: ${filePath}\n// Line ${lineNumber}${columnNumber ? `:${columnNumber}` : ''}\n\n// This file was opened from a terminal stack trace`);
+                    }, 0);
+                    setSelectedFile(fileName);
                   }
                 }}
                 onClose={() => {}}

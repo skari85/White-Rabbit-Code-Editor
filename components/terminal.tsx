@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Terminal, X, Minimize2, Maximize2, Play, Square } from 'lucide-react';
+import { Terminal, X, Minimize2, Maximize2, Play, Square, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,18 +12,22 @@ interface TerminalComponentProps {
   onExecuteCommand: (command: string) => Promise<void>;
   onClose?: () => void;
   onMinimize?: () => void;
+  onOpenFile?: (filePath: string, lineNumber?: number, columnNumber?: number) => void;
   className?: string;
 }
 
-export function TerminalComponent({ 
-  session, 
-  onExecuteCommand, 
-  onClose, 
+export function TerminalComponent({
+  session,
+  onExecuteCommand,
+  onClose,
   onMinimize,
-  className = "" 
+  onOpenFile,
+  className = ""
 }: TerminalComponentProps) {
   const [input, setInput] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
+  const [collapsedCommands, setCollapsedCommands] = useState<Set<string>>(new Set());
+  const [hoveredError, setHoveredError] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -36,6 +40,47 @@ export function TerminalComponent({
       }
     }
   }, [session.commands]);
+
+  // Handle file path clicks in stack traces
+  const handleFilePathClick = (event: React.MouseEvent) => {
+    const target = event.target as HTMLElement;
+    const filePath = target.getAttribute('data-file-path');
+    const lineNumber = target.getAttribute('data-line');
+    const columnNumber = target.getAttribute('data-column');
+
+    if (filePath && onOpenFile) {
+      onOpenFile(
+        filePath,
+        lineNumber ? parseInt(lineNumber) : undefined,
+        columnNumber ? parseInt(columnNumber) : undefined
+      );
+    }
+  };
+
+  // Toggle command output collapse
+  const toggleCommandCollapse = (commandId: string) => {
+    setCollapsedCommands(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(commandId)) {
+        newSet.delete(commandId);
+      } else {
+        newSet.add(commandId);
+      }
+      return newSet;
+    });
+  };
+
+  // Check if output should be collapsible (more than 10 lines)
+  const isOutputCollapsible = (output: string): boolean => {
+    return output.split('\n').length > 10;
+  };
+
+  // Get collapsed output preview
+  const getCollapsedPreview = (output: string): string => {
+    const lines = output.split('\n');
+    const hiddenCount = lines.length - 3;
+    return `${lines.slice(0, 3).join('\n')}\n... ${hiddenCount} lines hidden - click to expand`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,12 +116,158 @@ export function TerminalComponent({
     }
   };
 
+  // Error explanation system
+  const getErrorExplanation = (output: string): { title: string; explanation: string; suggestions: string[] } | null => {
+    const lowerOutput = output.toLowerCase();
+
+    if (lowerOutput.includes('module not found') || lowerOutput.includes('cannot resolve module')) {
+      return {
+        title: 'Module Not Found Error',
+        explanation: 'The application is trying to import a module that cannot be found.',
+        suggestions: [
+          'Run "npm install" to install missing dependencies',
+          'Check if the module name is spelled correctly',
+          'Verify the file path is correct',
+          'Check if the module is listed in package.json'
+        ]
+      };
+    }
+
+    if (lowerOutput.includes('syntaxerror') || lowerOutput.includes('unexpected token')) {
+      return {
+        title: 'Syntax Error',
+        explanation: 'There is a syntax error in your code that prevents it from being parsed correctly.',
+        suggestions: [
+          'Check for missing brackets, parentheses, or semicolons',
+          'Verify proper indentation and formatting',
+          'Look for unclosed strings or comments',
+          'Use a code formatter to identify issues'
+        ]
+      };
+    }
+
+    if (lowerOutput.includes('port') && lowerOutput.includes('already in use')) {
+      return {
+        title: 'Port Already in Use',
+        explanation: 'The port you are trying to use is already occupied by another process.',
+        suggestions: [
+          'Use a different port number',
+          'Kill the process using the port',
+          'Check what is running on the port with "lsof -i :PORT"',
+          'Restart your development server'
+        ]
+      };
+    }
+
+    if (lowerOutput.includes('permission denied') || lowerOutput.includes('eacces')) {
+      return {
+        title: 'Permission Denied',
+        explanation: 'You do not have the necessary permissions to perform this operation.',
+        suggestions: [
+          'Try running the command with sudo (use with caution)',
+          'Check file and directory permissions',
+          'Ensure you own the files you are trying to modify',
+          'Use npm config to set proper permissions'
+        ]
+      };
+    }
+
+    return null;
+  };
+
+  // Enhanced output formatting with syntax highlighting
   const formatOutput = (output: string) => {
+    let formattedOutput = output;
+
+    // Apply syntax highlighting patterns
+    formattedOutput = applySyntaxHighlighting(formattedOutput);
+
     // Convert URLs to clickable links
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return output.replace(urlRegex, (url) => {
+    formattedOutput = formattedOutput.replace(urlRegex, (url) => {
       return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline">${url}</a>`;
     });
+
+    return formattedOutput;
+  };
+
+  // Syntax highlighting function
+  const applySyntaxHighlighting = (text: string): string => {
+    let highlighted = text;
+
+    // Error patterns (red text with background)
+    const errorPatterns = [
+      /\b(error|Error|ERROR|failed|Failed|FAILED|exception|Exception|EXCEPTION)\b/g,
+      /\b(npm ERR!|yarn error|pnpm ERR!)\b/g,
+      /\b(SyntaxError|TypeError|ReferenceError|RangeError|EvalError|URIError)\b/g,
+      /\b(ModuleNotFoundError|ImportError|AttributeError|NameError)\b/g,
+      /\b(fatal|Fatal|FATAL)\b/g
+    ];
+
+    errorPatterns.forEach(pattern => {
+      highlighted = highlighted.replace(pattern, (match) =>
+        `<span class="text-red-400 bg-red-900/20 px-1 rounded font-semibold">${match}</span>`
+      );
+    });
+
+    // Warning patterns (yellow/amber text)
+    const warningPatterns = [
+      /\b(warning|Warning|WARNING|warn|Warn|WARN)\b/g,
+      /\b(deprecated|Deprecated|DEPRECATED)\b/g,
+      /\b(npm WARN|yarn warn|pnpm WARN)\b/g
+    ];
+
+    warningPatterns.forEach(pattern => {
+      highlighted = highlighted.replace(pattern, (match) =>
+        `<span class="text-amber-400 bg-amber-900/20 px-1 rounded font-medium">${match}</span>`
+      );
+    });
+
+    // Success patterns (green text)
+    const successPatterns = [
+      /\b(success|Success|SUCCESS|completed|Completed|COMPLETED|done|Done|DONE)\b/g,
+      /\b(✓|✔|✅|✨|🎉)\s*[^<\n]*/g,
+      /\b(installed|built|compiled|deployed|started)\b/g
+    ];
+
+    successPatterns.forEach(pattern => {
+      highlighted = highlighted.replace(pattern, (match) =>
+        `<span class="text-green-400 font-medium">${match}</span>`
+      );
+    });
+
+    // Info patterns (blue/cyan text)
+    const infoPatterns = [
+      /\b(info|Info|INFO|note|Note|NOTE)\b/g,
+      /\b(Local:|Network:|Port:|URL:)\s*[^\s<\n]+/g,
+      /\b(npm info|yarn info|pnpm info)\b/g
+    ];
+
+    infoPatterns.forEach(pattern => {
+      highlighted = highlighted.replace(pattern, (match) =>
+        `<span class="text-cyan-400 font-medium">${match}</span>`
+      );
+    });
+
+    // File paths and line numbers (for stack traces)
+    const filePathPattern = /([a-zA-Z0-9_\-./\\]+\.(js|ts|jsx|tsx|py|java|cpp|c|php|rb|go|rs|swift|kt|scala|clj|hs|ml|fs|vb|cs|dart|lua|perl|sh|bash|zsh|fish|ps1|bat|cmd|html|css|scss|sass|less|styl|vue|svelte|astro|md|mdx|json|yaml|yml|toml|ini|cfg|conf|xml|svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|otf|eot)):(\d+)(?::(\d+))?/g;
+
+    highlighted = highlighted.replace(filePathPattern, (match, filePath, extension, lineNumber, columnNumber) => {
+      const clickableClass = "text-blue-300 hover:text-blue-200 underline cursor-pointer hover:bg-blue-900/20 px-1 rounded transition-colors";
+      return `<span class="${clickableClass}" data-file-path="${filePath}" data-line="${lineNumber}" data-column="${columnNumber || ''}">${match}</span>`;
+    });
+
+    // Highlight numbers and versions
+    highlighted = highlighted.replace(/\b(\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?)\b/g,
+      '<span class="text-purple-400">$1</span>'
+    );
+
+    // Highlight timestamps
+    highlighted = highlighted.replace(/\b(\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:\d{2})?)\b/g,
+      '<span class="text-gray-400">$1</span>'
+    );
+
+    return highlighted;
   };
 
   return (
@@ -149,14 +340,61 @@ export function TerminalComponent({
                 
                 {/* Command Output */}
                 {command.output && (
-                  <div 
-                    className={`pl-4 whitespace-pre-wrap text-xs ${
-                      command.status === 'error' ? 'text-red-300' : 'text-gray-300'
-                    }`}
-                    dangerouslySetInnerHTML={{ 
-                      __html: formatOutput(command.output) 
-                    }}
-                  />
+                  <div className="pl-4">
+                    {/* Collapsible toggle for long outputs */}
+                    {isOutputCollapsible(command.output) && (
+                      <button
+                        onClick={() => toggleCommandCollapse(command.id)}
+                        className="text-xs text-blue-400 hover:text-blue-300 mb-1 flex items-center gap-1"
+                      >
+                        {collapsedCommands.has(command.id) ? '▶' : '▼'}
+                        {collapsedCommands.has(command.id) ? 'Expand output' : 'Collapse output'}
+                      </button>
+                    )}
+
+                    {/* Output content with error tooltip */}
+                    <div
+                      className={`whitespace-pre-wrap text-xs relative ${
+                        command.status === 'error' ? 'text-red-300' : 'text-gray-300'
+                      }`}
+                      onClick={handleFilePathClick}
+                      onMouseEnter={() => {
+                        if (command.status === 'error') {
+                          setHoveredError(command.id);
+                        }
+                      }}
+                      onMouseLeave={() => setHoveredError(null)}
+                      dangerouslySetInnerHTML={{
+                        __html: formatOutput(
+                          collapsedCommands.has(command.id) && isOutputCollapsible(command.output)
+                            ? getCollapsedPreview(command.output)
+                            : command.output
+                        )
+                      }}
+                    />
+
+                    {/* Error explanation tooltip */}
+                    {hoveredError === command.id && command.status === 'error' && (
+                      (() => {
+                        const errorInfo = getErrorExplanation(command.output);
+                        return errorInfo ? (
+                          <div className="absolute z-10 bg-gray-800 border border-gray-600 rounded-lg p-3 mt-2 max-w-md shadow-lg">
+                            <h4 className="text-sm font-semibold text-red-400 mb-2">{errorInfo.title}</h4>
+                            <p className="text-xs text-gray-300 mb-2">{errorInfo.explanation}</p>
+                            <div className="space-y-1">
+                              <p className="text-xs font-medium text-gray-400">Suggestions:</p>
+                              {errorInfo.suggestions.map((suggestion, index) => (
+                                <div key={index} className="text-xs text-gray-300 flex items-start gap-1">
+                                  <span className="text-green-400">•</span>
+                                  <span>{suggestion}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null;
+                      })()
+                    )}
+                  </div>
                 )}
               </div>
             ))}

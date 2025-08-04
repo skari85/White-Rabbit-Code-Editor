@@ -118,6 +118,23 @@ export function useTerminal() {
         }
       } else if (command.includes('python') || command.includes('node')) {
         output = `Executing: ${command}\n✓ Script completed successfully`;
+      } else if (command.includes('test-error')) {
+        // Simulate various error types for testing
+        output = `npm ERR! code ENOENT\nnpm ERR! syscall open\nnpm ERR! path /Users/georgalbert/pwa-code-3/package.json\nnpm ERR! errno -2\nnpm ERR! enoent ENOENT: no such file or directory, open '/Users/georgalbert/pwa-code-3/package.json'\nnpm ERR! enoent This is related to npm not being able to find a file.\nnpm ERR! enoent \n\nSyntaxError: Unexpected token '}' in components/terminal.tsx:45:12\n    at Module._compile (internal/modules/cjs/loader.js:723:23)\n    at Object.Module._extensions..js (internal/modules/cjs/loader.js:789:10)\n    at Module.load (internal/modules/cjs/loader.js:653:32)\n    at Function.Module._load (internal/modules/cjs/loader.js:593:12)\n    at Function.executeUserEntryPoint [as runMain] (internal/modules/run_main.js:60:12)\n    at internal/main/run_main_module.js:17:47`;
+        status = 'error';
+      } else if (command.includes('test-warning')) {
+        // Simulate warnings for testing
+        output = `npm WARN deprecated request@2.88.2: request has been deprecated, see https://github.com/request/request/issues/3142\nnpm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@2.3.2 (node_modules/fsevents):\nnpm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@2.3.2: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})\n\nwarning: LF will be replaced by CRLF in package.json.\nwarning: The file will have its original line endings in your working directory`;
+      } else if (command.includes('test-success')) {
+        // Simulate success messages for testing
+        output = `✓ Dependencies installed successfully\n✓ Build completed in 2.3s\n✓ Tests passed: 15/15\n✨ Ready on http://localhost:3000\n🎉 Deployment successful!`;
+      } else if (command.includes('test-long')) {
+        // Simulate long output for testing collapsible feature
+        const lines = [];
+        for (let i = 1; i <= 25; i++) {
+          lines.push(`Line ${i}: This is a long output line to test the collapsible feature`);
+        }
+        output = lines.join('\n');
       } else {
         output = `Command executed: ${command}\n✓ Completed`;
       }
