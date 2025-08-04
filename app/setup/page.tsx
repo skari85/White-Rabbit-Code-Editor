@@ -47,7 +47,7 @@ export default function SetupPage() {
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 mb-4">
-                Configure your Hex & Kex PWA Code Editor with GitHub authentication to unlock 
+                Configure your Hex & Kex Code Editor with GitHub authentication to unlock
                 powerful features like repository sync, collaboration, and deployment.
               </p>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

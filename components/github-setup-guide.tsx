@@ -193,11 +193,11 @@ export default function GitHubSetupGuide({ onComplete, className = '' }: GitHubS
               <div className="bg-gray-50 p-3 rounded-lg">
                 <Label className="text-xs font-medium text-gray-700">Application name</Label>
                 <div className="flex items-center justify-between mt-1">
-                  <code className="text-sm">Hex & Kex PWA Builder</code>
+                  <code className="text-sm">Hex & Kex Code Editor</code>
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => copyToClipboard('Hex & Kex PWA Builder', 'name')}
+                    onClick={() => copyToClipboard('Hex & Kex Code Editor', 'name')}
                   >
                     {copied === 'name' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                   </Button>

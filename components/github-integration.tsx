@@ -28,7 +28,7 @@ interface GitHubIntegrationProps {
 export default function GitHubIntegration({ files, projectName, className }: GitHubIntegrationProps) {
   const { data: session } = useSession();
   const [repoName, setRepoName] = useState(projectName.toLowerCase().replace(/\s+/g, '-'));
-  const [description, setDescription] = useState(`PWA project created with Hex & Kex`);
+  const [description, setDescription] = useState(`Project created with Hex & Kex Code Editor`);
   const [isPrivate, setIsPrivate] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<'success' | 'error' | null>(null);
@@ -86,7 +86,7 @@ export default function GitHubIntegration({ files, projectName, className }: Git
       // Create README.md
       const readmeContent = `# ${projectName}
 
-PWA project created with [Hex & Kex](https://github.com/skari85/pwa-code)
+Project created with [Hex & Kex Code Editor](https://github.com/skari85/pwa-code)
 
 ## Files
 ${files.map(file => `- \`${file.name}\` (${file.type})`).join('\n')}
@@ -99,7 +99,7 @@ ${files.map(file => `- \`${file.name}\` (${file.type})`).join('\n')}
 
 ## About Hex & Kex
 
-Hex & Kex is an AI-powered Progressive Web App builder that lets developers create applications through visual interfaces and conversational AI.
+Hex & Kex is an AI-powered code editor that lets developers create applications through intelligent code generation and conversational AI.
 
 ---
 *Generated on ${new Date().toLocaleDateString()}*
@@ -183,7 +183,7 @@ Hex & Kex is an AI-powered Progressive Web App builder that lets developers crea
             <Input
               value={repoName}
               onChange={(e) => setRepoName(e.target.value)}
-              placeholder="my-pwa-project"
+              placeholder="my-code-project"
               className="text-xs"
             />
           </div>
