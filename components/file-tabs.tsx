@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, FileText, Code, Palette, Settings } from 'lucide-react';
+import { X, FileText, Code, Palette, Settings, BookOpen, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileContent } from '@/hooks/use-code-builder';
@@ -13,6 +13,12 @@ interface FileTabsProps {
   onCloseFile?: (filename: string) => void;
   hasUnsavedChanges?: boolean;
   className?: string;
+  showDocumentation?: boolean;
+  onToggleDocumentation?: () => void;
+  hasDocumentation?: boolean;
+  useAIEnhancedEditor?: boolean;
+  onToggleAIEditor?: () => void;
+  aiConfigured?: boolean;
 }
 
 // Get file type icon based on extension
@@ -69,7 +75,13 @@ export default function FileTabs({
   onSelectFile,
   onCloseFile,
   hasUnsavedChanges = false,
-  className = ''
+  className = '',
+  showDocumentation = false,
+  onToggleDocumentation,
+  hasDocumentation = false,
+  useAIEnhancedEditor = false,
+  onToggleAIEditor,
+  aiConfigured = false
 }: FileTabsProps) {
   if (files.length === 0) {
     return (
@@ -153,11 +165,48 @@ export default function FileTabs({
                 Total files: <span className="font-medium text-gray-700">{files.length}</span>
               </span>
             </div>
-            {hasUnsavedChanges && (
-              <Badge variant="outline" className="text-xs">
-                Unsaved changes
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {onToggleAIEditor && aiConfigured && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleAIEditor}
+                  className={`h-6 px-2 text-xs ${
+                    useAIEnhancedEditor
+                      ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                      : 'hover:bg-gray-200'
+                  }`}
+                  title={useAIEnhancedEditor ? "Disable AI completions" : "Enable AI completions"}
+                >
+                  <Zap className="w-3 h-3 mr-1" />
+                  AI
+                </Button>
+              )}
+              {onToggleDocumentation && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleDocumentation}
+                  className={`h-6 px-2 text-xs ${
+                    showDocumentation
+                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                      : 'hover:bg-gray-200'
+                  }`}
+                  title={showDocumentation ? "Hide documentation" : "Show documentation"}
+                >
+                  <BookOpen className="w-3 h-3 mr-1" />
+                  Docs
+                  {hasDocumentation && (
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full ml-1" />
+                  )}
+                </Button>
+              )}
+              {hasUnsavedChanges && (
+                <Badge variant="outline" className="text-xs">
+                  Unsaved changes
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -21,6 +21,7 @@ import {
   Settings
 } from "lucide-react";
 import LazyMonacoEditor from './lazy-monaco-editor';
+import AIEnhancedMonacoEditor from './ai-enhanced-monaco-editor';
 import { ErrorBoundary } from './error-boundary';
 import { useAutoSave } from '@/hooks/use-debounced-auto-save';
 import FileTabs from './file-tabs';
@@ -33,6 +34,7 @@ import Marketplace from './marketplace';
 import CodeAnalysisPanel from './code-analysis-panel';
 import AdvancedEditorToolbar from './advanced-editor-toolbar';
 import BYOKAISettings from './byok-ai-settings';
+import DocumentationPanel from './documentation-panel';
 
 export default function CodeEditor() {
   // Code Builder hooks
@@ -56,7 +58,9 @@ export default function CodeEditor() {
     messages: aiMessages,
     clearMessages: clearAIMessages,
     isConfigured: aiConfigured,
-    saveSettings: updateAISettings
+    saveSettings: updateAISettings,
+    generateDocumentation,
+    getCachedDocumentation
   } = useAIAssistantEnhanced();
 
   const terminal = useTerminal();
@@ -64,6 +68,14 @@ export default function CodeEditor() {
   const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace">("code");
   const [codeColor, setCodeColor] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
+
+  // Documentation state
+  const [showDocumentation, setShowDocumentation] = useState(false);
+  const [documentationData, setDocumentationData] = useState<any>(null);
+  const [documentationLoading, setDocumentationLoading] = useState(false);
+
+  // AI-enhanced editor state
+  const [useAIEnhancedEditor, setUseAIEnhancedEditor] = useState(true);
 
   // GitHub integration
   const { data: session } = useSession();
@@ -146,6 +158,49 @@ export default function CodeEditor() {
   const handleCodeColorToggle = () => {
     setCodeColor(!codeColor);
   };
+
+  // Documentation handlers
+  const handleToggleDocumentation = useCallback(() => {
+    setShowDocumentation(!showDocumentation);
+
+    // Load cached documentation if available
+    if (!showDocumentation && selectedFile && !documentationData) {
+      const cached = getCachedDocumentation(selectedFile);
+      if (cached) {
+        setDocumentationData(cached);
+      }
+    }
+  }, [showDocumentation, selectedFile, documentationData, getCachedDocumentation]);
+
+  const handleGenerateDocumentation = useCallback(async (fileName: string, code: string) => {
+    if (!fileName || !code.trim()) return;
+
+    setDocumentationLoading(true);
+    try {
+      const fileType = fileName.split('.').pop()?.toLowerCase() || 'txt';
+      const documentation = await generateDocumentation(code, fileName, fileType);
+      setDocumentationData(documentation);
+    } catch (error) {
+      console.error('Failed to generate documentation:', error);
+    } finally {
+      setDocumentationLoading(false);
+    }
+  }, [generateDocumentation]);
+
+  const handleCloseDocumentation = useCallback(() => {
+    setShowDocumentation(false);
+  }, []);
+
+  const handleToggleAIEditor = useCallback(() => {
+    setUseAIEnhancedEditor(!useAIEnhancedEditor);
+  }, [useAIEnhancedEditor]);
+
+  // Check if current file has cached documentation
+  const hasDocumentation = useMemo(() => {
+    if (!selectedFile) return false;
+    const cached = getCachedDocumentation(selectedFile);
+    return !!cached;
+  }, [selectedFile, getCachedDocumentation]);
 
   // Memoize the onCodeGenerated callback to prevent infinite re-renders
   const handleCodeGenerated = useCallback((filename: string, content: string, language: string) => {
@@ -426,27 +481,70 @@ export default function CodeEditor() {
                   onSelectFile={setSelectedFile}
                   onCloseFile={handleCloseFile}
                   hasUnsavedChanges={autoSave.hasUnsavedChanges}
+                  showDocumentation={showDocumentation}
+                  onToggleDocumentation={handleToggleDocumentation}
+                  hasDocumentation={hasDocumentation}
+                  useAIEnhancedEditor={useAIEnhancedEditor}
+                  onToggleAIEditor={handleToggleAIEditor}
+                  aiConfigured={aiConfigured}
                 />
 
-                {/* Code Editor */}
-                <div className="flex-1">
-                  <ErrorBoundary>
-                    <LazyMonacoEditor
-                      value={getSelectedFileContent() || ''}
-                      onChange={(content) => {
-                        if (selectedFile && content !== undefined) {
-                          updateFileContent(selectedFile, content);
-                          autoSave.save({
-                            file: selectedFile,
-                            content
-                          });
-                        }
-                      }}
-                      language={getLanguageFromFileName(selectedFile)}
-                      theme={codeColor ? "hex-light" : "kex-dark"}
-                      height="100%"
-                    />
-                  </ErrorBoundary>
+                {/* Code Editor and Documentation Panel */}
+                <div className="flex-1 flex">
+                  {/* Code Editor */}
+                  <div className={`${showDocumentation ? 'flex-1' : 'w-full'} transition-all duration-300`}>
+                    <ErrorBoundary>
+                      {useAIEnhancedEditor && aiConfigured ? (
+                        <AIEnhancedMonacoEditor
+                          value={getSelectedFileContent() || ''}
+                          onChange={(content) => {
+                            if (selectedFile && content !== undefined) {
+                              updateFileContent(selectedFile, content);
+                              autoSave.save({
+                                file: selectedFile,
+                                content
+                              });
+                            }
+                          }}
+                          language={getLanguageFromFileName(selectedFile)}
+                          theme={codeColor ? "hex-light" : "kex-dark"}
+                          height="100%"
+                          enableAICompletions={true}
+                        />
+                      ) : (
+                        <LazyMonacoEditor
+                          value={getSelectedFileContent() || ''}
+                          onChange={(content) => {
+                            if (selectedFile && content !== undefined) {
+                              updateFileContent(selectedFile, content);
+                              autoSave.save({
+                                file: selectedFile,
+                                content
+                              });
+                            }
+                          }}
+                          language={getLanguageFromFileName(selectedFile)}
+                          theme={codeColor ? "hex-light" : "kex-dark"}
+                          height="100%"
+                        />
+                      )}
+                    </ErrorBoundary>
+                  </div>
+
+                  {/* Documentation Panel */}
+                  {showDocumentation && (
+                    <div className="w-96 border-l border-gray-200 bg-white">
+                      <DocumentationPanel
+                        documentation={documentationData}
+                        isLoading={documentationLoading}
+                        onGenerate={handleGenerateDocumentation}
+                        onClose={handleCloseDocumentation}
+                        currentFile={selectedFile}
+                        currentCode={getSelectedFileContent() || ''}
+                        className="h-full"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

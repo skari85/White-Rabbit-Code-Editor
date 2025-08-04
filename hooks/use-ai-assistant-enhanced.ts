@@ -2,8 +2,28 @@ import { useState, useCallback, useEffect } from 'react';
 import { AISettings, AIMessage, DEFAULT_AI_SETTINGS } from '@/lib/ai-config';
 import { AIService, validateApiKey } from '@/lib/ai-service';
 
+// Documentation types
+interface DocumentationSection {
+  id: string;
+  title: string;
+  content: string;
+  type: 'overview' | 'parameters' | 'returns' | 'examples' | 'usage' | 'notes';
+  language?: string;
+}
+
+interface DocumentationData {
+  fileName: string;
+  fileType: string;
+  generatedAt: Date;
+  sections: DocumentationSection[];
+  summary: string;
+  complexity: 'low' | 'medium' | 'high';
+  tags: string[];
+}
+
 const STORAGE_KEY = 'hex-kex-ai-settings';
 const MESSAGES_STORAGE_KEY = 'hex-kex-ai-messages';
+const DOCUMENTATION_STORAGE_KEY = 'hex-kex-documentation-cache';
 
 // Enhanced system prompt for modern UI development
 const ENHANCED_SYSTEM_PROMPT = `You are an advanced AI coding assistant for Hex & Kex Code Console specializing in creating modern, professional web applications. You work iteratively with users to build visually stunning, contemporary UIs.
@@ -444,6 +464,181 @@ Please help me with this request by refining the existing code.`;
     }
   }, []);
 
+  // Documentation generation methods
+  const generateDocumentation = useCallback(async (
+    code: string,
+    fileName: string,
+    fileType: string
+  ): Promise<DocumentationData> => {
+    if (!aiService || !isConfigured) {
+      throw new Error('AI service not configured. Please set up your API key in Settings.');
+    }
+
+    setIsLoading(true);
+
+    try {
+      const prompt = `Generate comprehensive documentation for this ${fileType} code file "${fileName}":
+
+\`\`\`${fileType}
+${code}
+\`\`\`
+
+Please provide documentation in the following JSON format:
+{
+  "summary": "Brief summary of what this code does",
+  "complexity": "low|medium|high",
+  "tags": ["tag1", "tag2", "tag3"],
+  "sections": [
+    {
+      "id": "overview",
+      "title": "Overview",
+      "content": "Detailed overview of the code",
+      "type": "overview"
+    },
+    {
+      "id": "parameters",
+      "title": "Parameters",
+      "content": "Description of parameters/props",
+      "type": "parameters"
+    },
+    {
+      "id": "returns",
+      "title": "Returns",
+      "content": "Description of return values",
+      "type": "returns"
+    },
+    {
+      "id": "examples",
+      "title": "Examples",
+      "content": "Code examples with syntax highlighting",
+      "type": "examples",
+      "language": "${fileType}"
+    },
+    {
+      "id": "usage",
+      "title": "Usage",
+      "content": "How to use this code",
+      "type": "usage"
+    },
+    {
+      "id": "notes",
+      "title": "Notes",
+      "content": "Important notes and considerations",
+      "type": "notes"
+    }
+  ]
+}
+
+Focus on:
+- Clear, concise explanations
+- Practical examples
+- Best practices
+- Potential gotchas or important notes
+- Type information for TypeScript/JavaScript
+- Component props for React components
+- API endpoints for backend code
+- CSS classes and styling for CSS/SCSS files
+
+Return only the JSON object, no additional text.`;
+
+      const messages: AIMessage[] = [
+        {
+          id: Date.now().toString(),
+          role: 'user',
+          content: prompt,
+          timestamp: new Date()
+        }
+      ];
+
+      const response = await aiService.sendMessage(messages);
+
+      // Parse the JSON response
+      let docData;
+      try {
+        const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          docData = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('No JSON found in response');
+        }
+      } catch (parseError) {
+        // Fallback: create basic documentation from response
+        docData = {
+          summary: "AI-generated documentation",
+          complexity: "medium",
+          tags: [fileType, "documentation"],
+          sections: [
+            {
+              id: "overview",
+              title: "Overview",
+              content: response.content,
+              type: "overview"
+            }
+          ]
+        };
+      }
+
+      const documentation: DocumentationData = {
+        fileName,
+        fileType,
+        generatedAt: new Date(),
+        sections: docData.sections || [],
+        summary: docData.summary || "No summary available",
+        complexity: docData.complexity || "medium",
+        tags: docData.tags || [fileType]
+      };
+
+      // Cache the documentation
+      try {
+        const cached = localStorage.getItem(DOCUMENTATION_STORAGE_KEY);
+        const cache = cached ? JSON.parse(cached) : {};
+        cache[fileName] = {
+          ...documentation,
+          generatedAt: documentation.generatedAt.toISOString()
+        };
+        localStorage.setItem(DOCUMENTATION_STORAGE_KEY, JSON.stringify(cache));
+      } catch (error) {
+        console.warn('Failed to cache documentation:', error);
+      }
+
+      return documentation;
+    } catch (error) {
+      console.error('Error generating documentation:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [aiService, isConfigured]);
+
+  // Get cached documentation
+  const getCachedDocumentation = useCallback((fileName: string): DocumentationData | null => {
+    try {
+      const cached = localStorage.getItem(DOCUMENTATION_STORAGE_KEY);
+      if (!cached) return null;
+
+      const cache = JSON.parse(cached);
+      const doc = cache[fileName];
+      if (!doc) return null;
+
+      return {
+        ...doc,
+        generatedAt: new Date(doc.generatedAt)
+      };
+    } catch (error) {
+      console.warn('Failed to get cached documentation:', error);
+      return null;
+    }
+  }, []);
+
+  // Clear documentation cache
+  const clearDocumentationCache = useCallback(() => {
+    try {
+      localStorage.removeItem(DOCUMENTATION_STORAGE_KEY);
+    } catch (error) {
+      console.warn('Failed to clear documentation cache:', error);
+    }
+  }, []);
+
   return {
     settings,
     messages,
@@ -455,6 +650,10 @@ Please help me with this request by refining the existing code.`;
     clearMessages,
     testConnection,
     streamedMessage,
-    isStreaming
+    isStreaming,
+    // Documentation methods
+    generateDocumentation,
+    getCachedDocumentation,
+    clearDocumentationCache
   };
 }

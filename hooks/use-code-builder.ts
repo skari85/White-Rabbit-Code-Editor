@@ -731,6 +731,155 @@ export default function Component() {
     return files.find(file => file.name === selectedFile)?.type || 'html';
   }, [files, selectedFile]);
 
+  // Project context analysis for AI completions
+  const getProjectContext = useCallback(() => {
+    const context = {
+      totalFiles: files.length,
+      fileTypes: [...new Set(files.map(f => f.type))],
+      fileNames: files.map(f => f.name),
+      dependencies: [] as string[],
+      frameworks: [] as string[],
+      patterns: [] as string[]
+    };
+
+    // Analyze files for dependencies and frameworks
+    files.forEach(file => {
+      const content = file.content.toLowerCase();
+
+      // Detect frameworks
+      if (content.includes('react') || content.includes('jsx') || content.includes('usestate')) {
+        if (!context.frameworks.includes('React')) context.frameworks.push('React');
+      }
+      if (content.includes('vue') || content.includes('v-')) {
+        if (!context.frameworks.includes('Vue')) context.frameworks.push('Vue');
+      }
+      if (content.includes('angular') || content.includes('@component')) {
+        if (!context.frameworks.includes('Angular')) context.frameworks.push('Angular');
+      }
+      if (content.includes('tailwind') || content.includes('tw-')) {
+        if (!context.frameworks.includes('Tailwind')) context.frameworks.push('Tailwind');
+      }
+      if (content.includes('bootstrap') || content.includes('btn-')) {
+        if (!context.frameworks.includes('Bootstrap')) context.frameworks.push('Bootstrap');
+      }
+
+      // Detect common patterns
+      if (content.includes('async') && content.includes('await')) {
+        if (!context.patterns.includes('async/await')) context.patterns.push('async/await');
+      }
+      if (content.includes('fetch(') || content.includes('axios')) {
+        if (!context.patterns.includes('API calls')) context.patterns.push('API calls');
+      }
+      if (content.includes('localstorage') || content.includes('sessionstorage')) {
+        if (!context.patterns.includes('Local storage')) context.patterns.push('Local storage');
+      }
+      if (content.includes('eventlistener') || content.includes('onclick')) {
+        if (!context.patterns.includes('Event handling')) context.patterns.push('Event handling');
+      }
+
+      // Extract import statements for dependencies
+      const importMatches = file.content.match(/import.*from\s+['"]([^'"]+)['"]/g);
+      if (importMatches) {
+        importMatches.forEach(match => {
+          const dep = match.match(/from\s+['"]([^'"]+)['"]/)?.[1];
+          if (dep && !dep.startsWith('.') && !context.dependencies.includes(dep)) {
+            context.dependencies.push(dep);
+          }
+        });
+      }
+    });
+
+    return context;
+  }, [files]);
+
+  // Get related files for context
+  const getRelatedFiles = useCallback((currentFile: string, maxFiles: number = 5) => {
+    if (!currentFile) return [];
+
+    const currentFileExt = currentFile.split('.').pop()?.toLowerCase();
+    const currentFileBase = currentFile.replace(/\.[^/.]+$/, '');
+
+    return files
+      .filter(file => file.name !== currentFile)
+      .sort((a, b) => {
+        let scoreA = 0;
+        let scoreB = 0;
+
+        // Same extension gets higher score
+        if (a.name.endsWith(`.${currentFileExt}`)) scoreA += 3;
+        if (b.name.endsWith(`.${currentFileExt}`)) scoreB += 3;
+
+        // Similar base name gets higher score
+        if (a.name.includes(currentFileBase) || currentFileBase.includes(a.name.replace(/\.[^/.]+$/, ''))) {
+          scoreA += 5;
+        }
+        if (b.name.includes(currentFileBase) || currentFileBase.includes(b.name.replace(/\.[^/.]+$/, ''))) {
+          scoreB += 5;
+        }
+
+        // Files with imports/references get higher score
+        const currentContent = files.find(f => f.name === currentFile)?.content || '';
+        if (currentContent.includes(a.name) || a.content.includes(currentFile)) scoreA += 2;
+        if (currentContent.includes(b.name) || b.content.includes(currentFile)) scoreB += 2;
+
+        return scoreB - scoreA;
+      })
+      .slice(0, maxFiles);
+  }, [files]);
+
+  // Extract symbols from file for completion context
+  const extractFileSymbols = useCallback((fileName: string) => {
+    const file = files.find(f => f.name === fileName);
+    if (!file) return { functions: [], variables: [], classes: [], exports: [] };
+
+    const content = file.content;
+    const symbols = {
+      functions: [] as string[],
+      variables: [] as string[],
+      classes: [] as string[],
+      exports: [] as string[]
+    };
+
+    // Extract functions
+    const functionRegex = /(?:function\s+([a-zA-Z_$][a-zA-Z0-9_$]*)|const\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*(?:async\s+)?\([^)]*\)\s*=>|([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:\s*(?:async\s+)?\([^)]*\)\s*=>)/g;
+    let match;
+    while ((match = functionRegex.exec(content)) !== null) {
+      const funcName = match[1] || match[2] || match[3];
+      if (funcName && !symbols.functions.includes(funcName)) {
+        symbols.functions.push(funcName);
+      }
+    }
+
+    // Extract variables
+    const variableRegex = /(?:const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
+    while ((match = variableRegex.exec(content)) !== null) {
+      const varName = match[1];
+      if (varName && !symbols.variables.includes(varName)) {
+        symbols.variables.push(varName);
+      }
+    }
+
+    // Extract classes
+    const classRegex = /class\s+([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
+    while ((match = classRegex.exec(content)) !== null) {
+      const className = match[1];
+      if (className && !symbols.classes.includes(className)) {
+        symbols.classes.push(className);
+      }
+    }
+
+    // Extract exports
+    const exportRegex = /export\s+(?:default\s+)?(?:const|let|var|function|class)?\s*([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
+    while ((match = exportRegex.exec(content)) !== null) {
+      const exportName = match[1];
+      if (exportName && !symbols.exports.includes(exportName)) {
+        symbols.exports.push(exportName);
+      }
+    }
+
+    return symbols;
+  }, [files]);
+
   return {
     files,
     selectedFile,
@@ -748,7 +897,11 @@ export default function Component() {
     // Project management
     currentProject,
     saveProject,
-    initializeDefaultProject
+    initializeDefaultProject,
+    // Context analysis methods
+    getProjectContext,
+    getRelatedFiles,
+    extractFileSymbols
   };
 }
 
