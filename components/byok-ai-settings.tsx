@@ -237,13 +237,15 @@ export default function BYOKAISettings({
               <SelectContent>
                 {settings.provider === 'openai' && (
                   <>
-                    <SelectItem value="gpt-4">GPT-4</SelectItem>
+                    <SelectItem value="gpt-4o">GPT-4o (Latest)</SelectItem>
+                    <SelectItem value="gpt-4o-mini">GPT-4o Mini (Fast)</SelectItem>
                     <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
                     <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
                   </>
                 )}
                 {settings.provider === 'anthropic' && (
                   <>
+                    <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Latest)</SelectItem>
                     <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
                     <SelectItem value="claude-3-sonnet-20240229">Claude 3 Sonnet</SelectItem>
                     <SelectItem value="claude-3-haiku-20240307">Claude 3 Haiku</SelectItem>
@@ -251,9 +253,12 @@ export default function BYOKAISettings({
                 )}
                 {settings.provider === 'groq' && (
                   <>
-                    <SelectItem value="llama2-70b-4096">Llama 2 70B</SelectItem>
+                    <SelectItem value="llama-3.1-405b-reasoning">Llama 3.1 405B (Best)</SelectItem>
+                    <SelectItem value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</SelectItem>
+                    <SelectItem value="llama-3.2-90b-text-preview">Llama 3.2 90B (Preview)</SelectItem>
                     <SelectItem value="mixtral-8x7b-32768">Mixtral 8x7B</SelectItem>
-                    <SelectItem value="gemma-7b-it">Gemma 7B</SelectItem>
+                    <SelectItem value="gemma2-9b-it">Gemma 2 9B</SelectItem>
+                    <SelectItem value="mistral-7b-instruct">Mistral 7B</SelectItem>
                   </>
                 )}
               </SelectContent>
