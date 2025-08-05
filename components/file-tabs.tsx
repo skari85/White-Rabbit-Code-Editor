@@ -111,7 +111,7 @@ export default function FileTabs({
 
           return (
             <div
-              key={`${file.name}-${file.type}-${index}`}
+              key={`${file.name}-${file.type}-${file.lastModified?.getTime() || index}-${index}`}
               className={`
                 flex items-center min-w-0 border-r border-gray-200 last:border-r-0
                 ${isSelected 

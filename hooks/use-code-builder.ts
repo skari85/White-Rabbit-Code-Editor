@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import JSZip from 'jszip';
 
 const PROJECT_STORAGE_KEY = 'hex-kex-project';
@@ -616,6 +616,14 @@ document.addEventListener('mousemove', function(e) {
   }, []);
 
   const addNewFile = useCallback((name: string, type: FileContent['type'] = 'html') => {
+    // Check if file already exists
+    const existingFile = files.find(f => f.name === name);
+    if (existingFile) {
+      // File already exists, just select it
+      setSelectedFile(name);
+      return;
+    }
+
     const defaultContent = {
       html: `<!DOCTYPE html>
 <html>
@@ -623,7 +631,7 @@ document.addEventListener('mousemove', function(e) {
   <title>New File</title>
 </head>
 <body>
-  
+
 </body>
 </html>`,
       css: '/* CSS styles */',
@@ -652,7 +660,30 @@ export default function Component() {
     };
     setFiles(prev => [...prev, newFile]);
     setSelectedFile(name);
+  }, [files]);
+
+  // Remove duplicate files
+  const removeDuplicateFiles = useCallback(() => {
+    setFiles(prev => {
+      const uniqueFiles = new Map<string, FileContent>();
+      prev.forEach(file => {
+        if (!uniqueFiles.has(file.name)) {
+          uniqueFiles.set(file.name, file);
+        }
+      });
+      return Array.from(uniqueFiles.values());
+    });
   }, []);
+
+  // Clean up duplicates on files change
+  useEffect(() => {
+    const fileNames = files.map(f => f.name);
+    const uniqueNames = new Set(fileNames);
+    if (fileNames.length !== uniqueNames.size) {
+      console.warn('Duplicate files detected, cleaning up...');
+      removeDuplicateFiles();
+    }
+  }, [files, removeDuplicateFiles]);
 
   const deleteFile = useCallback((fileName: string) => {
     setFiles(prev => prev.filter(file => file.name !== fileName));
