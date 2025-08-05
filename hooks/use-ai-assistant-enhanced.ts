@@ -21,12 +21,12 @@ interface DocumentationData {
   tags: string[];
 }
 
-const STORAGE_KEY = 'hex-kex-ai-settings';
-const MESSAGES_STORAGE_KEY = 'hex-kex-ai-messages';
-const DOCUMENTATION_STORAGE_KEY = 'hex-kex-documentation-cache';
+const STORAGE_KEY = 'white-rabbit-ai-settings';
+const MESSAGES_STORAGE_KEY = 'white-rabbit-ai-messages';
+const DOCUMENTATION_STORAGE_KEY = 'white-rabbit-documentation-cache';
 
 // Enhanced system prompt for modern UI development
-const ENHANCED_SYSTEM_PROMPT = `You are an advanced AI coding assistant for Hex & Kex Code Console specializing in creating modern, professional web applications. You work iteratively with users to build visually stunning, contemporary UIs.
+const ENHANCED_SYSTEM_PROMPT = `You are an advanced AI coding assistant for White Rabbit Code Editor specializing in creating modern, professional web applications. You work iteratively with users to build visually stunning, contemporary UIs.
 
 🎯 **Your Role**:
 - **CREATE MODERN, PROFESSIONAL WEB APPLICATIONS** with contemporary design
@@ -251,7 +251,7 @@ export function useAIAssistantEnhanced() {
         const parsed = JSON.parse(savedSettings);
         finalSettings = {
           ...parsed,
-          systemPrompt: parsed.systemPrompt?.includes('Hex & Kex code editor')
+          systemPrompt: parsed.systemPrompt?.includes('White Rabbit Code Editor')
             ? parsed.systemPrompt
             : ENHANCED_SYSTEM_PROMPT
         };
@@ -288,7 +288,7 @@ export function useAIAssistantEnhanced() {
   const saveSettings = useCallback((newSettings: AISettings) => {
     const enhancedSettings = {
       ...newSettings,
-      systemPrompt: newSettings.systemPrompt?.includes('Hex & Kex code editor')
+      systemPrompt: newSettings.systemPrompt?.includes('White Rabbit Code Editor')
         ? newSettings.systemPrompt
         : ENHANCED_SYSTEM_PROMPT
     };

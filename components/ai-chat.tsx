@@ -24,7 +24,7 @@ interface AIChatProps {
   streamedMessage?: string;
   onCodeBlocks?: (blocks: { code: string; lang?: string; messageId?: string }[]) => void;
   onCodeGenerated?: (filename: string, content: string, language: string) => void;
-  personality?: 'hex' | 'kex'; // Optional, for visual mode
+  personality?: 'rabbit' | 'assistant'; // Optional, for visual mode
   isStreaming?: boolean;
 }
 
@@ -214,7 +214,7 @@ export function AIChat({
 
   const renderMessage = (message: AIMessage, isStreamed = false) => {
     const isUser = message.role === 'user';
-    const isKex = personality === 'kex' || settings?.personality === 'kex';
+    const isRabbit = personality === 'rabbit' || settings?.personality === 'rabbit';
 
     // For assistant messages, use LiveAIResponse component
     if (!isUser) {
@@ -238,8 +238,8 @@ export function AIChat({
         <div className="max-w-[80%] flex flex-col gap-2 items-end">
           {/* Chat bubble for user message */}
           <div className={`rounded-lg px-4 py-3 ${
-            isKex
-              ? 'bg-gradient-to-r from-[#00ffe1] to-[#00d4aa] text-black font-medium'
+            isRabbit
+              ? 'bg-gradient-to-r from-blue-400 to-purple-500 text-white font-medium'
               : 'bg-blue-600 text-white'
           }`}>
             <div className="whitespace-pre-wrap text-sm">{message.content}</div>
@@ -272,9 +272,9 @@ export function AIChat({
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-gray-700">
           <div className="flex items-center gap-2">
-            <img 
-              src="/hexkexlogo.png" 
-              alt="Hex & Kex" 
+            <img
+              src="/whiterabbitlogo.png"
+              alt="White Rabbit"
               className="w-8 h-8 object-contain"
             />
             <span className="text-sm font-medium">What can I do for you?</span>
@@ -284,9 +284,9 @@ export function AIChat({
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center p-8">
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <img 
-                src="/hexkexlogo.png" 
-                alt="Hex & Kex" 
+              <img
+                src="/whiterabbitlogo.png"
+                alt="White Rabbit"
                 className="w-16 h-16 object-contain"
               />
             </div>
@@ -302,32 +302,32 @@ export function AIChat({
     );
   }
 
-  // Determine if KEX mode is active
-  const isKex = personality === 'kex' || settings?.personality === 'kex';
+  // Determine if Rabbit mode is active
+  const isRabbit = personality === 'rabbit' || settings?.personality === 'rabbit';
 
   return (
     <div
-      className={`flex flex-col h-full bg-gray-800 text-white relative ${isKex ? 'kex-active' : ''}`}
-      style={isKex ? {
-        boxShadow: '0 0 0 4px #00ffe1, 0 0 24px 4px #00ffe155',
-        border: '2px solid #00ffe1',
+      className={`flex flex-col h-full bg-gray-800 text-white relative ${isRabbit ? 'rabbit-active' : ''}`}
+      style={isRabbit ? {
+        boxShadow: '0 0 0 4px #60a5fa, 0 0 24px 4px #60a5fa55',
+        border: '2px solid #60a5fa',
         transition: 'box-shadow 0.3s, border 0.3s',
         zIndex: 10
       } : {}}
     >
-      {/* KEX Banner */}
-      {isKex && (
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-50 px-6 py-2 rounded-b-xl bg-[#00ffe1] text-black font-bold text-sm flex items-center gap-2 animate-pulse shadow-lg border-b-2 border-[#00d4aa]" style={{letterSpacing:'0.05em'}}>
-          <span className="text-lg">⚡</span> KEX MODE ACTIVE <span className="text-lg">⚡</span>
+      {/* White Rabbit Banner */}
+      {isRabbit && (
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-50 px-6 py-2 rounded-b-xl bg-blue-400 text-white font-bold text-sm flex items-center gap-2 animate-pulse shadow-lg border-b-2 border-blue-500" style={{letterSpacing:'0.05em'}}>
+          <span className="text-lg">🐰</span> WHITE RABBIT MODE <span className="text-lg">🐰</span>
         </div>
       )}
       
       {/* Header with Model Dropdown */}
       <div className="flex items-center justify-between p-3 border-b border-gray-700">
         <div className="flex items-center gap-2">
-          <img 
-            src="/hexkexlogo.png" 
-            alt="Hex & Kex" 
+          <img
+            src="/whiterabbitlogo.png"
+            alt="White Rabbit"
             className="w-8 h-8 object-contain"
           />
           <span className="text-sm font-medium">What can I do for you?</span>
@@ -533,9 +533,9 @@ export function AIChat({
           {(messages?.length || 0) === 0 ? (
             <div className="text-center py-8">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <img 
-                  src="/hexkexlogo.png" 
-                  alt="Hex & Kex" 
+                <img
+                  src="/whiterabbitlogo.png"
+                  alt="White Rabbit"
                   className="w-16 h-16 object-contain"
                 />
               </div>

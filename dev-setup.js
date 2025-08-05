@@ -469,7 +469,7 @@ body {
 
   // Main setup function
   async setup(options = {}) {
-    console.log('🔮 Hex & Kex Development Environment Setup');
+    console.log('🐰 White Rabbit Development Environment Setup');
     console.log('==========================================');
 
     try {

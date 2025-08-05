@@ -340,11 +340,15 @@ export default function CodeEditor() {
         <div className="p-4 border-b border-gray-700 bg-gray-750">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
-                <span className="text-white font-bold text-sm">H&K</span>
+              <div className="w-8 h-8 bg-white rounded flex items-center justify-center p-1">
+                <img
+                  src="/whiterabbitlogo.png"
+                  alt="White Rabbit"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
-                <h2 className="font-semibold text-sm text-white">Hex & Kex</h2>
+                <h2 className="font-semibold text-sm text-white">White Rabbit</h2>
                 <p className="text-xs text-gray-400">Code Editor</p>
               </div>
             </div>

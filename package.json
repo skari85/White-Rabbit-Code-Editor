@@ -1,16 +1,16 @@
 {
-  "name": "hex-and-kex",
+  "name": "white-rabbit",
   "version": "4.1.3",
-  "description": "Hex & Kex - A visual tool for creating Progressive Web Applications",
+  "description": "White Rabbit - A visual tool for creating Progressive Web Applications",
   "private": true,
   "keywords": [
     "builder",
     "maker",
     "nextjs",
     "react",
-    "hex-kex"
+    "white-rabbit"
   ],
-  "author": "Hex & Kex Team",
+  "author": "White Rabbit Team",
   "license": "MIT",
   "scripts": {
     "build": "next build",

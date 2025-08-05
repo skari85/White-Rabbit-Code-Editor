@@ -1,6 +1,6 @@
-# Hex & Kex - Build Progressive Web Apps
+# White Rabbit - Build Progressive Web Apps
 
-Hex & Kex is a visual tool for creating Progressive Web Applications with ease. Build, customize, and export PWAs using an intuitive drag-and-drop interface.
+White Rabbit is a visual tool for creating Progressive Web Applications with ease. Build, customize, and export PWAs using an intuitive drag-and-drop interface.
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/georgoskar-7854s-projects/v0-recreate-ui-design)
 [![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js-black?style=for-the-badge&logo=next.js)](https://nextjs.org)

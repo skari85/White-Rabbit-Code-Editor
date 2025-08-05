@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
 
-/* Hex & Kex Custom Fonts */
+/* White Rabbit Custom Fonts */
 
 @tailwind base;
 @tailwind components;
@@ -17,7 +17,7 @@
 
 @layer base {
   :root {
-    /* Hex & Kex Color Palette */
+    /* White Rabbit Color Palette */
     --hex-background: #0d0d0d;      /* near-black, soft on the eyes */
     --hex-accent-1: #6c2fff;        /* electric purple (Hex's spell color) */
     --hex-accent-2: #00ffe1;        /* neon cyan (Kex's glitch color) */
@@ -144,7 +144,7 @@
   transition: all 0.3s ease;
 }
 
-/* Custom utility classes for Hex & Kex colors */
+/* Custom utility classes for White Rabbit colors */
 .bg-hex-primary { background-color: #0d0d0d; }
 .bg-hex-accent-1 { background-color: #6c2fff; }
 .bg-hex-accent-2 { background-color: #00ffe1; }

@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import JSZip from 'jszip';
 
-const PROJECT_STORAGE_KEY = 'hex-kex-project';
-const PROJECTS_LIST_KEY = 'hex-kex-projects-list';
+const PROJECT_STORAGE_KEY = 'white-rabbit-project';
+const PROJECTS_LIST_KEY = 'white-rabbit-projects-list';
 
 export interface FileContent {
   name: string;

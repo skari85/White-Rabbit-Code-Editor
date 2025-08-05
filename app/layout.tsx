@@ -5,14 +5,14 @@ import { AuthSessionProvider } from '@/components/session-provider'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Hex & Kex Code Console',
+  title: 'White Rabbit Code Editor',
   description: 'AI-Powered Application Builder - Create apps through conversation',
-  generator: 'Hex & Kex',
+  generator: 'White Rabbit',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Hex & Kex',
+    title: 'White Rabbit',
   },
   formatDetection: {
     telephone: false,

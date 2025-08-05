@@ -496,7 +496,7 @@ Return only the JSON object.`;
 
   private loadCustomTemplates(): void {
     try {
-      const stored = localStorage.getItem('hex-kex-custom-templates');
+      const stored = localStorage.getItem('white-rabbit-custom-templates');
       if (stored) {
         const templates = JSON.parse(stored);
         templates.forEach((template: LiveTemplate) => {
@@ -511,7 +511,7 @@ Return only the JSON object.`;
   private saveCustomTemplates(): void {
     try {
       const templates = Array.from(this.customTemplates.values());
-      localStorage.setItem('hex-kex-custom-templates', JSON.stringify(templates));
+      localStorage.setItem('white-rabbit-custom-templates', JSON.stringify(templates));
     } catch (error) {
       console.warn('Failed to save custom templates:', error);
     }

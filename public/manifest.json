@@ -1,6 +1,6 @@
 {
-  "name": "Hex & Kex AI Code Console",
-  "short_name": "HexKex AI",
+  "name": "White Rabbit Code Editor",
+  "short_name": "White Rabbit",
   "description": "AI-powered code generation and development console with Monaco Editor",
   "version": "1.0.0",
   "manifest_version": 3,

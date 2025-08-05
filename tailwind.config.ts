@@ -63,8 +63,8 @@ const config: Config = {
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
   			},
-  			// Hex & Kex custom colors
-  			hex: {
+  			// White Rabbit custom colors
+  			rabbit: {
   				background: 'var(--hex-background)',
   				'accent-1': 'var(--hex-accent-1)',
   				'accent-2': 'var(--hex-accent-2)',
@@ -95,7 +95,7 @@ const config: Config = {
   					height: '0'
   				}
   			},
-  			// Hex & Kex custom animations
+  			// White Rabbit custom animations
   			glitch: {
   				'0%': { transform: 'translate(0)' },
   				'20%': { transform: 'translate(-2px, 1px)' },
