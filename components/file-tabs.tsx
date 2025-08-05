@@ -105,10 +105,10 @@ export default function FileTabs({
   return (
     <div className={`bg-white border-b border-gray-200 ${className}`}>
       <div className="flex items-center overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" style={{ scrollbarWidth: 'thin' }}>
-        {files.map((file) => {
+        {files.map((file, index) => {
           const isSelected = file.name === selectedFile;
           const fileTypeColor = getFileTypeColor(file.name);
-          
+
           return (
             <div
               key={`${file.name}-${file.type}-${index}`}
