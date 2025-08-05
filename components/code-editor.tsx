@@ -1,11 +1,12 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useCodeBuilder } from "@/hooks/use-code-builder";
+import { useCodeBuilder, FileContent } from "@/hooks/use-code-builder";
 import { useAIAssistantEnhanced } from "@/hooks/use-ai-assistant-enhanced";
 import { TerminalComponent } from "@/components/terminal";
 import { AIChat } from "@/components/ai-chat";
 import { useTerminal } from "@/hooks/use-terminal";
+import LiveCodingEngine from "@/components/live-coding-engine";
 import { useSession } from "next-auth/react";
 import {
   Download,
@@ -61,12 +62,45 @@ export default function CodeEditor() {
     isConfigured: aiConfigured,
     saveSettings: updateAISettings,
     generateDocumentation,
-    getCachedDocumentation
+    getCachedDocumentation,
+    setFileGenerationCallbacks
   } = useAIAssistantEnhanced();
 
   const terminal = useTerminal();
 
   const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace">("code");
+
+  // Set up file generation callbacks for AI
+  useEffect(() => {
+    setFileGenerationCallbacks({
+      onCreate: (name: string, content: string) => {
+        // Determine file type from extension
+        const getFileType = (filename: string): FileContent['type'] => {
+          const ext = filename.split('.').pop()?.toLowerCase();
+          switch (ext) {
+            case 'js': case 'jsx': return 'js';
+            case 'ts': case 'tsx': return 'tsx';
+            case 'html': return 'html';
+            case 'css': return 'css';
+            case 'json': return 'json';
+            case 'md': return 'md';
+            case 'py': return 'py';
+            default: return 'txt';
+          }
+        };
+
+        addNewFile(name, getFileType(name));
+        // Update content after file is created
+        setTimeout(() => updateFileContent(name, content), 100);
+      },
+      onUpdate: (name: string, content: string) => {
+        updateFileContent(name, content);
+      },
+      onSelect: (name: string) => {
+        setSelectedFile(name);
+      }
+    });
+  }, [setFileGenerationCallbacks, addNewFile, updateFileContent, setSelectedFile]);
   const [codeColor, setCodeColor] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
 
@@ -275,7 +309,7 @@ export default function CodeEditor() {
   }, [selectedFile, getCachedDocumentation]);
 
   // Memoize the onCodeGenerated callback to prevent infinite re-renders
-  const handleCodeGenerated = useCallback((filename: string, content: string, language: string) => {
+  const handleCodeGenerated = useCallback((filename: string, content: string) => {
     // Determine file type from extension
     const getFileType = (name: string): 'html' | 'css' | 'js' | 'json' | 'md' | 'tsx' | 'ts' | 'py' | 'txt' => {
       const ext = name.split('.').pop()?.toLowerCase();
@@ -440,17 +474,46 @@ export default function CodeEditor() {
         </div>
 
         {/* AI Chat - Expanded */}
-        <div className="border-t flex-1 min-h-0">
-          <AIChat
-            messages={aiMessages || []}
-            onSendMessage={handleSendMessage}
-            onClearMessages={clearAIMessages}
-            isLoading={aiLoading}
-            isConfigured={aiConfigured}
-            settings={aiSettings}
-            onSettingsChange={updateAISettings}
-            onCodeGenerated={handleCodeGenerated}
-          />
+        <div className="border-t flex-1 min-h-0 flex flex-col">
+          <div className="flex-1 min-h-0">
+            <AIChat
+              messages={aiMessages || []}
+              onSendMessage={handleSendMessage}
+              onClearMessages={clearAIMessages}
+              isLoading={aiLoading}
+              isConfigured={aiConfigured}
+              settings={aiSettings}
+              onSettingsChange={updateAISettings}
+              onCodeGenerated={handleCodeGenerated}
+            />
+          </div>
+
+          {/* Live Coding Engine */}
+          <div className="border-t bg-gray-50 p-2">
+            <LiveCodingEngine
+              onFileCreate={(name, content) => {
+                const getFileType = (filename: string): FileContent['type'] => {
+                  const ext = filename.split('.').pop()?.toLowerCase();
+                  switch (ext) {
+                    case 'js': case 'jsx': return 'js';
+                    case 'ts': case 'tsx': return 'tsx';
+                    case 'html': return 'html';
+                    case 'css': return 'css';
+                    case 'json': return 'json';
+                    case 'md': return 'md';
+                    case 'py': return 'py';
+                    default: return 'txt';
+                  }
+                };
+
+                addNewFile(name, getFileType(name));
+                setTimeout(() => updateFileContent(name, content), 100);
+              }}
+              onFileUpdate={updateFileContent}
+              onFileSelect={setSelectedFile}
+              className="max-h-64"
+            />
+          </div>
         </div>
       </div>
 

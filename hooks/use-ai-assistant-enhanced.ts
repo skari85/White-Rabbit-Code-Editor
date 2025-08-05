@@ -166,7 +166,38 @@ const ENHANCED_SYSTEM_PROMPT = `You are an advanced AI coding assistant for Hex 
 - "Add loading states and micro-interactions"
 - "Improve the color scheme and typography"
 
-Always create applications that users would be proud to show off, not basic HTML documents. Focus on visual appeal, user experience, and modern design trends.`;
+Always create applications that users would be proud to show off, not basic HTML documents. Focus on visual appeal, user experience, and modern design trends.
+
+🔧 **CRITICAL - PROFESSIONAL IDE WORKFLOW**:
+When users request code to be written or modified:
+
+1. **NEVER** include large code blocks in your chat responses
+2. **ALWAYS** use the file generation system to create/edit files directly in the Monaco editor
+3. **Chat responses** should focus on explanations, guidance, and planning only
+4. **Code generation** happens in the editor, not in chat
+
+**File Generation Commands:**
+- To create a new file: CREATE_FILE:filename.ext
+- To update existing file: UPDATE_FILE:filename.ext
+- Follow immediately with code in triple backticks
+
+**Example Response Format:**
+"I'll create a React component for you. Let me add it to your project."
+
+CREATE_FILE:components/MyComponent.tsx
+\`\`\`typescript
+import React from 'react';
+
+const MyComponent: React.FC = () => {
+  return <div>Hello World</div>;
+};
+
+export default MyComponent;
+\`\`\`
+
+"The component has been created in your editor. You can now import and use it in your application."
+
+**Remember:** Keep chat responses conversational and explanatory. All code goes directly to the Monaco editor through file commands. This maintains professional IDE workflow: Chat for communication, Monaco editor for development.`;
 
 export function useAIAssistantEnhanced() {
   const [settings, setSettings] = useState<AISettings>({
@@ -177,6 +208,11 @@ export function useAIAssistantEnhanced() {
   const [isLoading, setIsLoading] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
   const [aiService, setAIService] = useState<AIService | null>(null);
+
+  // File generation callbacks
+  const [onFileCreate, setOnFileCreate] = useState<((name: string, content: string, type?: string) => void) | null>(null);
+  const [onFileUpdate, setOnFileUpdate] = useState<((name: string, content: string) => void) | null>(null);
+  const [onFileSelect, setOnFileSelect] = useState<((name: string) => void) | null>(null);
   const [streamedMessage, setStreamedMessage] = useState<string>('');
   const [isStreaming, setIsStreaming] = useState(false);
 
@@ -270,6 +306,54 @@ export function useAIAssistantEnhanced() {
     setMessages(newMessages);
   }, []);
 
+  // Parse AI response for file generation commands
+  const parseFileCommands = useCallback((content: string) => {
+    const commands: Array<{type: 'create' | 'update', filename: string, content: string}> = [];
+
+    // Look for CREATE_FILE: commands
+    const createMatches = content.match(/CREATE_FILE:([^\n]+)\n```[\w]*\n([\s\S]*?)\n```/g);
+    if (createMatches) {
+      createMatches.forEach(match => {
+        const [, filename] = match.match(/CREATE_FILE:([^\n]+)/) || [];
+        const [, , fileContent] = match.match(/CREATE_FILE:[^\n]+\n```[\w]*\n([\s\S]*?)\n```/) || [];
+        if (filename && fileContent) {
+          commands.push({ type: 'create', filename: filename.trim(), content: fileContent });
+        }
+      });
+    }
+
+    // Look for UPDATE_FILE: commands
+    const updateMatches = content.match(/UPDATE_FILE:([^\n]+)\n```[\w]*\n[\s\S]*?\n```/g);
+    if (updateMatches) {
+      updateMatches.forEach(match => {
+        const [, filename] = match.match(/UPDATE_FILE:([^\n]+)/) || [];
+        const [, , fileContent] = match.match(/UPDATE_FILE:[^\n]+\n```[\w]*\n([\s\S]*?)\n```/) || [];
+        if (filename && fileContent) {
+          commands.push({ type: 'update', filename: filename.trim(), content: fileContent });
+        }
+      });
+    }
+
+    return commands;
+  }, []);
+
+  // Execute file commands
+  const executeFileCommands = useCallback((commands: Array<{type: 'create' | 'update', filename: string, content: string}>) => {
+    commands.forEach(command => {
+      if (command.type === 'create' && onFileCreate) {
+        onFileCreate(command.filename, command.content);
+        if (onFileSelect) {
+          onFileSelect(command.filename);
+        }
+      } else if (command.type === 'update' && onFileUpdate) {
+        onFileUpdate(command.filename, command.content);
+        if (onFileSelect) {
+          onFileSelect(command.filename);
+        }
+      }
+    });
+  }, [onFileCreate, onFileUpdate, onFileSelect]);
+
   // Send message to AI
   const sendMessage = useCallback(async (
     content: string, 
@@ -331,7 +415,21 @@ Please help me with this request by refining the existing code.`;
 
       // Send to AI service
       const response = await aiService.sendMessage(updatedMessages);
-      
+
+      // Parse and execute file commands
+      const fileCommands = parseFileCommands(response.content);
+      if (fileCommands.length > 0) {
+        executeFileCommands(fileCommands);
+
+        // Clean the response content by removing file commands
+        let cleanContent = response.content;
+        cleanContent = cleanContent.replace(/CREATE_FILE:[^\n]+\n```[\w]*\n[\s\S]*?\n```/g, '');
+        cleanContent = cleanContent.replace(/UPDATE_FILE:[^\n]+\n```[\w]*\n[\s\S]*?\n```/g, '');
+        cleanContent = cleanContent.trim();
+
+        response.content = cleanContent || "I've created/updated the files in your editor. Check the file tabs to see the changes!";
+      }
+
       const finalMessages = [...updatedMessages, response];
       saveMessages(finalMessages);
       return response;
@@ -660,6 +758,16 @@ Return only the JSON object, no additional text.`;
     // Documentation methods
     generateDocumentation,
     getCachedDocumentation,
-    clearDocumentationCache
+    clearDocumentationCache,
+    // File generation callbacks
+    setFileGenerationCallbacks: useCallback((callbacks: {
+      onCreate: (name: string, content: string, type?: string) => void;
+      onUpdate: (name: string, content: string) => void;
+      onSelect: (name: string) => void;
+    }) => {
+      setOnFileCreate(() => callbacks.onCreate);
+      setOnFileUpdate(() => callbacks.onUpdate);
+      setOnFileSelect(() => callbacks.onSelect);
+    }, [])
   };
 }
