@@ -590,13 +590,15 @@ Return only the JSON object, no additional text.`;
 
       // Cache the documentation
       try {
-        const cached = localStorage.getItem(DOCUMENTATION_STORAGE_KEY);
-        const cache = cached ? JSON.parse(cached) : {};
-        cache[fileName] = {
-          ...documentation,
-          generatedAt: documentation.generatedAt.toISOString()
-        };
-        localStorage.setItem(DOCUMENTATION_STORAGE_KEY, JSON.stringify(cache));
+        if (typeof window !== 'undefined') {
+          const cached = localStorage.getItem(DOCUMENTATION_STORAGE_KEY);
+          const cache = cached ? JSON.parse(cached) : {};
+          cache[fileName] = {
+            ...documentation,
+            generatedAt: documentation.generatedAt.toISOString()
+          };
+          localStorage.setItem(DOCUMENTATION_STORAGE_KEY, JSON.stringify(cache));
+        }
       } catch (error) {
         console.warn('Failed to cache documentation:', error);
       }
@@ -613,6 +615,9 @@ Return only the JSON object, no additional text.`;
   // Get cached documentation
   const getCachedDocumentation = useCallback((fileName: string): DocumentationData | null => {
     try {
+      // Check if we're in the browser environment
+      if (typeof window === 'undefined') return null;
+
       const cached = localStorage.getItem(DOCUMENTATION_STORAGE_KEY);
       if (!cached) return null;
 
@@ -633,6 +638,7 @@ Return only the JSON object, no additional text.`;
   // Clear documentation cache
   const clearDocumentationCache = useCallback(() => {
     try {
+      if (typeof window === 'undefined') return;
       localStorage.removeItem(DOCUMENTATION_STORAGE_KEY);
     } catch (error) {
       console.warn('Failed to clear documentation cache:', error);
