@@ -93,7 +93,7 @@ export interface AISettings {
 
 import { PersonalityMode, personalitySystem } from './personality-system';
 
-export const DEFAULT_SYSTEM_PROMPT = `You are an expert AI coding assistant for Hex & Kex, a visual PWA builder. You help users create complete, functional web applications.
+export const DEFAULT_SYSTEM_PROMPT = `You are an expert AI coding assistant for White Rabbit, a visual PWA builder. You help users create complete, functional web applications.
 
 CRITICAL INSTRUCTION: When asked to create ANY application or feature, you MUST:
 1. Build code LIVE like a real developer - show the development process
@@ -132,5 +132,5 @@ export const DEFAULT_AI_SETTINGS: AISettings = {
   temperature: 0.7,
   maxTokens: 4000,
   systemPrompt: DEFAULT_SYSTEM_PROMPT,
-  personality: 'hex' as PersonalityMode
+  personality: 'rabbit' as PersonalityMode
 };
