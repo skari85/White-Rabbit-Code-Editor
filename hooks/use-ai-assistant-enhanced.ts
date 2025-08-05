@@ -218,10 +218,14 @@ export function useAIAssistantEnhanced() {
 
   // Load settings from localStorage on mount (prioritize BYOK settings)
   useEffect(() => {
-    // First check for BYOK settings
-    const byokSettings = localStorage.getItem('byok-ai-settings');
-    const savedSettings = localStorage.getItem(STORAGE_KEY);
-    const savedMessages = localStorage.getItem(MESSAGES_STORAGE_KEY);
+    // Check if we're in the browser environment
+    if (typeof window === 'undefined') return;
+
+    try {
+      // First check for BYOK settings
+      const byokSettings = localStorage.getItem('byok-ai-settings');
+      const savedSettings = localStorage.getItem(STORAGE_KEY);
+      const savedMessages = localStorage.getItem(MESSAGES_STORAGE_KEY);
 
     let finalSettings = {
       ...DEFAULT_AI_SETTINGS,
@@ -274,6 +278,8 @@ export function useAIAssistantEnhanced() {
       } catch (error) {
         console.error('Error loading AI messages:', error);
       }
+    } catch (error) {
+      console.warn('Failed to access localStorage:', error);
     }
   }, []);
 
@@ -287,8 +293,14 @@ export function useAIAssistantEnhanced() {
     };
 
     // Save to both BYOK and legacy storage for compatibility
-    localStorage.setItem('byok-ai-settings', JSON.stringify(enhancedSettings));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(enhancedSettings));
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('byok-ai-settings', JSON.stringify(enhancedSettings));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(enhancedSettings));
+      }
+    } catch (error) {
+      console.warn('Failed to save settings to localStorage:', error);
+    }
     setSettings(enhancedSettings);
 
     if (enhancedSettings.apiKey && validateApiKey(enhancedSettings.provider, enhancedSettings.apiKey)) {
@@ -302,7 +314,13 @@ export function useAIAssistantEnhanced() {
 
   // Save messages to localStorage
   const saveMessages = useCallback((newMessages: AIMessage[]) => {
-    localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(newMessages));
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(newMessages));
+      }
+    } catch (error) {
+      console.warn('Failed to save messages to localStorage:', error);
+    }
     setMessages(newMessages);
   }, []);
 
@@ -536,7 +554,13 @@ Please help me with this request by refining the existing code.`;
   // Clear conversation
   const clearMessages = useCallback(() => {
     setMessages([]);
-    localStorage.removeItem(MESSAGES_STORAGE_KEY);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(MESSAGES_STORAGE_KEY);
+      }
+    } catch (error) {
+      console.warn('Failed to clear messages from localStorage:', error);
+    }
   }, []);
 
   // Test API connection

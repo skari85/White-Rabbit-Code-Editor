@@ -308,7 +308,7 @@ export function AIChat({
 
   return (
     <div
-      className={`flex flex-col h-full bg-[#1a1a1a] text-white relative ${isKex ? 'kex-active' : ''}`}
+      className={`flex flex-col h-full bg-gray-800 text-white relative ${isKex ? 'kex-active' : ''}`}
       style={isKex ? {
         boxShadow: '0 0 0 4px #00ffe1, 0 0 24px 4px #00ffe155',
         border: '2px solid #00ffe1',
@@ -524,9 +524,9 @@ export function AIChat({
       )}
 
       {/* Messages */}
-      <ScrollArea className="flex-1 min-h-0">
+      <ScrollArea className="flex-1 min-h-0 bg-gray-850">
         <div
-          className="p-4 space-y-6 h-full w-full"
+          className="p-6 space-y-8 h-full w-full"
           ref={scrollAreaRef}
           onScroll={handleScroll}
           style={{ overflow: 'auto' }}
@@ -573,8 +573,8 @@ export function AIChat({
       )}
 
       {/* Input */}
-      <div className="border-t border-gray-700 p-3">
-        <form onSubmit={handleSubmit} className="flex gap-2">
+      <div className="border-t border-gray-600 p-4 bg-gray-750">
+        <form onSubmit={handleSubmit} className="flex gap-3">
           <div className="flex-1 relative">
             <Textarea
               ref={textareaRef}
@@ -586,8 +586,8 @@ export function AIChat({
                   handleSubmit(e);
                 }
               }}
-              placeholder="Ask me anything..."
-              className="min-h-[40px] max-h-[120px] resize-none bg-gray-800 border-gray-600 pr-20"
+              placeholder="Ask me anything... (Shift+Enter for new line)"
+              className="min-h-[60px] max-h-[140px] resize-none bg-gray-700 border-gray-500 text-white placeholder-gray-400 pr-24 text-sm leading-relaxed"
               disabled={isLoading}
             />
             

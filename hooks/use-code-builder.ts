@@ -1027,9 +1027,65 @@ export function useCodeExport() {
     }
 
     console.log('Using HTML file content length:', htmlFile.content.length);
-    const blob = new Blob([htmlFile.content], { type: 'text/html' });
+
+    // Create a complete HTML with embedded resources
+    let completeHtml = htmlFile.content;
+
+    // Find and embed CSS files
+    const cssFiles = files.filter(f => f.type === 'css');
+    cssFiles.forEach(cssFile => {
+      const linkRegex = new RegExp(`<link[^>]*href=["']${cssFile.name}["'][^>]*>`, 'gi');
+      const styleTag = `<style>\n${cssFile.content}\n</style>`;
+      completeHtml = completeHtml.replace(linkRegex, styleTag);
+    });
+
+    // Find and embed JavaScript files
+    const jsFiles = files.filter(f => f.type === 'js' || f.type === 'tsx' || f.type === 'ts');
+    jsFiles.forEach(jsFile => {
+      const scriptRegex = new RegExp(`<script[^>]*src=["']${jsFile.name}["'][^>]*></script>`, 'gi');
+      let jsContent = jsFile.content;
+
+      // Handle TypeScript/JSX files - convert to plain JavaScript for preview
+      if (jsFile.type === 'tsx' || jsFile.type === 'ts') {
+        // Simple conversion - remove TypeScript syntax for preview
+        jsContent = jsContent
+          .replace(/import\s+.*?from\s+['"][^'"]*['"];?\s*/g, '') // Remove imports
+          .replace(/export\s+(default\s+)?/g, '') // Remove exports
+          .replace(/:\s*\w+(\[\])?/g, '') // Remove type annotations
+          .replace(/interface\s+\w+\s*{[^}]*}/g, '') // Remove interfaces
+          .replace(/type\s+\w+\s*=\s*[^;]+;/g, ''); // Remove type definitions
+      }
+
+      const scriptTag = `<script>\n${jsContent}\n</script>`;
+      completeHtml = completeHtml.replace(scriptRegex, scriptTag);
+    });
+
+    // Add error handling for localStorage issues
+    const errorHandlingScript = `
+    <script>
+      // Override localStorage for sandboxed environment
+      if (typeof Storage === "undefined" || !window.localStorage) {
+        window.localStorage = {
+          getItem: function(key) { return null; },
+          setItem: function(key, value) { console.warn('localStorage not available in preview'); },
+          removeItem: function(key) { console.warn('localStorage not available in preview'); },
+          clear: function() { console.warn('localStorage not available in preview'); }
+        };
+      }
+
+      // Handle module errors
+      window.addEventListener('error', function(e) {
+        if (e.message.includes('import') || e.message.includes('export')) {
+          console.warn('Module syntax detected - this is a preview limitation');
+        }
+      });
+    </script>`;
+
+    completeHtml = completeHtml.replace('</head>', errorHandlingScript + '</head>');
+
+    const blob = new Blob([completeHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
-    console.log('Generated blob URL for HTML:', url);
+    console.log('Generated blob URL for complete HTML:', url);
     window.open(url, '_blank');
   }, []);
 
