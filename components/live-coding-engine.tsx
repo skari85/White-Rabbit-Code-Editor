@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, Square, FileText, Code, Zap, Clock } from 'lucide-react';
+import { Play, Square, FileText, Code, Zap, Clock, ChevronDown, ChevronUp, Minimize2 } from 'lucide-react';
 
 interface LiveCodingEngineProps {
   onFileCreate: (name: string, content: string, type?: string) => void;
@@ -31,6 +31,8 @@ const LiveCodingEngine: React.FC<LiveCodingEngineProps> = ({
   const [isActive, setIsActive] = useState(false);
   const [currentTask, setCurrentTask] = useState<CodingTask | null>(null);
   const [typingSpeed, setTypingSpeed] = useState(50); // characters per second
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   // Add a new coding task
   const addTask = useCallback((type: 'create' | 'update', filename: string, content: string) => {
@@ -157,121 +159,155 @@ const LiveCodingEngine: React.FC<LiveCodingEngineProps> = ({
   const completedTasks = tasks.filter(t => t.status === 'complete');
 
   return (
-    <div className={`bg-gray-900 border border-gray-700 rounded-lg p-4 ${className}`}>
+    <div className={`bg-gray-800/95 backdrop-blur-sm border-t border-gray-600 transition-all duration-300 ${
+      isMinimized ? 'h-12' : isCollapsed ? 'h-16' : 'h-auto max-h-80'
+    } ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between p-3 bg-gray-700/50">
         <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-yellow-400" />
-          <h3 className="text-lg font-semibold text-white">Live Coding Engine</h3>
-          <Badge variant={isActive ? 'default' : 'secondary'}>
-            {isActive ? 'Active' : 'Inactive'}
-          </Badge>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            variant={isActive ? 'destructive' : 'default'}
-            size="sm"
-            onClick={toggleLiveCoding}
-            className="flex items-center gap-1"
-          >
-            {isActive ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            {isActive ? 'Stop' : 'Start'}
-          </Button>
-          
-          {tasks.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearTasks}
-              className="text-gray-300"
-            >
-              Clear
-            </Button>
+          <Zap className="w-4 h-4 text-yellow-400" />
+          <h3 className="text-sm font-medium text-gray-200">Live Coding</h3>
+          {!isMinimized && (
+            <Badge variant={isActive ? 'default' : 'secondary'} className="text-xs px-1.5 py-0.5">
+              {isActive ? 'Active' : 'Idle'}
+            </Badge>
+          )}
+          {tasks.length > 0 && !isMinimized && (
+            <Badge variant="outline" className="text-xs px-1.5 py-0.5 text-gray-300">
+              {tasks.length} tasks
+            </Badge>
           )}
         </div>
+
+        <div className="flex items-center gap-1">
+          {!isMinimized && (
+            <>
+              <Button
+                variant={isActive ? 'destructive' : 'default'}
+                size="sm"
+                onClick={toggleLiveCoding}
+                className="h-6 px-2 text-xs"
+              >
+                {isActive ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+              </Button>
+
+              {tasks.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearTasks}
+                  className="h-6 px-2 text-xs text-gray-400 hover:text-gray-200"
+                >
+                  Clear
+                </Button>
+              )}
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-200"
+              >
+                {isCollapsed ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+              </Button>
+            </>
+          )}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsMinimized(!isMinimized)}
+            className="h-6 w-6 p-0 text-gray-400 hover:text-gray-200"
+          >
+            <Minimize2 className="w-3 h-3" />
+          </Button>
+        </div>
       </div>
 
-      {/* Typing Speed Control */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Typing Speed: {typingSpeed} chars/sec
-        </label>
-        <input
-          type="range"
-          min="10"
-          max="200"
-          value={typingSpeed}
-          onChange={(e) => setTypingSpeed(Number(e.target.value))}
-          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-        />
-      </div>
+      {/* Content - only show if not collapsed or minimized */}
+      {!isCollapsed && !isMinimized && (
+        <div className="p-3 pt-0 overflow-y-auto max-h-64">{/* Rest of content will go here */}
 
-      {/* Current Task */}
-      {currentTask && (
-        <div className="mb-4 p-3 bg-blue-900/30 border border-blue-500/50 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <Code className="w-4 h-4 text-blue-400" />
-            <span className="text-blue-300 font-medium">
-              {currentTask.type === 'create' ? 'Creating' : 'Updating'}: {currentTask.filename}
-            </span>
-          </div>
-          <div className="w-full bg-gray-700 rounded-full h-2">
-            <div 
-              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${currentTask.progress}%` }}
+          {/* Typing Speed Control */}
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-gray-400 mb-1">
+              Speed: {typingSpeed} chars/sec
+            </label>
+            <input
+              type="range"
+              min="10"
+              max="200"
+              value={typingSpeed}
+              onChange={(e) => setTypingSpeed(Number(e.target.value))}
+              className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
             />
           </div>
-          <div className="text-xs text-gray-400 mt-1">
-            {Math.round(currentTask.progress)}% complete
-          </div>
-        </div>
-      )}
 
-      {/* Task Queue */}
-      <div className="space-y-2">
-        {/* Pending Tasks */}
-        {pendingTasks.map(task => (
-          <div key={task.id} className="flex items-center gap-3 p-2 bg-gray-800 rounded">
-            <div className={`w-2 h-2 rounded-full ${getStatusColor(task.status)}`} />
-            <FileText className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-300 text-sm flex-1">{task.filename}</span>
-            <Badge variant="outline" className="text-xs">
-              {task.type}
-            </Badge>
-            <Clock className="w-3 h-3 text-gray-500" />
-          </div>
-        ))}
+          {/* Current Task */}
+          {currentTask && (
+            <div className="mb-3 p-2 bg-blue-900/20 border border-blue-500/30 rounded">
+              <div className="flex items-center gap-2 mb-1">
+                <Code className="w-3 h-3 text-blue-400" />
+                <span className="text-blue-300 text-xs font-medium">
+                  {currentTask.type === 'create' ? 'Creating' : 'Updating'}: {currentTask.filename}
+                </span>
+              </div>
+              <div className="w-full bg-gray-600 rounded-full h-1">
+                <div
+                  className="bg-blue-500 h-1 rounded-full transition-all duration-300"
+                  style={{ width: `${currentTask.progress}%` }}
+                />
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {Math.round(currentTask.progress)}% complete
+              </div>
+            </div>
+          )}
 
-        {/* Completed Tasks */}
-        {completedTasks.slice(-3).map(task => (
-          <div key={task.id} className="flex items-center gap-3 p-2 bg-gray-800/50 rounded opacity-60">
-            <div className={`w-2 h-2 rounded-full ${getStatusColor(task.status)}`} />
-            <FileText className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-300 text-sm flex-1">{task.filename}</span>
-            <Badge variant="outline" className="text-xs">
-              ✓ {task.type}
-            </Badge>
-          </div>
-        ))}
-      </div>
+          {/* Task Queue */}
+          <div className="space-y-1">
+            {/* Pending Tasks */}
+            {pendingTasks.map(task => (
+              <div key={task.id} className="flex items-center gap-2 p-1.5 bg-gray-700/30 rounded text-xs">
+                <div className={`w-1.5 h-1.5 rounded-full ${getStatusColor(task.status)}`} />
+                <FileText className="w-3 h-3 text-gray-400" />
+                <span className="text-gray-300 flex-1 truncate">{task.filename}</span>
+                <Badge variant="outline" className="text-xs px-1 py-0">
+                  {task.type}
+                </Badge>
+                <Clock className="w-3 h-3 text-gray-500" />
+              </div>
+            ))}
 
-      {/* Stats */}
-      {tasks.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-gray-700">
-          <div className="flex justify-between text-xs text-gray-400">
-            <span>Pending: {pendingTasks.length}</span>
-            <span>Active: {activeTasks.length}</span>
-            <span>Completed: {completedTasks.length}</span>
+            {/* Completed Tasks */}
+            {completedTasks.slice(-2).map(task => (
+              <div key={task.id} className="flex items-center gap-2 p-1.5 bg-gray-700/20 rounded opacity-60 text-xs">
+                <div className={`w-1.5 h-1.5 rounded-full ${getStatusColor(task.status)}`} />
+                <FileText className="w-3 h-3 text-gray-400" />
+                <span className="text-gray-300 flex-1 truncate">{task.filename}</span>
+                <Badge variant="outline" className="text-xs px-1 py-0">
+                  ✓
+                </Badge>
+              </div>
+            ))}
           </div>
-        </div>
-      )}
 
-      {tasks.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          <Code className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>No coding tasks in queue</p>
-          <p className="text-xs mt-1">AI will add tasks here when generating code</p>
+          {/* Stats */}
+          {tasks.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-gray-600">
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Queue: {pendingTasks.length}</span>
+                <span>Done: {completedTasks.length}</span>
+              </div>
+            </div>
+          )}
+
+          {tasks.length === 0 && (
+            <div className="text-center py-4 text-gray-500">
+              <Code className="w-6 h-6 mx-auto mb-2 opacity-50" />
+              <p className="text-xs">Ready for AI tasks</p>
+            </div>
+          )}
         </div>
       )}
     </div>

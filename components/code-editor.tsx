@@ -333,19 +333,19 @@ export default function CodeEditor() {
 
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-900">
       {/* Left Sidebar - File Explorer & AI Chat */}
-      <div className="w-96 bg-white border-r flex flex-col h-screen overflow-hidden">
+      <div className="w-96 bg-gray-800 border-r border-gray-700 flex flex-col h-screen overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b">
+        <div className="p-4 border-b border-gray-700 bg-gray-750">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
                 <span className="text-white font-bold text-sm">H&K</span>
               </div>
               <div>
-                <h2 className="font-semibold text-sm">Hex & Kex</h2>
-                <p className="text-xs text-gray-500">Code Editor</p>
+                <h2 className="font-semibold text-sm text-white">Hex & Kex</h2>
+                <p className="text-xs text-gray-400">Code Editor</p>
               </div>
             </div>
 
@@ -471,7 +471,7 @@ export default function CodeEditor() {
 
         {/* AI Chat - Expanded */}
         <div className="border-t flex-1 min-h-0 flex flex-col">
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-hidden">
             <AIChat
               messages={aiMessages || []}
               onSendMessage={handleSendMessage}
@@ -484,32 +484,29 @@ export default function CodeEditor() {
             />
           </div>
 
-          {/* Live Coding Engine */}
-          <div className="border-t bg-gray-50 p-2">
-            <LiveCodingEngine
-              onFileCreate={(name, content) => {
-                const getFileType = (filename: string): FileContent['type'] => {
-                  const ext = filename.split('.').pop()?.toLowerCase();
-                  switch (ext) {
-                    case 'js': case 'jsx': return 'js';
-                    case 'ts': case 'tsx': return 'tsx';
-                    case 'html': return 'html';
-                    case 'css': return 'css';
-                    case 'json': return 'json';
-                    case 'md': return 'md';
-                    case 'py': return 'py';
-                    default: return 'txt';
-                  }
-                };
+          {/* Live Coding Engine - Fixed at bottom */}
+          <LiveCodingEngine
+            onFileCreate={(name, content) => {
+              const getFileType = (filename: string): FileContent['type'] => {
+                const ext = filename.split('.').pop()?.toLowerCase();
+                switch (ext) {
+                  case 'js': case 'jsx': return 'js';
+                  case 'ts': case 'tsx': return 'tsx';
+                  case 'html': return 'html';
+                  case 'css': return 'css';
+                  case 'json': return 'json';
+                  case 'md': return 'md';
+                  case 'py': return 'py';
+                  default: return 'txt';
+                }
+              };
 
-                addNewFile(name, getFileType(name));
-                setTimeout(() => updateFileContent(name, content), 100);
-              }}
-              onFileUpdate={updateFileContent}
-              onFileSelect={setSelectedFile}
-              className="max-h-64"
-            />
-          </div>
+              addNewFile(name, getFileType(name));
+              setTimeout(() => updateFileContent(name, content), 100);
+            }}
+            onFileUpdate={updateFileContent}
+            onFileSelect={setSelectedFile}
+          />
         </div>
       </div>
 
