@@ -5,8 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { AIMessage, AI_PROVIDERS, AISettings } from '@/lib/ai-config';
-import { PERSONALITIES } from '@/lib/personality-system';
-import { Send, Trash2, Copy, Check, Bot, User, Loader2, ChevronDown, Settings2, Zap, Target, Wand2 } from 'lucide-react';
+import { Send, Trash2, User, Loader2, ChevronDown, Settings2, Target, Wand2 } from 'lucide-react';
 import PromptOptimizerComponent from './prompt-optimizer';
 import LiveAIResponse from './live-ai-response';
 
