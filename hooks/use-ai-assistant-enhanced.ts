@@ -268,15 +268,16 @@ export function useAIAssistantEnhanced() {
       setAIService(new AIService(finalSettings));
     }
 
-    if (savedMessages) {
-      try {
-        const parsed = JSON.parse(savedMessages);
-        setMessages(parsed.map((m: any) => ({
-          ...m,
-          timestamp: new Date(m.timestamp)
-        })));
-      } catch (error) {
-        console.error('Error loading AI messages:', error);
+      if (savedMessages) {
+        try {
+          const parsed = JSON.parse(savedMessages);
+          setMessages(parsed.map((m: any) => ({
+            ...m,
+            timestamp: new Date(m.timestamp)
+          })));
+        } catch (error) {
+          console.error('Error loading AI messages:', error);
+        }
       }
     } catch (error) {
       console.warn('Failed to access localStorage:', error);
