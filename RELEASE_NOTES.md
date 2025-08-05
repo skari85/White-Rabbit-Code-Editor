@@ -1,3 +1,47 @@
+# 🚀 Hex & Kex v4.1.3 - BrainJets Tier 1 Features Release (January 2025)
+
+## 🎯 Major Features - BrainJets AI Intelligence
+
+### 🧠 **Smart Documentation Generator**
+- **AI-Powered Documentation**: Generate comprehensive documentation for any code file using advanced AI
+- **Interactive Panel**: Tabbed interface with Overview, Parameters, Returns, Examples, Usage, and Notes sections
+- **Export Functionality**: Download documentation as professionally formatted Markdown files
+- **Intelligent Caching**: 30-minute cache duration to reduce API calls and improve performance
+- **Multi-language Support**: JavaScript, TypeScript, Python, Java, C++, HTML, CSS, JSON, and more
+- **Copy & Share**: Copy individual sections or entire documentation with one click
+- **Responsive Design**: Side-by-side panel that adapts to screen size
+
+### ⚡ **Context-Aware Code Completion++**
+- **Project Intelligence**: AI understands your entire project structure and relationships
+- **Cross-file References**: Smart suggestions from other project files with import assistance
+- **Import Completions**: Intelligent import suggestions for local files and npm packages
+- **Method Signatures**: Parameter hints and comprehensive documentation for functions
+- **Framework Detection**: Automatic detection of React, Vue, Angular, and other frameworks
+- **Hover Information**: Detailed tooltips for cross-file references and documentation
+- **Performance Optimized**: Intelligent caching and debouncing for smooth, responsive experience
+- **Advanced IntelliSense**: Enhanced Monaco Editor with AI-powered suggestions
+
+### 🔧 **Technical Architecture Enhancements**
+- **New AI Completion Service**: Core intelligent completion engine with advanced context analysis
+- **Enhanced AI Assistant**: Extended with documentation generation capabilities and caching
+- **Project Context Analysis**: Deep understanding of project structure, dependencies, and patterns
+- **Performance Optimization**: Intelligent caching, debouncing, and fallback mechanisms
+
+### 🎨 **UI/UX Improvements**
+- **Feature Toggles**: Easy enable/disable buttons for AI features in file tabs
+- **Visual Indicators**: Clear status indicators for AI features and cached content
+- **Loading States**: Smooth animations and progress indicators for AI operations
+- **Theme Compatibility**: Full support for both light and dark themes
+- **Mobile Responsive**: Optimized experience across all device sizes
+
+### 🔒 **Security & Privacy**
+- **BYOK Compatible**: Works with your own API keys for complete control
+- **Local Caching**: All caching happens locally in browser storage
+- **No Telemetry**: No usage data sent to external services
+- **Secure Transmission**: All API calls use HTTPS encryption
+
+---
+
 # 🎉 Hex & Kex v3.2.0 - GitHub Authentication & Live Code Generation Release
 
 ## 🚀 Major Features Added

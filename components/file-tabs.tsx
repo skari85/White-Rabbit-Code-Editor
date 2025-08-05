@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, FileText, Code, Palette, Settings, BookOpen, Zap } from 'lucide-react';
+import { X, FileText, Code, Palette, Settings, BookOpen, Zap, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileContent } from '@/hooks/use-code-builder';
@@ -19,6 +19,10 @@ interface FileTabsProps {
   useAIEnhancedEditor?: boolean;
   onToggleAIEditor?: () => void;
   aiConfigured?: boolean;
+  showInspections?: boolean;
+  onToggleInspections?: () => void;
+  onRunInspections?: () => void;
+  inspectionCount?: number;
 }
 
 // Get file type icon based on extension
@@ -81,7 +85,11 @@ export default function FileTabs({
   hasDocumentation = false,
   useAIEnhancedEditor = false,
   onToggleAIEditor,
-  aiConfigured = false
+  aiConfigured = false,
+  showInspections = false,
+  onToggleInspections,
+  onRunInspections,
+  inspectionCount = 0
 }: FileTabsProps) {
   if (files.length === 0) {
     return (
@@ -103,7 +111,7 @@ export default function FileTabs({
           
           return (
             <div
-              key={file.name}
+              key={`${file.name}-${file.type}-${index}`}
               className={`
                 flex items-center min-w-0 border-r border-gray-200 last:border-r-0
                 ${isSelected 
@@ -180,6 +188,39 @@ export default function FileTabs({
                 >
                   <Zap className="w-3 h-3 mr-1" />
                   AI
+                </Button>
+              )}
+              {onToggleInspections && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleInspections}
+                  className={`h-6 px-2 text-xs ${
+                    showInspections
+                      ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                      : 'hover:bg-gray-200'
+                  }`}
+                  title={showInspections ? "Hide code inspections" : "Show code inspections"}
+                >
+                  <AlertTriangle className="w-3 h-3 mr-1" />
+                  Issues
+                  {inspectionCount > 0 && (
+                    <Badge variant="secondary" className="ml-1 text-xs h-4 px-1">
+                      {inspectionCount}
+                    </Badge>
+                  )}
+                </Button>
+              )}
+              {onRunInspections && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onRunInspections}
+                  className="h-6 px-2 text-xs hover:bg-gray-200"
+                  title="Run code inspections"
+                >
+                  <AlertTriangle className="w-3 h-3 mr-1" />
+                  Scan
                 </Button>
               )}
               {onToggleDocumentation && (

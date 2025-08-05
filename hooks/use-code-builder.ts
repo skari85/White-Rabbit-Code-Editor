@@ -120,7 +120,7 @@ export function useCodeBuilder() {
       </div>
     </main>
   </div>
-  <script src="script.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>`,
         type: 'html',
@@ -352,7 +352,7 @@ body {
         lastModified: new Date()
       },
       {
-        name: 'script.js',
+        name: 'app.js',
         content: `// Modern JavaScript with interactive features
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Modern app loaded successfully!');

@@ -35,6 +35,7 @@ import CodeAnalysisPanel from './code-analysis-panel';
 import AdvancedEditorToolbar from './advanced-editor-toolbar';
 import BYOKAISettings from './byok-ai-settings';
 import DocumentationPanel from './documentation-panel';
+import CodeInspectionPanel from './code-inspection-panel';
 
 export default function CodeEditor() {
   // Code Builder hooks
@@ -76,6 +77,11 @@ export default function CodeEditor() {
 
   // AI-enhanced editor state
   const [useAIEnhancedEditor, setUseAIEnhancedEditor] = useState(true);
+
+  // Code inspection state
+  const [showInspections, setShowInspections] = useState(false);
+  const [inspections, setInspections] = useState<any[]>([]);
+  const [inspectionLoading, setInspectionLoading] = useState(false);
 
   // GitHub integration
   const { data: session } = useSession();
@@ -194,6 +200,72 @@ export default function CodeEditor() {
   const handleToggleAIEditor = useCallback(() => {
     setUseAIEnhancedEditor(!useAIEnhancedEditor);
   }, [useAIEnhancedEditor]);
+
+  // Code inspection handlers
+  const handleToggleInspections = useCallback(() => {
+    setShowInspections(!showInspections);
+  }, [showInspections]);
+
+  const handleRunInspections = useCallback(async () => {
+    if (!selectedFile || !getSelectedFileContent()) return;
+
+    setInspectionLoading(true);
+    try {
+      // Import the service dynamically to avoid SSR issues
+      const { CodeInspectionService } = await import('@/lib/code-inspection-service');
+
+      const config = {
+        enabledCategories: ['syntax', 'code-style', 'performance', 'security', 'unused-code', 'complexity'] as any[],
+        severity: {},
+        customRules: [],
+        aiEnhanced: aiConfigured
+      };
+
+      const service = new CodeInspectionService(config, aiSettings);
+      const fileType = selectedFile.split('.').pop()?.toLowerCase() || 'javascript';
+      const language = fileType === 'js' ? 'javascript' : fileType === 'ts' ? 'typescript' : fileType;
+
+      const results = await service.inspectCode(
+        getSelectedFileContent(),
+        selectedFile,
+        language,
+        { files: files.slice(0, 5) }
+      );
+
+      setInspections(results);
+    } catch (error) {
+      console.error('Code inspection failed:', error);
+      setInspections([]);
+    } finally {
+      setInspectionLoading(false);
+    }
+  }, [selectedFile, getSelectedFileContent, aiConfigured, aiSettings, files]);
+
+  const handleInspectionClick = useCallback((inspection: any) => {
+    // Navigate to the inspection location in the editor
+    console.log('Navigate to inspection:', inspection);
+  }, []);
+
+  const handleQuickFix = useCallback(async (inspection: any) => {
+    if (!inspection.quickFix || !selectedFile) return;
+
+    try {
+      const { QuickFixService } = await import('@/lib/code-inspection-service');
+      const currentCode = getSelectedFileContent();
+      const fixedCode = QuickFixService.applyQuickFix(currentCode, inspection.quickFix);
+      updateFileContent(selectedFile, fixedCode);
+
+      // Re-run inspections after applying fix
+      setTimeout(handleRunInspections, 500);
+    } catch (error) {
+      console.error('Quick fix failed:', error);
+      throw error;
+    }
+  }, [selectedFile, getSelectedFileContent, updateFileContent, handleRunInspections]);
+
+  const handleCloseInspections = useCallback(() => {
+    setShowInspections(false);
+  }, []);
 
   // Check if current file has cached documentation
   const hasDocumentation = useMemo(() => {
@@ -487,12 +559,19 @@ export default function CodeEditor() {
                   useAIEnhancedEditor={useAIEnhancedEditor}
                   onToggleAIEditor={handleToggleAIEditor}
                   aiConfigured={aiConfigured}
+                  showInspections={showInspections}
+                  onToggleInspections={handleToggleInspections}
+                  onRunInspections={handleRunInspections}
+                  inspectionCount={inspections.length}
                 />
 
-                {/* Code Editor and Documentation Panel */}
+                {/* Code Editor and Side Panels */}
                 <div className="flex-1 flex">
                   {/* Code Editor */}
-                  <div className={`${showDocumentation ? 'flex-1' : 'w-full'} transition-all duration-300`}>
+                  <div className={`${
+                    showDocumentation && showInspections ? 'flex-1' :
+                    showDocumentation || showInspections ? 'flex-1' : 'w-full'
+                  } transition-all duration-300`}>
                     <ErrorBoundary>
                       {useAIEnhancedEditor && aiConfigured ? (
                         <AIEnhancedMonacoEditor
@@ -531,18 +610,41 @@ export default function CodeEditor() {
                     </ErrorBoundary>
                   </div>
 
-                  {/* Documentation Panel */}
-                  {showDocumentation && (
-                    <div className="w-96 border-l border-gray-200 bg-white">
-                      <DocumentationPanel
-                        documentation={documentationData}
-                        isLoading={documentationLoading}
-                        onGenerate={handleGenerateDocumentation}
-                        onClose={handleCloseDocumentation}
-                        currentFile={selectedFile}
-                        currentCode={getSelectedFileContent() || ''}
-                        className="h-full"
-                      />
+                  {/* Right Side Panels */}
+                  {(showDocumentation || showInspections) && (
+                    <div className={`${
+                      showDocumentation && showInspections ? 'w-[800px]' : 'w-96'
+                    } border-l border-gray-200 bg-white flex transition-all duration-300`}>
+
+                      {/* Documentation Panel */}
+                      {showDocumentation && (
+                        <div className={`${showInspections ? 'w-1/2 border-r border-gray-200' : 'w-full'}`}>
+                          <DocumentationPanel
+                            documentation={documentationData}
+                            isLoading={documentationLoading}
+                            onGenerate={handleGenerateDocumentation}
+                            onClose={handleCloseDocumentation}
+                            currentFile={selectedFile}
+                            currentCode={getSelectedFileContent() || ''}
+                            className="h-full"
+                          />
+                        </div>
+                      )}
+
+                      {/* Code Inspection Panel */}
+                      {showInspections && (
+                        <div className={`${showDocumentation ? 'w-1/2' : 'w-full'}`}>
+                          <CodeInspectionPanel
+                            inspections={inspections}
+                            isLoading={inspectionLoading}
+                            onInspectionClick={handleInspectionClick}
+                            onQuickFix={handleQuickFix}
+                            onRefresh={handleRunInspections}
+                            onClose={handleCloseInspections}
+                            className="h-full"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
