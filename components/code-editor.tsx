@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import { useCodeBuilder, FileContent } from "@/hooks/use-code-builder";
 import { useAIAssistantEnhanced } from "@/hooks/use-ai-assistant-enhanced";
 import { TerminalComponent } from "@/components/terminal";
@@ -13,7 +13,7 @@ import {
   ExternalLink,
   Plus,
   FileText,
-  Bot,
+
   Terminal,
   X,
   Server,
@@ -28,11 +28,7 @@ import { useAutoSave } from '@/hooks/use-debounced-auto-save';
 import FileTabs from './file-tabs';
 
 import LivePreview from './live-preview';
-import AISettingsSidebar from './ai-settings-sidebar';
-import GitHubIntegration from './github-integration';
-import VercelIntegrationComponent from './vercel-integration';
 import Marketplace from './marketplace';
-import CodeAnalysisPanel from './code-analysis-panel';
 import AdvancedEditorToolbar from './advanced-editor-toolbar';
 import BYOKAISettings from './byok-ai-settings';
 import DocumentationPanel from './documentation-panel';
