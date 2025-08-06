@@ -1,9 +1,12 @@
-# White Rabbit - Build Progressive Web Apps
+# 🐰 White Rabbit Code Editor
 
-White Rabbit is a visual tool for creating Progressive Web Applications with ease. Build, customize, and export PWAs using an intuitive drag-and-drop interface.
+> **AI-Powered Application Builder** - Create apps through conversation
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/georgoskar-7854s-projects/v0-recreate-ui-design)
-[![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![License](https://img.shields.io/badge/License-Custom-blue.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.0.0-blue)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0.2-blue)](https://www.typescriptlang.org/)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://white-rabbit-code-editor-eat1i3kii-georgoskar-7854s-projects.vercel.app)
 
 ## Features
 
@@ -240,9 +243,45 @@ npm run lint
 - [ ] Custom component creation
 - [ ] Advanced PWA features (background sync, etc.)
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**⚠️ Important: This software is protected by a custom license.**
+
+### ✅ Personal Use Allowed
+- ✅ Personal projects and learning
+- ✅ Educational purposes
+- ✅ Non-commercial use
+- ✅ Modifications for personal use
+
+### ❌ Commercial Use Restricted
+- ❌ Business/commercial organizations
+- ❌ Revenue-generating activities
+- ❌ Commercial products/services
+- ❌ Redistribution as a product
+
+**Commercial licenses are available.** Contact us for pricing and terms.
+
+### 📝 Attribution Required
+All uses must include:
+```
+Powered by White Rabbit Code Editor
+```
+
+## 🏢 Commercial Licensing
+
+For commercial use, enterprise licenses, or custom arrangements:
+
+- 📧 **Email**: licensing@whiterabbit.dev
+- 🌐 **Website**: https://whiterabbit.dev/licensing
+- 💼 **Enterprise**: Custom solutions available
+
+## 🛡️ Copyright & Trademarks
+
+© 2025 White Rabbit Team. All rights reserved.
+
+"White Rabbit" and associated logos are trademarks of White Rabbit Team.
+
+See the [LICENSE](LICENSE) file for complete terms and conditions.
 
 ## Support
 
@@ -254,7 +293,7 @@ If you encounter any issues or have questions:
 
 ---
 
-**Built with ❤️ by the Hex & Kex team**
+**Built with ❤️ by the White Rabbit Team**
 Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
 
 ## Deployment

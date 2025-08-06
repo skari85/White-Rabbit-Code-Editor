@@ -13,11 +13,10 @@ interface LivePreviewProps {
 }
 
 export default function LivePreview({ files, selectedFile, className }: LivePreviewProps) {
-  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [previewContent, setPreviewContent] = useState<string>('');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const currentBlobUrl = useRef<string>('');
 
   // Generate preview HTML with all files bundled
   const generatePreviewHTML = () => {
@@ -122,7 +121,7 @@ export default function LivePreview({ files, selectedFile, className }: LivePrev
       }
     }
 
-    // Add meta tags for better preview
+    // Add meta tags and error handling for better preview
     const metaInjection = `
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
@@ -146,7 +145,45 @@ export default function LivePreview({ files, selectedFile, className }: LivePrev
         padding: 2rem;
         color: #666;
       }
-    </style>`;
+    </style>
+    <script>
+      // Override localStorage for sandboxed environment
+      (function() {
+        try {
+          // Test if localStorage is accessible
+          window.localStorage.getItem('test');
+        } catch (e) {
+          // Create a mock localStorage for sandboxed environment
+          window.localStorage = {
+            getItem: function(key) { return null; },
+            setItem: function(key, value) { console.warn('localStorage not available in preview'); },
+            removeItem: function(key) { console.warn('localStorage not available in preview'); },
+            clear: function() { console.warn('localStorage not available in preview'); },
+            length: 0,
+            key: function(index) { return null; }
+          };
+        }
+
+        // Handle module errors
+        window.addEventListener('error', function(e) {
+          if (e.message.includes('import') || e.message.includes('export')) {
+            console.warn('Module syntax detected - this is a preview limitation');
+          }
+          if (e.message.includes('localStorage')) {
+            console.warn('localStorage access blocked in sandboxed preview');
+          }
+        });
+
+        // Handle module errors and localStorage access
+        window.addEventListener('error', function(e) {
+          if (e.message && e.message.includes('localStorage') && e.message.includes('sandboxed')) {
+            console.warn('localStorage access blocked in preview - using mock implementation');
+            e.preventDefault();
+            return false;
+          }
+        });
+      })();
+    </script>`;
 
     if (htmlContent.includes('<head>')) {
       htmlContent = htmlContent.replace('<head>', `<head>\n${metaInjection}`);
@@ -161,48 +198,26 @@ export default function LivePreview({ files, selectedFile, className }: LivePrev
   useEffect(() => {
     const updatePreview = () => {
       setIsLoading(true);
-      
-      // Clean up previous blob URL
-      if (currentBlobUrl.current) {
-        URL.revokeObjectURL(currentBlobUrl.current);
-      }
-
       const htmlContent = generatePreviewHTML();
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      
-      currentBlobUrl.current = url;
-      setPreviewUrl(url);
+      setPreviewContent(htmlContent);
       setIsLoading(false);
     };
 
     updatePreview();
-
-    // Cleanup on unmount
-    return () => {
-      if (currentBlobUrl.current) {
-        URL.revokeObjectURL(currentBlobUrl.current);
-      }
-    };
   }, [files]);
 
   const refreshPreview = () => {
     const htmlContent = generatePreviewHTML();
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    
-    if (currentBlobUrl.current) {
-      URL.revokeObjectURL(currentBlobUrl.current);
-    }
-    
-    currentBlobUrl.current = url;
-    setPreviewUrl(url);
+    setPreviewContent(htmlContent);
   };
 
   const openInNewTab = () => {
-    if (previewUrl) {
-      window.open(previewUrl, '_blank');
-    }
+    const htmlContent = generatePreviewHTML();
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    // Clean up the blob URL after a short delay
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const toggleFullscreen = () => {
@@ -243,14 +258,13 @@ export default function LivePreview({ files, selectedFile, className }: LivePrev
       </CardHeader>
       <CardContent className="p-0">
         <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-96 bg-white'}`}>
-          {previewUrl ? (
+          {previewContent ? (
             <iframe
               ref={iframeRef}
-              src={previewUrl}
+              srcDoc={previewContent}
               className="w-full h-full border-0 bg-white"
-              // Security: Removed 'allow-same-origin' to prevent sandbox escape
-              // when combined with 'allow-scripts'. This maintains functionality
-              // while ensuring proper security isolation.
+              // Security: Using srcDoc instead of blob URLs to avoid sandbox issues
+              // while maintaining proper security isolation.
               sandbox="allow-scripts allow-forms allow-popups allow-modals"
               title="Live Preview"
               style={{ backgroundColor: '#ffffff' }}

@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+
+// Disable static generation for this demo page
+export const dynamic = 'force-dynamic';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -31,7 +34,7 @@ import {
 } from 'lucide-react';
 
 export default function EnhancedIDEDemo() {
-  const [personality, setPersonality] = useState<PersonalityMode>('hex');
+  const [personality, setPersonality] = useState<PersonalityMode>('rabbit');
   const [activeTab, setActiveTab] = useState('file-system');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState('');
@@ -231,7 +234,7 @@ export default function EnhancedIDEDemo() {
                     value={fileContent}
                     onChange={setFileContent}
                     language="typescript"
-                    theme={personality === 'kex' ? 'kex-dark' : 'vs-dark'}
+                    theme={personality === 'assistant' ? 'vs-light' : 'vs-dark'}
                     enableDiagnostics={true}
                     enableIntelliSense={true}
                     enableMinimap={true}

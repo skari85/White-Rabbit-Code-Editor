@@ -1,5 +1,17 @@
+/**
+ * White Rabbit Code Editor
+ * Copyright (c) 2025 White Rabbit Team. All rights reserved.
+ *
+ * This software is licensed for personal and educational use only.
+ * Commercial use requires a separate license agreement.
+ *
+ * For licensing information, see LICENSE file.
+ * For commercial licensing, contact: licensing@whiterabbit.dev
+ */
+
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
 
 import { useCodeBuilder, FileContent } from "@/hooks/use-code-builder";
 import { useAIAssistantEnhanced } from "@/hooks/use-ai-assistant-enhanced";
@@ -13,13 +25,14 @@ import {
   ExternalLink,
   Plus,
   FileText,
-
   Terminal,
   X,
   Server,
   RefreshCw,
   Package,
-  Settings
+  Settings,
+  Sun,
+  Moon
 } from "lucide-react";
 import LazyMonacoEditor from './lazy-monaco-editor';
 import AIEnhancedMonacoEditor from './ai-enhanced-monaco-editor';
@@ -33,6 +46,44 @@ import AdvancedEditorToolbar from './advanced-editor-toolbar';
 import BYOKAISettings from './byok-ai-settings';
 import DocumentationPanel from './documentation-panel';
 import CodeInspectionPanel from './code-inspection-panel';
+
+// Dark Mode Toggle Component
+function DarkModeToggleButton() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    // Return a placeholder that matches the server render
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0"
+        title="Toggle theme"
+        disabled
+      >
+        <Moon className="w-4 h-4" />
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      className="h-8 w-8 p-0"
+      title="Toggle theme"
+    >
+      {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+    </Button>
+  );
+}
 
 export default function CodeEditor() {
   // Code Builder hooks
@@ -342,7 +393,7 @@ export default function CodeEditor() {
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-white rounded flex items-center justify-center p-1">
                 <img
-                  src="/whiterabbitlogo.png"
+                  src="/whitebunnylogo.png"
                   alt="White Rabbit"
                   className="w-full h-full object-contain"
                 />
@@ -353,8 +404,11 @@ export default function CodeEditor() {
               </div>
             </div>
 
-            {/* Settings and User Profile */}
+            {/* Controls */}
             <div className="flex items-center gap-2">
+              {/* Dark Mode Toggle */}
+              <DarkModeToggleButton />
+
               {/* Settings Button */}
               <Button
                 variant="ghost"
@@ -376,7 +430,7 @@ export default function CodeEditor() {
                       className="w-6 h-6 rounded-full"
                     />
                   )}
-                  <span className="text-xs text-gray-600">
+                  <span className="text-xs text-gray-300">
                     {session.user.name || session.user.email}
                   </span>
                 </div>

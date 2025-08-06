@@ -273,7 +273,7 @@ export function AIChat({
         <div className="flex items-center justify-between p-3 border-b border-gray-700">
           <div className="flex items-center gap-2">
             <img
-              src="/whiterabbitlogo.png"
+              src="/whitebunnylogo.png"
               alt="White Rabbit"
               className="w-8 h-8 object-contain"
             />
@@ -285,7 +285,7 @@ export function AIChat({
           <div className="text-center p-8">
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <img
-                src="/whiterabbitlogo.png"
+                src="/whitebunnylogo.png"
                 alt="White Rabbit"
                 className="w-16 h-16 object-contain"
               />
@@ -322,15 +322,10 @@ export function AIChat({
         </div>
       )}
       
-      {/* Header with Model Dropdown */}
+      {/* Simplified Header with Controls */}
       <div className="flex items-center justify-between p-3 border-b border-gray-700">
         <div className="flex items-center gap-2">
-          <img
-            src="/whiterabbitlogo.png"
-            alt="White Rabbit"
-            className="w-8 h-8 object-contain"
-          />
-          <span className="text-sm font-medium">What can I do for you?</span>
+          <span className="text-sm font-medium text-gray-300">AI Assistant</span>
         </div>
         
         <div className="flex items-center gap-2">
@@ -534,7 +529,7 @@ export function AIChat({
             <div className="text-center py-8">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <img
-                  src="/whiterabbitlogo.png"
+                  src="/whitebunnylogo.png"
                   alt="White Rabbit"
                   className="w-16 h-16 object-contain"
                 />

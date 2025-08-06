@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { AuthSessionProvider } from '@/components/session-provider'
+import { ThemeProvider } from '@/components/theme-provider'
+import { CopyrightFooter } from '@/components/license-notice'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -36,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
@@ -48,6 +50,24 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Hex & Kex" />
         <meta name="format-detection" content="telephone=no" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('theme') || 'dark';
+                  var systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  var finalTheme = theme === 'system' ? systemTheme : theme;
+                  document.documentElement.classList.add(finalTheme);
+                  document.documentElement.style.colorScheme = finalTheme;
+                } catch (e) {
+                  document.documentElement.classList.add('dark');
+                  document.documentElement.style.colorScheme = 'dark';
+                }
+              })();
+            `,
+          }}
+        />
         <style>{`
 html {
   font-family: ${GeistSans.style.fontFamily};
@@ -57,9 +77,17 @@ html {
         `}</style>
       </head>
       <body>
-        <AuthSessionProvider>
-          {children}
-        </AuthSessionProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthSessionProvider>
+            {children}
+            <CopyrightFooter />
+          </AuthSessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
