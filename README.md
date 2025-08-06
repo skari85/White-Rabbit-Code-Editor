@@ -1,42 +1,50 @@
 # 🐰 White Rabbit Code Editor
 
-> **AI-Powered Application Builder** - Create apps through conversation
+> **AI-Powered Code Editor** - Build web applications through conversation
 
 [![License](https://img.shields.io/badge/License-Custom-blue.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.0.0-blue)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0.2-blue)](https://www.typescriptlang.org/)
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://white-rabbit-code-editor-eat1i3kii-georgoskar-7854s-projects.vercel.app)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://www.whiterabbit.onl)
 
-## Features
+## ✨ Features
 
-### ✨ Core Features
-- **Visual PWA Builder**: Create PWAs with a visual interface
-- **Code Editor**: Full-featured code editor with syntax highlighting
-- **Live Preview**: See your changes in real-time with mobile preview
-- **Template Library**: Pre-built templates (Employee Directory, Todo App, etc.)
-- **Responsive Design**: Works on desktop, tablet, and mobile devices
+### 🤖 AI-Powered Development
+- **Conversational Coding**: Create applications through natural language
+- **AI Code Completions**: Intelligent, context-aware code suggestions
+- **Multi-AI Support**: OpenAI, Anthropic, Groq, Google AI, and more
+- **Smart Documentation**: Auto-generate documentation for your code
+- **Context Understanding**: AI knows your entire project structure
 
-### 🚀 PWA Features
+### 💻 Advanced Code Editor
+- **Monaco Editor**: VS Code-quality editing experience
+- **Syntax Highlighting**: Support for JavaScript, TypeScript, React, HTML, CSS
+- **Live Preview**: Real-time preview of your web applications
+- **File Management**: Create, edit, and organize project files
+- **Theme Support**: Dark and light modes with custom themes
+
+### 🚀 Modern Development Tools
+- **Live Coding**: See changes instantly as you type
+- **Terminal Integration**: Built-in terminal for running commands
+- **Export Projects**: Download your projects as ZIP files
+- **Mobile Responsive**: Code on desktop, tablet, or mobile devices
 - **Offline Support**: Works without internet connection
-- **Installable**: Can be installed on devices like native apps
-- **Push Notifications**: Support for web push notifications
-- **Background Sync**: Sync data when connection is restored
-- **App Shell**: Fast loading app shell architecture
 
-### 🛠️ Technical Features
+### 🛠️ Technical Stack
 - Built with **Next.js 15** and **React 19**
 - **TypeScript** for type safety
+- **Monaco Editor** for professional code editing
 - **Tailwind CSS** for styling
 - **Radix UI** components for accessibility
-- **JSZip** for file compression and export
-- Modern PWA standards compliance
+- **Vercel Analytics** for usage insights
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 18+
 - npm or pnpm package manager
+- AI API key (OpenAI, Anthropic, Groq, etc.) - optional but recommended
 
 ### Installation
 
@@ -57,8 +65,8 @@
    ```bash
    cp .env.example .env.local
    ```
-   
-   Edit `.env.local` and add your GitHub OAuth credentials (see GitHub OAuth Setup below).
+
+   Edit `.env.local` and add your API keys for AI providers and GitHub OAuth.
 
 4. **Start the development server**
    ```bash
@@ -68,132 +76,121 @@
    ```
 
 5. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+   Navigate to [http://localhost:3012](http://localhost:3012)
 
-## GitHub OAuth Setup
+## 🔧 Configuration
 
-To enable GitHub authentication, you need to create a GitHub OAuth App:
+### AI Provider Setup
+To enable AI features, configure at least one AI provider:
 
-### 1. Create GitHub OAuth App
-1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
-2. Click **"New OAuth App"**
-3. Fill in the application details:
-   - **Application name**: `Hex & Kex` (or your preferred name)
-   - **Homepage URL**: `http://localhost:3000` (for development)
-   - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
-4. Click **"Register application"**
-
-### 2. Configure Environment Variables
-1. Copy the **Client ID** and **Client Secret** from your GitHub OAuth App
-2. Update your `.env.local` file:
+1. **OpenAI** (Recommended)
    ```env
-   NEXTAUTH_URL=http://localhost:3000
+   OPENAI_API_KEY=sk-your-openai-api-key-here
+   ```
+
+2. **Anthropic (Claude)**
+   ```env
+   ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key-here
+   ```
+
+3. **Groq** (Fast inference)
+   ```env
+   GROQ_API_KEY=gsk_your-groq-api-key-here
+   ```
+
+### GitHub OAuth Setup (Optional)
+For user authentication and future GitHub integrations:
+
+1. **Create GitHub OAuth App**
+   - Go to [GitHub Developer Settings](https://github.com/settings/developers)
+   - Click **"New OAuth App"**
+   - Application name: `White Rabbit Code Editor`
+   - Homepage URL: `http://localhost:3012` (development)
+   - Callback URL: `http://localhost:3012/api/auth/callback/github`
+
+2. **Configure Environment Variables**
+   ```env
+   NEXTAUTH_URL=http://localhost:3012
    NEXTAUTH_SECRET=your-secret-key-here
    GITHUB_CLIENT_ID=your-github-client-id
    GITHUB_CLIENT_SECRET=your-github-client-secret
    ```
 
-### 3. Generate NextAuth Secret
-Generate a secure secret for NextAuth:
-```bash
-openssl rand -base64 32
-```
-Use this value for `NEXTAUTH_SECRET` in your `.env.local` file.
+3. **Generate NextAuth Secret**
+   ```bash
+   openssl rand -base64 32
+   ```
 
-### 4. Production Setup
-For production deployment:
-1. Update your GitHub OAuth App settings:
-   - **Homepage URL**: `https://yourdomain.com`
-   - **Authorization callback URL**: `https://yourdomain.com/api/auth/callback/github`
-2. Update environment variables in your hosting platform
-3. Set `NEXTAUTH_URL` to your production domain
+## 🎯 How to Use
 
-### Features Enabled by GitHub Authentication
-- **User Authentication**: Secure sign-in with GitHub accounts
-- **User Profile**: Access to GitHub profile information
-- **Session Management**: Persistent login sessions
-- **Future Integrations**: Ready for GitHub API integrations (repositories, issues, etc.)
+### 1. Start Coding
+- **Create Files**: Add HTML, CSS, JavaScript, TypeScript, or React files
+- **AI Chat**: Describe what you want to build in natural language
+- **Live Preview**: See your changes instantly in the preview panel
 
-## How to Use
+### 2. AI-Powered Development
+- **Ask Questions**: "Create a React component for a todo list"
+- **Get Suggestions**: AI provides intelligent code completions as you type
+- **Generate Code**: AI can create entire files based on your descriptions
+- **Documentation**: Auto-generate docs for your functions and components
 
-### 1. Choose Your Mode
-- **Code Editor**: Write code manually with full control
-- **PWA Builder**: Use the visual interface to build PWAs
+### 3. Advanced Features
+- **Multi-File Projects**: Organize your code across multiple files
+- **Terminal**: Run commands and scripts directly in the browser
+- **Themes**: Switch between dark and light modes
+- **Export**: Download your project as a ZIP file
 
-### 2. Start with a Template
-- Select from pre-built templates:
-  - **Employee Directory**: Browse and search employees
-  - **Todo App**: Task management application
-  - More templates coming soon!
+### 4. AI Configuration
+- **Settings**: Configure your preferred AI provider and model
+- **API Keys**: Add your own API keys for unlimited usage
+- **Personality**: Choose between different AI assistant personalities
 
-### 3. Customize Your App
-- **Settings Panel**: Configure app name, description, colors, and icons
-- **File Editor**: Modify HTML, CSS, JavaScript, and JSON files
-- **Live Preview**: See changes instantly in the mobile preview
-
-### 4. Generate PWA Files
-- Click **"Generate PWA"** to create:
-  - `manifest.json` with your app configuration
-  - `sw.js` service worker for offline functionality
-  - Optimized HTML with PWA meta tags
-
-### 5. Export and Deploy
-- **Download**: Export as ZIP file containing all your files
-- **Preview**: Test your app in a new browser tab
-- **Deploy**: Upload to any web server or hosting platform
-
-## Project Structure
+## 📁 Project Structure
 
 ```
-pwa-code/
+white-rabbit/
 ├── app/                    # Next.js app directory
 │   ├── globals.css        # Global styles
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Main page
-├── components/            # Reusable UI components
+│   ├── layout.tsx         # Root layout with analytics
+│   └── page.tsx           # Main code editor page
+├── components/            # React components
 │   ├── ui/               # Shadcn/ui components
-│   └── theme-provider.tsx
+│   ├── code-editor.tsx   # Main code editor component
+│   ├── ai-chat.tsx       # AI conversation interface
+│   ├── live-preview.tsx  # Real-time preview panel
+│   └── monaco-editor/    # Monaco editor integration
 ├── hooks/                 # Custom React hooks
-│   └── use-pwa-builder.ts # PWA builder logic
+│   ├── use-code-builder.ts    # File management logic
+│   ├── use-ai-assistant.ts    # AI integration
+│   └── use-analytics.ts       # Usage tracking
 ├── lib/                   # Utility libraries
-│   ├── pwa-generator.ts   # PWA file generation
-│   ├── templates.ts       # Template definitions
+│   ├── ai-config.ts      # AI provider configurations
+│   ├── ai-completion-service.ts # Code completion engine
 │   └── utils.ts          # General utilities
 ├── public/               # Static assets
-│   ├── manifest.json     # PWA manifest
-│   ├── sw.js            # Service worker
-│   └── *.svg            # Icons
-└── plunker-clone.tsx     # Main application component
+│   ├── whiterabbitlogo.png    # Application logo
+│   └── icons/            # Various icons
+└── styles/               # CSS and styling
 ```
 
-## Available Templates
+## 🤖 AI Features
 
-### 1. Employee Directory
-A professional employee directory application featuring:
-- Employee search and filtering
-- Responsive card layout
-- Contact information display
-- PWA installation prompt
+### Supported AI Providers
+- **OpenAI**: GPT-3.5, GPT-4, GPT-4 Turbo
+- **Anthropic**: Claude 3 Haiku, Sonnet, Opus
+- **Groq**: Llama 3, Mixtral (ultra-fast inference)
+- **Google AI**: Gemini Pro, Gemini Pro Vision
+- **Mistral**: Mistral 7B, Mixtral 8x7B
 
-### 2. Todo App
-A task management application with:
-- Add, edit, and delete tasks
-- Mark tasks as complete
-- Local storage persistence
-- Clean, modern interface
+### AI Capabilities
+- **Code Generation**: Create complete files from descriptions
+- **Code Completion**: Intelligent autocomplete as you type
+- **Documentation**: Auto-generate JSDoc comments
+- **Code Explanation**: Understand complex code snippets
+- **Debugging Help**: Get assistance with errors and bugs
+- **Refactoring**: Improve code structure and performance
 
-## PWA Standards Compliance
-
-This tool generates PWAs that meet modern web standards:
-
-- ✅ **Web App Manifest**: Complete manifest.json configuration
-- ✅ **Service Worker**: Offline functionality and caching
-- ✅ **HTTPS Ready**: Works with secure connections
-- ✅ **Responsive Design**: Mobile-first approach
-- ✅ **Installable**: Add to home screen functionality
-- ✅ **Performance**: Optimized loading and caching
-
-## Development
+## 🛠️ Development
 
 ### Building for Production
 ```bash
@@ -206,13 +203,23 @@ npm start
 npm run lint
 ```
 
+### Available Scripts
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run deploy       # Deploy with license verification
+```
+
 ### Technologies Used
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
+- **Editor**: Monaco Editor (VS Code engine)
 - **Styling**: Tailwind CSS
 - **UI Components**: Radix UI primitives
-- **File Handling**: JSZip for exports
-- **PWA**: Web App Manifest + Service Workers
+- **AI Integration**: Multiple provider support
+- **Analytics**: Vercel Analytics & Speed Insights
 
 ## Contributing
 
@@ -222,24 +229,25 @@ npm run lint
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## Roadmap
+## 🗺️ Roadmap
 
 ### Upcoming Features
-- [ ] More PWA templates (Weather App, News Reader, etc.)
-- [ ] Drag-and-drop visual builder
-- [ ] Component library integration
-- [ ] Database integration templates
-- [ ] Push notification setup wizard
-- [ ] Advanced theming options
-- [ ] Collaborative editing
-- [ ] Version control integration
-
-### Technical Improvements
-- [ ] Enhanced code editor with IntelliSense
+- [ ] GitHub repository integration
 - [ ] Real-time collaboration
-- [ ] Template marketplace
-- [ ] Custom component creation
-- [ ] Advanced PWA features (background sync, etc.)
+- [ ] Plugin system for extensions
+- [ ] Advanced AI code analysis
+- [ ] Custom AI model training
+- [ ] Team workspaces
+- [ ] Version control integration
+- [ ] Deployment integrations (Vercel, Netlify)
+
+### AI Enhancements
+- [ ] Voice-to-code functionality
+- [ ] Visual design to code conversion
+- [ ] Automated testing generation
+- [ ] Performance optimization suggestions
+- [ ] Security vulnerability detection
+- [ ] Code review automation
 
 ## 📄 License
 
@@ -291,24 +299,27 @@ If you encounter any issues or have questions:
 
 ---
 
+## 🌐 Live Demo
+
+Experience White Rabbit Code Editor live at:
+
+**[https://www.whiterabbit.onl](https://www.whiterabbit.onl)**
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help:
+
+1. **Fork the repository**
+2. **Create a feature branch** (`git checkout -b feature/amazing-feature`)
+3. **Make your changes** and test thoroughly
+4. **Commit your changes** (`git commit -m 'Add amazing feature'`)
+5. **Push to the branch** (`git push origin feature/amazing-feature`)
+6. **Open a Pull Request**
+
+### Development Guidelines
+- Follow TypeScript best practices
+- Add tests for new features
+- Update documentation as needed
+- Ensure accessibility compliance
+
 **Built with ❤️ by the White Rabbit Team**
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
-
-## Deployment
-
-Your project is live at:
-
-**[https://vercel.com/georgoskar-7854s-projects/v0-recreate-ui-design](https://vercel.com/georgoskar-7854s-projects/v0-recreate-ui-design)**
-
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.dev/chat/projects/f1mzLkvOodF](https://v0.dev/chat/projects/f1mzLkvOodF)**
-
-## How It Works
-
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
