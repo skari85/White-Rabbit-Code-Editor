@@ -16,6 +16,7 @@ import { useTheme } from "next-themes";
 import { useCodeBuilder, FileContent } from "@/hooks/use-code-builder";
 import { useAIAssistantEnhanced } from "@/hooks/use-ai-assistant-enhanced";
 import { TerminalComponent } from "@/components/terminal";
+import { useAnalytics } from "@/hooks/use-analytics";
 import { AIChat } from "@/components/ai-chat";
 import { useTerminal } from "@/hooks/use-terminal";
 import LiveCodingEngine from "@/components/live-coding-engine";
@@ -51,6 +52,7 @@ import CodeInspectionPanel from './code-inspection-panel';
 function DarkModeToggleButton() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { trackThemeToggle } = useAnalytics();
 
   // Prevent hydration mismatch by only rendering after mount
   useEffect(() => {
@@ -72,11 +74,17 @@ function DarkModeToggleButton() {
     );
   }
 
+  const handleThemeToggle = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    trackThemeToggle(newTheme);
+  };
+
   return (
     <Button
       variant="ghost"
       size="sm"
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={handleThemeToggle}
       className="h-8 w-8 p-0"
       title="Toggle theme"
     >
@@ -86,6 +94,16 @@ function DarkModeToggleButton() {
 }
 
 export default function CodeEditor() {
+  // Analytics
+  const {
+    trackFileCreated,
+    trackFileDeleted,
+    trackPreviewOpened,
+    trackAIInteraction,
+    trackFeatureUsed,
+    trackUserSession
+  } = useAnalytics();
+
   // Code Builder hooks
   const {
     files,
@@ -117,6 +135,17 @@ export default function CodeEditor() {
 
   const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace">("code");
 
+  // Track user session
+  useEffect(() => {
+    const sessionStart = Date.now();
+    trackUserSession('session_start');
+
+    return () => {
+      const sessionDuration = Date.now() - sessionStart;
+      trackUserSession('session_end', sessionDuration);
+    };
+  }, [trackUserSession]);
+
   // Set up file generation callbacks for AI
   useEffect(() => {
     setFileGenerationCallbacks({
@@ -137,6 +166,8 @@ export default function CodeEditor() {
         };
 
         addNewFile(name, getFileType(name));
+        // Track file creation
+        trackFileCreated(getFileType(name), name);
         // Update content after file is created
         setTimeout(() => updateFileContent(name, content), 100);
       },

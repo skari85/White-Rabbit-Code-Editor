@@ -5,12 +5,28 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Shield, Copyright } from 'lucide-react'
+import { useAnalytics } from '@/hooks/use-analytics'
 
 export function LicenseNotice() {
+  const { trackLicenseViewed, trackCommercialInquiry } = useAnalytics()
+
+  const handleLicenseOpen = () => {
+    trackLicenseViewed()
+  }
+
+  const handleCommercialClick = () => {
+    trackCommercialInquiry()
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-muted-foreground hover:text-foreground"
+          onClick={handleLicenseOpen}
+        >
           <Copyright className="w-3 h-3 mr-1" />
           © 2025 White Rabbit
         </Button>
@@ -73,8 +89,24 @@ export function LicenseNotice() {
                 For commercial use, enterprise licenses, or custom licensing arrangements, please contact:
               </p>
               <div className="space-y-1 text-sm">
-                <p>📧 Email: licensing@whiterabbit.dev</p>
-                <p>🌐 Website: https://whiterabbit.dev/licensing</p>
+                <p>
+                  📧 Email:
+                  <button
+                    onClick={handleCommercialClick}
+                    className="ml-1 text-blue-600 hover:text-blue-800 underline"
+                  >
+                    licensing@whiterabbit.dev
+                  </button>
+                </p>
+                <p>
+                  🌐 Website:
+                  <button
+                    onClick={handleCommercialClick}
+                    className="ml-1 text-blue-600 hover:text-blue-800 underline"
+                  >
+                    https://whiterabbit.dev/licensing
+                  </button>
+                </p>
               </div>
             </div>
 

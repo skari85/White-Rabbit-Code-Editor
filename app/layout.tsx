@@ -4,6 +4,8 @@ import { GeistMono } from 'geist/font/mono'
 import { AuthSessionProvider } from '@/components/session-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { CopyrightFooter } from '@/components/license-notice'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -86,6 +88,8 @@ html {
           <AuthSessionProvider>
             {children}
             <CopyrightFooter />
+            <Analytics />
+            <SpeedInsights />
           </AuthSessionProvider>
         </ThemeProvider>
       </body>
