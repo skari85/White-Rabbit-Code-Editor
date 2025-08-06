@@ -33,8 +33,8 @@ export function AICodeSpace({ codeBlocks, personality }: AICodeSpaceProps) {
     }
   };
 
-  // Enhanced Hex/Kex themed color scheme
-  const hexKexStyle = {
+  // Enhanced White Rabbit themed color scheme
+  const whiteRabbitStyle = {
     ...oneDark,
     'pre[class*="language-"]': {
       ...oneDark['pre[class*="language-"]'],
@@ -50,13 +50,13 @@ export function AICodeSpace({ codeBlocks, personality }: AICodeSpaceProps) {
       fontSize: '14px',
       lineHeight: '1.5',
     },
-    // Enhanced syntax highlighting for Hex/Kex
-    '.token.keyword': { 
-      color: isKex ? '#00FFE1' : '#569CD6', 
-      fontWeight: 'bold' 
+    // Enhanced syntax highlighting for White Rabbit
+    '.token.keyword': {
+      color: isKex ? '#00FFE1' : '#569CD6',
+      fontWeight: 'bold'
     },
-    '.token.string': { 
-      color: isKex ? '#CE9178' : '#a5d6ff' 
+    '.token.string': {
+      color: isKex ? '#CE9178' : '#a5d6ff'
     },
     '.token.function': { 
       color: isKex ? '#DCDCAA' : '#d2a8ff' 
@@ -185,7 +185,7 @@ export function AICodeSpace({ codeBlocks, personality }: AICodeSpaceProps) {
           <div className="relative">
             <SyntaxHighlighter
               language={selected.lang || 'javascript'}
-              style={isDarkTheme ? hexKexStyle : oneLight}
+              style={isDarkTheme ? whiteRabbitStyle : oneLight}
               showLineNumbers={true}
               lineNumberStyle={{
                 minWidth: '3em',

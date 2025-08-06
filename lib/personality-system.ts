@@ -122,12 +122,12 @@ export class PersonalitySystem {
     const lines = code.split('\n');
     const currentLine = lines[cursorPosition.line] || '';
 
-    // HEX suggestions (clean, strict)
+    // WHITE RABBIT suggestions (clean, strict)
     if (this.currentPersonality === 'hex') {
       // Look for optimization opportunities
       if (currentLine.includes('for (let i = 0')) {
         suggestions.push({
-          id: `hex-${Date.now()}-1`,
+          id: `rabbit-${Date.now()}-1`,
           line: cursorPosition.line,
           column: cursorPosition.column,
           type: 'optimization',
@@ -140,7 +140,7 @@ export class PersonalitySystem {
       // Look for function extraction opportunities
       if (currentLine.length > 80) {
         suggestions.push({
-          id: `hex-${Date.now()}-2`,
+          id: `rabbit-${Date.now()}-2`,
           line: cursorPosition.line,
           column: cursorPosition.column,
           type: 'extract',

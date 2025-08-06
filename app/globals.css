@@ -18,12 +18,12 @@
 @layer base {
   :root {
     /* White Rabbit Color Palette */
-    --hex-background: #0d0d0d;      /* near-black, soft on the eyes */
-    --hex-accent-1: #6c2fff;        /* electric purple (Hex's spell color) */
-    --hex-accent-2: #00ffe1;        /* neon cyan (Kex's glitch color) */
-    --hex-foreground: #eaeaea;      /* off-white, clean for code */
-    --hex-error: #ff3c75;           /* hot magenta, dramatic feedback */
-    --hex-subtle: #7a7a7a;          /* muted gray for secondary labels */
+    --rabbit-background: #0d0d0d;      /* near-black, soft on the eyes */
+    --rabbit-accent-1: #6c2fff;        /* electric purple (primary accent) */
+    --rabbit-accent-2: #00ffe1;        /* neon cyan (secondary accent) */
+    --rabbit-foreground: #eaeaea;      /* off-white, clean for code */
+    --rabbit-error: #ff3c75;           /* hot magenta, dramatic feedback */
+    --rabbit-subtle: #7a7a7a;          /* muted gray for secondary labels */
     
     /* Map to CSS variables for Tailwind compatibility */
     --background: 0 0% 5.1%;         /* #0d0d0d */
@@ -128,8 +128,8 @@
   animation: glitch 0.4s infinite;
 }
 
-/* 🪄 Spell-like Hover Effects (Hex-style) */
-.hex-hover:hover {
+/* 🐰 White Rabbit Hover Effects */
+.rabbit-hover:hover {
   background: linear-gradient(90deg, #6c2fff, #00ffe1);
   -webkit-background-clip: text;
   background-clip: text;
@@ -138,21 +138,21 @@
   transition: all 0.3s ease;
 }
 
-.hex-button:hover {
+.rabbit-button:hover {
   background: linear-gradient(90deg, #6c2fff, #00ffe1);
   box-shadow: 0 0 20px rgba(108, 47, 255, 0.3);
   transition: all 0.3s ease;
 }
 
 /* Custom utility classes for White Rabbit colors */
-.bg-hex-primary { background-color: #0d0d0d; }
-.bg-hex-accent-1 { background-color: #6c2fff; }
-.bg-hex-accent-2 { background-color: #00ffe1; }
-.text-hex-foreground { color: #eaeaea; }
-.text-hex-error { color: #ff3c75; }
-.text-hex-subtle { color: #7a7a7a; }
-.text-hex-accent-1 { color: #6c2fff; }
-.text-hex-accent-2 { color: #00ffe1; }
+.bg-rabbit-primary { background-color: #0d0d0d; }
+.bg-rabbit-accent-1 { background-color: #6c2fff; }
+.bg-rabbit-accent-2 { background-color: #00ffe1; }
+.text-rabbit-foreground { color: #eaeaea; }
+.text-rabbit-error { color: #ff3c75; }
+.text-rabbit-subtle { color: #7a7a7a; }
+.text-rabbit-accent-1 { color: #6c2fff; }
+.text-rabbit-accent-2 { color: #00ffe1; }
 
 /* Glow effects */
 .glow-purple {

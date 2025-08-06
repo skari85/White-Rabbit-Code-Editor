@@ -83,15 +83,15 @@ pwa-code/
 - **Branch Management**: Fork and merge code branches
 - **Generation History**: Rewind to any previous version
 
-### 🎨 Hex & Kex Personality System
-- **Dual Personalities**: Switch between Hex (structured) and Kex (creative)
-- **Context-Aware Suggestions**: AI adapts to your coding style
-- **Personality-Driven UI**: Interface changes based on selected personality
+### 🎨 White Rabbit AI Personality System
+- **Intelligent Assistance**: AI adapts to your coding style and preferences
+- **Context-Aware Suggestions**: Smart recommendations based on your project
+- **Personality-Driven UI**: Interface optimized for productivity
 
-### 🔧 HexLayoutSwitcher (Split Screen System)
+### 🔧 WhiteRabbitLayoutSwitcher (Split Screen System)
 - **Single View**: Focus on one component
 - **Horizontal Split**: Code + Terminal
-- **Vertical Split**: Code + File Navigator  
+- **Vertical Split**: Code + File Navigator
 - **Grid Layout**: All components visible (Code, Navigator, Terminal, DNA)
 
 ### 🤖 AI Integration

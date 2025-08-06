@@ -19,7 +19,7 @@ interface PaneConfig {
   icon: React.ReactNode;
 }
 
-interface HexLayoutSwitcherProps {
+interface WhiteRabbitLayoutSwitcherProps {
   children?: React.ReactNode;
   onLayoutChange?: (layout: LayoutMode) => void;
   selectedFile?: { name: string; content: string; type: string } | null;
@@ -29,15 +29,15 @@ interface HexLayoutSwitcherProps {
   terminalProps?: any;
 }
 
-export default function HexLayoutSwitcher({ 
-  children, 
-  onLayoutChange, 
+export default function WhiteRabbitLayoutSwitcher({
+  children,
+  onLayoutChange,
   selectedFile,
   generatedFiles = [],
   onFileSelect,
   dnaProps,
   terminalProps
-}: HexLayoutSwitcherProps) {
+}: WhiteRabbitLayoutSwitcherProps) {
   const [layout, setLayout] = useState<LayoutMode>('single');
   const [paneConfigs, setPaneConfigs] = useState<PaneConfig[]>([]);
 
@@ -231,7 +231,7 @@ export default function HexLayoutSwitcher({
           <div className="text-green-300/60 font-mono text-sm">
             // Your content here...
             <br />
-            // Ready for hex magic ✨
+            // Ready for White Rabbit magic ✨
           </div>
         );
     }
@@ -356,9 +356,9 @@ export default function HexLayoutSwitcher({
 }
 
 // Hook for using layout state in other components
-export function useHexLayout() {
+export function useWhiteRabbitLayout() {
   const [layout, setLayout] = useState<LayoutMode>('single');
-  
+
   return {
     layout,
     setLayout,

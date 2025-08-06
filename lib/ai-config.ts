@@ -7,18 +7,18 @@ export interface AIProvider {
 }
 
 /**
- * Hex & Kex Color Palette Integration
- * 
+ * White Rabbit Color Palette Integration
+ *
  * Our app uses a custom dark theme with the following colors:
  * - Background: #0d0d0d (near-black, soft on the eyes)
- * - Accent 1: #6c2fff (electric purple - Hex's spell color)
- * - Accent 2: #00ffe1 (neon cyan - Kex's glitch color)  
+ * - Accent 1: #6c2fff (electric purple - primary accent)
+ * - Accent 2: #00ffe1 (neon cyan - secondary accent)
  * - Foreground: #eaeaea (off-white, clean for code)
  * - Error: #ff3c75 (hot magenta, dramatic feedback)
  * - Subtle: #7a7a7a (muted gray for secondary labels)
- * 
+ *
  * Font: JetBrains Mono with contextual ligatures
- * Effects: Glitch animations (Kex-style) and spell hovers (Hex-style)
+ * Effects: Smooth animations and elegant hover effects
  */
 
 export const AI_PROVIDERS: AIProvider[] = [
