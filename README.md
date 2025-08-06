@@ -15,8 +15,6 @@
 - **Code Editor**: Full-featured code editor with syntax highlighting
 - **Live Preview**: See your changes in real-time with mobile preview
 - **Template Library**: Pre-built templates (Employee Directory, Todo App, etc.)
-- **PWA Generation**: Automatic manifest.json and service worker generation
-- **Export Functionality**: Download your PWA as a ZIP file
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
 
 ### 🚀 PWA Features
