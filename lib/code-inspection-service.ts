@@ -299,6 +299,123 @@ export class CodeInspectionService {
   private checkSyntaxIssues(code: string, lines: string[], language: string): CodeInspection[] {
     const inspections: CodeInspection[] = [];
 
+    // Check for common syntax issues
+    lines.forEach((line, index) => {
+      const lineNumber = index + 1;
+
+      // Check for console.log statements
+      if (line.includes('console.log')) {
+        inspections.push({
+          id: `console-log-${lineNumber}`,
+          type: 'warning',
+          severity: 'warning',
+          message: 'Console statement found',
+          description: 'Remove console.log statements before production deployment',
+          category: 'code-style',
+          range: {
+            startLineNumber: lineNumber,
+            startColumn: line.indexOf('console.log') + 1,
+            endLineNumber: lineNumber,
+            endColumn: line.indexOf('console.log') + 'console.log'.length + 1
+          },
+          source: 'white-rabbit',
+          quickFix: {
+            title: 'Remove console.log',
+            range: {
+              startLineNumber: lineNumber,
+              startColumn: 1,
+              endLineNumber: lineNumber,
+              endColumn: line.length + 1
+            },
+            newText: ''
+          }
+        });
+      }
+
+      // Check for TODO comments
+      if (line.includes('TODO') || line.includes('FIXME') || line.includes('HACK')) {
+        const match = line.match(/(TODO|FIXME|HACK)/i);
+        if (match) {
+          inspections.push({
+            id: `todo-${lineNumber}`,
+            type: 'info',
+            severity: 'info',
+            message: `${match[1]} comment found`,
+            description: 'Consider addressing this TODO item',
+            category: 'code-style',
+            range: {
+              startLineNumber: lineNumber,
+              startColumn: match.index! + 1,
+              endLineNumber: lineNumber,
+              endColumn: match.index! + match[1].length + 1
+            },
+            source: 'white-rabbit'
+          });
+        }
+      }
+
+      // Check for long lines
+      if (line.length > 120) {
+        inspections.push({
+          id: `long-line-${lineNumber}`,
+          type: 'warning',
+          severity: 'warning',
+          message: 'Line too long',
+          description: `Line has ${line.length} characters. Consider breaking it into multiple lines for better readability.`,
+          category: 'code-style',
+          range: {
+            startLineNumber: lineNumber,
+            startColumn: 121,
+            endLineNumber: lineNumber,
+            endColumn: line.length + 1
+          },
+          source: 'white-rabbit'
+        });
+      }
+
+      // Check for missing semicolons in JavaScript/TypeScript
+      if ((language === 'javascript' || language === 'typescript') &&
+          line.trim() &&
+          !line.trim().endsWith(';') &&
+          !line.trim().endsWith('{') &&
+          !line.trim().endsWith('}') &&
+          !line.trim().startsWith('//') &&
+          !line.trim().startsWith('*') &&
+          !line.includes('if ') &&
+          !line.includes('for ') &&
+          !line.includes('while ') &&
+          !line.includes('function ') &&
+          !line.includes('class ') &&
+          !line.includes('import ') &&
+          !line.includes('export ')) {
+        inspections.push({
+          id: `missing-semicolon-${lineNumber}`,
+          type: 'warning',
+          severity: 'warning',
+          message: 'Missing semicolon',
+          description: 'Add semicolon at the end of the statement',
+          category: 'syntax',
+          range: {
+            startLineNumber: lineNumber,
+            startColumn: line.length,
+            endLineNumber: lineNumber,
+            endColumn: line.length + 1
+          },
+          source: 'white-rabbit',
+          quickFix: {
+            title: 'Add semicolon',
+            range: {
+              startLineNumber: lineNumber,
+              startColumn: line.length + 1,
+              endLineNumber: lineNumber,
+              endColumn: line.length + 1
+            },
+            newText: ';'
+          }
+        });
+      }
+    });
+
     if (language === 'javascript' || language === 'typescript') {
       // Check for common syntax issues
       lines.forEach((line, index) => {

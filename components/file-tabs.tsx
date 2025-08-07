@@ -198,18 +198,27 @@ export default function FileTabs({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onToggleInspections}
-                  className={`h-6 px-2 text-xs ${
+                  onClick={() => {
+                    onToggleInspections();
+                    // Auto-run inspections when opening the panel
+                    if (!showInspections && onRunInspections) {
+                      setTimeout(() => onRunInspections(), 100);
+                    }
+                  }}
+                  className={`h-6 px-2 text-xs transition-all ${
                     showInspections
-                      ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                      : 'hover:bg-gray-200'
+                      ? 'bg-orange-100 text-orange-700 hover:bg-orange-200 shadow-sm'
+                      : 'hover:bg-gray-200 text-gray-600'
                   }`}
-                  title={showInspections ? "Hide code inspections" : "Show code inspections"}
+                  title={showInspections ? "Hide code inspections panel" : "Show code inspections panel"}
                 >
                   <AlertTriangle className="w-3 h-3 mr-1" />
                   Issues
                   {inspectionCount > 0 && (
-                    <Badge variant="secondary" className="ml-1 text-xs h-4 px-1">
+                    <Badge
+                      variant={inspectionCount > 5 ? "destructive" : "secondary"}
+                      className="ml-1 text-xs h-4 px-1 animate-pulse"
+                    >
                       {inspectionCount}
                     </Badge>
                   )}
@@ -219,9 +228,17 @@ export default function FileTabs({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onRunInspections}
-                  className="h-6 px-2 text-xs hover:bg-gray-200"
-                  title="Run code inspections"
+                  onClick={() => {
+                    onRunInspections();
+                    // Show visual feedback
+                    const button = document.activeElement as HTMLButtonElement;
+                    if (button) {
+                      button.classList.add('animate-pulse');
+                      setTimeout(() => button.classList.remove('animate-pulse'), 2000);
+                    }
+                  }}
+                  className="h-6 px-2 text-xs hover:bg-blue-100 hover:text-blue-700 transition-all text-gray-600"
+                  title="Run comprehensive code analysis and inspections"
                 >
                   <AlertTriangle className="w-3 h-3 mr-1" />
                   Scan
