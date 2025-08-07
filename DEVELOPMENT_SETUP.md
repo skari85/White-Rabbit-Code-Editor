@@ -1,6 +1,6 @@
-# 🔮 Hex & Kex Development Environment Setup Guide
+# 🐰 White Rabbit Development Environment Setup Guide
 
-Welcome to the Hex & Kex PWA Code project! This guide will help you set up your local development environment and understand the project structure that matches the folder organization shown in your attachment.
+Welcome to the White Rabbit Code Editor project! This guide will help you set up your local development environment and understand the project structure.
 
 ## 📋 Prerequisites
 

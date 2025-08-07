@@ -67,7 +67,7 @@ export function AISettingsPanel({ settings, onSettingsChange, onTestConnection, 
               {isConfigured && <Badge variant="secondary" className="bg-green-100 text-green-800">Configured</Badge>}
             </CardTitle>
             <CardDescription>
-              Configure your AI provider to enable the coding assistant in Hex & Kex
+              Configure your AI provider to enable the coding assistant in White Rabbit
             </CardDescription>
           </div>
         </div>

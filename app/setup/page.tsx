@@ -22,12 +22,12 @@ export default function SetupPage() {
                 </Button>
               </Link>
               <div className="flex items-center gap-2">
-                <img 
-                  src="/hexkexlogo.png" 
-                  alt="Hex & Kex Logo" 
+                <img
+                  src="/whiterabbitlogo.png"
+                  alt="White Rabbit Logo"
                   className="w-8 h-8 object-contain"
                 />
-                <h1 className="text-xl font-semibold">Hex & Kex Setup</h1>
+                <h1 className="text-xl font-semibold">White Rabbit Setup</h1>
               </div>
             </div>
           </div>
@@ -42,12 +42,12 @@ export default function SetupPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Settings className="w-5 h-5" />
-                Welcome to Hex & Kex Setup
+                Welcome to White Rabbit Setup
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 mb-4">
-                Configure your Hex & Kex Code Editor with GitHub authentication to unlock
+                Configure your White Rabbit Code Editor with GitHub authentication to unlock
                 powerful features like repository sync, collaboration, and deployment.
               </p>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
