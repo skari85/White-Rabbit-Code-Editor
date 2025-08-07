@@ -5,14 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, ExternalLink, Maximize2, Minimize2 } from 'lucide-react';
 import { FileContent } from '@/hooks/use-code-builder';
+import { ErrorBoundary } from './error-boundary';
 
 interface LivePreviewProps {
   files: FileContent[];
-  selectedFile: string;
+  selectedFile?: string;
   className?: string;
 }
 
-export default function LivePreview({ files, selectedFile, className }: LivePreviewProps) {
+export default function LivePreview({ files, className }: LivePreviewProps) {
   const [previewContent, setPreviewContent] = useState<string>('');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -20,9 +21,10 @@ export default function LivePreview({ files, selectedFile, className }: LivePrev
 
   // Generate preview HTML with all files bundled
   const generatePreviewHTML = () => {
-    const htmlFile = files.find(f => f.name === 'index.html') || files.find(f => f.type === 'html');
-    const cssFiles = files.filter(f => f.type === 'css');
-    const jsFiles = files.filter(f => f.type === 'js');
+    try {
+      const htmlFile = files.find(f => f.name === 'index.html') || files.find(f => f.type === 'html');
+      const cssFiles = files.filter(f => f.type === 'css');
+      const jsFiles = files.filter(f => f.type === 'js');
 
     if (!htmlFile) {
       return `
@@ -192,6 +194,37 @@ export default function LivePreview({ files, selectedFile, className }: LivePrev
     }
 
     return htmlContent;
+    } catch (error) {
+      console.error('Error generating preview HTML:', error);
+      return `
+        <html>
+          <head>
+            <title>Preview Error</title>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                padding: 2rem;
+                text-align: center;
+                background: #f5f5f5;
+              }
+              .error {
+                background: #fee;
+                border: 1px solid #fcc;
+                padding: 1rem;
+                border-radius: 8px;
+                color: #c33;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="error">
+              <h2>Preview Error</h2>
+              <p>There was an error generating the preview. Please check your code and try again.</p>
+            </div>
+          </body>
+        </html>
+      `;
+    }
   };
 
   // Update preview when files change
@@ -212,12 +245,22 @@ export default function LivePreview({ files, selectedFile, className }: LivePrev
   };
 
   const openInNewTab = () => {
-    const htmlContent = generatePreviewHTML();
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-    // Clean up the blob URL after a short delay
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    try {
+      const htmlContent = generatePreviewHTML();
+      if (!htmlContent) {
+        console.warn('No preview content available');
+        return;
+      }
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      // Clean up the blob URL after a short delay
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error('Failed to open preview in new tab:', error);
+      // Fallback: show error message to user
+      alert('Failed to open preview. Please try refreshing the preview first.');
+    }
   };
 
   const toggleFullscreen = () => {
@@ -242,7 +285,7 @@ export default function LivePreview({ files, selectedFile, className }: LivePrev
               variant="outline"
               size="sm"
               onClick={openInNewTab}
-              disabled={!previewUrl}
+              disabled={!previewContent}
             >
               <ExternalLink className="w-4 h-4" />
             </Button>
@@ -258,22 +301,41 @@ export default function LivePreview({ files, selectedFile, className }: LivePrev
       </CardHeader>
       <CardContent className="p-0">
         <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-96 bg-white'}`}>
-          {previewContent ? (
-            <iframe
-              ref={iframeRef}
-              srcDoc={previewContent}
-              className="w-full h-full border-0 bg-white"
-              // Security: Using srcDoc instead of blob URLs to avoid sandbox issues
-              // while maintaining proper security isolation.
-              sandbox="allow-scripts allow-forms allow-popups allow-modals"
-              title="Live Preview"
-              style={{ backgroundColor: '#ffffff' }}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full bg-white border border-gray-200 rounded">
-              <p className="text-gray-500">Loading preview...</p>
-            </div>
-          )}
+          <ErrorBoundary
+            fallback={
+              <div className="flex items-center justify-center h-full bg-red-50 border border-red-200 rounded">
+                <div className="text-center">
+                  <p className="text-red-600 font-medium">Preview Error</p>
+                  <p className="text-red-500 text-sm mt-1">There was an error loading the preview</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={refreshPreview}
+                    className="mt-2"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              </div>
+            }
+          >
+            {previewContent ? (
+              <iframe
+                ref={iframeRef}
+                srcDoc={previewContent}
+                className="w-full h-full border-0 bg-white"
+                // Security: Using srcDoc instead of blob URLs to avoid sandbox issues
+                // while maintaining proper security isolation.
+                sandbox="allow-scripts allow-forms allow-popups allow-modals"
+                title="Live Preview"
+                style={{ backgroundColor: '#ffffff' }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full bg-white border border-gray-200 rounded">
+                <p className="text-gray-500">Loading preview...</p>
+              </div>
+            )}
+          </ErrorBoundary>
           {isFullscreen && (
             <Button
               className="absolute top-4 right-4 z-10"

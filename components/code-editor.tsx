@@ -1033,7 +1033,6 @@ export default function CodeEditor() {
             <div className="h-full p-4">
               <LivePreview
                 files={files}
-                selectedFile={selectedFile}
                 className="h-full"
               />
             </div>
