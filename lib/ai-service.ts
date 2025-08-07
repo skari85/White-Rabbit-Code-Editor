@@ -2,14 +2,37 @@ import { AIProvider, AISettings, AIMessage, AI_PROVIDERS } from './ai-config';
 
 export class AIService {
   private settings: AISettings;
-  
+  private rateLimiter: Map<string, { count: number; resetTime: number }> = new Map();
+  private readonly MAX_REQUESTS_PER_MINUTE = 20;
+
   constructor(settings: AISettings) {
     // Client-side environment variables are not available in browsers
     // Users must provide their own API keys (BYOK - Bring Your Own Key)
     this.settings = settings;
   }
 
+  private checkRateLimit(provider: string): boolean {
+    const now = Date.now();
+    const key = `${provider}_${this.settings.apiKey?.slice(-4) || 'anonymous'}`;
+    const limit = this.rateLimiter.get(key);
+
+    if (!limit || now > limit.resetTime) {
+      this.rateLimiter.set(key, { count: 1, resetTime: now + 60000 });
+      return true;
+    }
+
+    if (limit.count >= this.MAX_REQUESTS_PER_MINUTE) {
+      throw new Error(`Rate limit exceeded. Maximum ${this.MAX_REQUESTS_PER_MINUTE} requests per minute.`);
+    }
+
+    limit.count++;
+    return true;
+  }
+
   async sendMessage(messages: AIMessage[]): Promise<AIMessage> {
+    // Check rate limit
+    this.checkRateLimit(this.settings.provider);
+
     const provider = AI_PROVIDERS.find(p => p.id === this.settings.provider);
     if (!provider) {
       throw new Error(`Provider ${this.settings.provider} not found`);

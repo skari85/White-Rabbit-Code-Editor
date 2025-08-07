@@ -24,10 +24,10 @@ Your production site `https://www.whiterabbit.onl` is showing an application err
 4. Add these variables:
 
 ```
-NEXTAUTH_URL = https://www.whiterabbit.onl
-NEXTAUTH_SECRET = hex-kex-development-secret-key-2024-make-it-very-long-and-random
-GITHUB_CLIENT_ID = Ov23liB8oYjzPvmlNM23
-GITHUB_CLIENT_SECRET = 21f3e985957e215f358709f1537208a96ca938d5
+NEXTAUTH_URL = https://your-domain.com
+NEXTAUTH_SECRET = your-secure-random-secret-key-here-make-it-very-long-and-random
+GITHUB_CLIENT_ID = your_github_client_id_here
+GITHUB_CLIENT_SECRET = your_github_client_secret_here
 ```
 
 ### Step 3: Optional - Add AI API Keys

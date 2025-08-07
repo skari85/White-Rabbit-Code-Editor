@@ -2,10 +2,31 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { files } = await request.json();
-    
+    const body = await request.json();
+    const { files } = body;
+
     if (!files || !Array.isArray(files)) {
       return NextResponse.json({ error: 'Invalid files data' }, { status: 400 });
+    }
+
+    // Validate file count and size
+    if (files.length > 50) {
+      return NextResponse.json({ error: 'Too many files (max 50)' }, { status: 400 });
+    }
+
+    const totalSize = files.reduce((sum: number, file: any) => sum + (file.content?.length || 0), 0);
+    if (totalSize > 1024 * 1024) { // 1MB limit
+      return NextResponse.json({ error: 'Files too large (max 1MB total)' }, { status: 400 });
+    }
+
+    // Validate file structure
+    for (const file of files) {
+      if (!file.name || typeof file.name !== 'string' || file.name.length > 255) {
+        return NextResponse.json({ error: 'Invalid file name' }, { status: 400 });
+      }
+      if (file.content && typeof file.content !== 'string') {
+        return NextResponse.json({ error: 'Invalid file content' }, { status: 400 });
+      }
     }
 
     // Find HTML file
@@ -48,7 +69,9 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'text/html',
           'X-Frame-Options': 'SAMEORIGIN',
-          'Content-Security-Policy': "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:;"
+          'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;",
+          'X-Content-Type-Options': 'nosniff',
+          'Referrer-Policy': 'strict-origin-when-cross-origin'
         }
       });
     }
@@ -107,7 +130,9 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'text/html',
         'X-Frame-Options': 'SAMEORIGIN',
-        'Content-Security-Policy': "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:;"
+        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https:;",
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin'
       }
     });
 

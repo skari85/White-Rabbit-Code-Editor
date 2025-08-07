@@ -13,9 +13,9 @@ const getAuthSecret = () => {
     return process.env.NEXTAUTH_SECRET;
   }
 
-  // For production, use a more secure default
+  // For production, require environment variable
   if (process.env.NODE_ENV === 'production') {
-    return "white-rabbit-production-secret-key-2025-very-long-and-secure-random-string";
+    throw new Error('NEXTAUTH_SECRET environment variable is required in production');
   }
 
   return "dev-secret-key-change-in-production";
