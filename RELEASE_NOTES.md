@@ -42,7 +42,7 @@
 
 ---
 
-# 🎉 Hex & Kex v3.2.0 - GitHub Authentication & Live Code Generation Release
+# 🎉 White Rabbit v3.2.0 - GitHub Authentication & Live Code Generation Release
 
 ## 🚀 Major Features Added
 

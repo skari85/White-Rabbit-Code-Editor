@@ -42,13 +42,13 @@ export default function SignIn() {
       <Card className="w-full max-w-md bg-gray-950 border-gray-800">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <img 
-              src="/hexkexlogo.png" 
-              alt="Hex & Kex Logo" 
+            <img
+              src="/whiterabbitlogo.png"
+              alt="White Rabbit Logo"
               className="w-16 h-16 object-contain"
             />
           </div>
-          <CardTitle className="text-2xl text-white">Welcome to Hex & Kex</CardTitle>
+          <CardTitle className="text-2xl text-white">Welcome to White Rabbit</CardTitle>
           <CardDescription className="text-gray-400">
             Sign in with your GitHub account to continue
           </CardDescription>

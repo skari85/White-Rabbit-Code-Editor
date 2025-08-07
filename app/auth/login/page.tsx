@@ -48,13 +48,17 @@ export default function LoginPage() {
         {/* Logo and Branding */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl mb-4 shadow-lg">
-            <Palette className="w-8 h-8 text-white" />
+            <img
+              src="/whiterabbitlogo.png"
+              alt="White Rabbit Logo"
+              className="w-8 h-8 object-contain"
+            />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Palette
+            White Rabbit
           </h1>
           <p className="text-gray-600 mt-2 text-sm">
-            made by artists for artists
+            AI-powered code editor
           </p>
         </div>
 
@@ -65,7 +69,7 @@ export default function LoginPage() {
               Welcome back
             </CardTitle>
             <CardDescription className="text-gray-600">
-              Sign in to your Palette account
+              Sign in to your White Rabbit account
             </CardDescription>
           </CardHeader>
           
