@@ -132,9 +132,11 @@ export default function AISettingsSidebar({
           <div className="space-y-2">
             <Label className="text-xs font-medium">Model</Label>
             <select
+              id="sidebar-model-select"
               value={settings?.model || currentProvider.models[0]}
               onChange={(e) => handleModelChange(e.target.value)}
               className="w-full text-xs p-2 border rounded-md bg-background"
+              aria-label="Select AI model"
             >
               {currentProvider.models.map((model) => (
                 <option key={model} value={model}>

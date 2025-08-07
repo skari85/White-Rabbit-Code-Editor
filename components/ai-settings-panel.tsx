@@ -75,9 +75,9 @@ export function AISettingsPanel({ settings, onSettingsChange, onTestConnection, 
       <CardContent className="space-y-6">
         {/* Provider Selection */}
         <div className="space-y-2">
-          <Label htmlFor="provider">AI Provider</Label>
+          <Label htmlFor="provider-select">AI Provider</Label>
           <Select value={localSettings.provider} onValueChange={handleProviderChange}>
-            <SelectTrigger>
+            <SelectTrigger id="provider-select">
               <SelectValue placeholder="Select AI provider" />
             </SelectTrigger>
             <SelectContent>
@@ -126,9 +126,9 @@ export function AISettingsPanel({ settings, onSettingsChange, onTestConnection, 
 
         {/* Model Selection */}
         <div className="space-y-2">
-          <Label htmlFor="model">Model</Label>
+          <Label htmlFor="model-select">Model</Label>
           <Select value={localSettings.model} onValueChange={(model) => setLocalSettings({ ...localSettings, model })}>
-            <SelectTrigger>
+            <SelectTrigger id="model-select">
               <SelectValue placeholder="Select model" />
             </SelectTrigger>
             <SelectContent>

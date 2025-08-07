@@ -121,10 +121,10 @@ export default function FileTabs({
                 transition-all duration-200 ease-in-out
               `}
             >
-              <button
+              <div
                 onClick={() => onSelectFile(file.name)}
                 className={`
-                  flex items-center gap-2 px-3 py-2 text-sm font-medium min-w-0 flex-1
+                  flex items-center gap-2 px-3 py-2 text-sm font-medium min-w-0 flex-1 cursor-pointer
                   ${isSelected
                     ? 'text-white'
                     : 'text-gray-200 hover:text-white'
@@ -132,6 +132,14 @@ export default function FileTabs({
                   focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset
                 `}
                 title={file.name}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelectFile(file.name);
+                  }
+                }}
               >
                 {getFileIcon(file.name)}
                 <span className="truncate max-w-[120px]">
@@ -140,7 +148,7 @@ export default function FileTabs({
                 {isSelected && hasUnsavedChanges && (
                   <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0" title="Unsaved changes" />
                 )}
-              </button>
+              </div>
               
               {onCloseFile && files.length > 1 && (
                 <Button

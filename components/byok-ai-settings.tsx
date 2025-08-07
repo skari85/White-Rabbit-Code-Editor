@@ -163,14 +163,14 @@ export default function BYOKAISettings({
         <CardContent className="space-y-6">
           {/* Provider Selection */}
           <div className="space-y-2">
-            <Label htmlFor="provider">AI Provider</Label>
+            <Label htmlFor="provider-select">AI Provider</Label>
             <Select
               value={settings.provider}
-              onValueChange={(value: 'openai' | 'anthropic' | 'groq') => 
+              onValueChange={(value: 'openai' | 'anthropic' | 'groq') =>
                 setSettings({ ...settings, provider: value, apiKey: '' })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger id="provider-select">
                 <SelectValue placeholder="Select AI provider" />
               </SelectTrigger>
               <SelectContent>
@@ -226,12 +226,12 @@ export default function BYOKAISettings({
 
           {/* Model Selection */}
           <div className="space-y-2">
-            <Label htmlFor="model">Model</Label>
+            <Label htmlFor="model-select">Model</Label>
             <Select
               value={settings.model}
               onValueChange={(value) => setSettings({ ...settings, model: value })}
             >
-              <SelectTrigger>
+              <SelectTrigger id="model-select">
                 <SelectValue placeholder="Select model" />
               </SelectTrigger>
               <SelectContent>

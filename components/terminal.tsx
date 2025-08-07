@@ -407,12 +407,14 @@ export function TerminalComponent({
             <span className="text-green-400 font-mono">$</span>
             <Input
               ref={inputRef}
+              id="terminal-command-input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Enter command..."
               disabled={isExecuting}
               className="flex-1 bg-transparent border-none focus:ring-0 focus:ring-offset-0 font-mono text-sm"
               autoComplete="off"
+              aria-label="Terminal command input"
             />
             <Button
               type="submit"

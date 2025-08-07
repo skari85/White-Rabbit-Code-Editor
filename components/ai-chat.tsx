@@ -357,10 +357,12 @@ export function AIChat({
               <div className="absolute right-0 top-full mt-1 w-64 bg-gray-800 border border-gray-600 rounded-md shadow-lg z-50">
                 <div className="p-2 border-b border-gray-600">
                   <div className="text-xs text-gray-400 mb-2">Provider</div>
-                  <select 
+                  <select
+                    id="ai-provider-select"
                     className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
                     value={settings?.provider || 'openai'}
                     onChange={(e) => handleProviderSelect(e.target.value)}
+                    aria-label="Select AI provider"
                   >
                     {AI_PROVIDERS.map(provider => (
                       <option key={provider.id} value={provider.id}>
@@ -448,9 +450,11 @@ export function AIChat({
                   Model
                 </label>
                 <select
+                  id="ai-model-select"
                   className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"
                   value={settings?.model || getCurrentProvider().models[0]}
                   onChange={(e) => handleModelSelect(e.target.value)}
+                  aria-label="Select AI model"
                 >
                   {getCurrentProvider().models.map(model => (
                     <option key={model} value={model}>
@@ -572,6 +576,7 @@ export function AIChat({
           <div className="flex-1 relative">
             <Textarea
               ref={textareaRef}
+              id="ai-chat-input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
@@ -583,6 +588,7 @@ export function AIChat({
               placeholder="Ask me anything... (Shift+Enter for new line)"
               className="min-h-[60px] max-h-[140px] resize-none bg-gray-700 border-gray-500 text-white placeholder-gray-400 pr-24 text-sm leading-relaxed"
               disabled={isLoading}
+              aria-label="AI chat message input"
             />
             
             {/* Action Buttons */}
