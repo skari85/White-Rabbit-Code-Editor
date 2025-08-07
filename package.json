@@ -61,6 +61,7 @@
     "embla-carousel-react": "latest",
     "geist": "latest",
     "input-otp": "latest",
+    "isomorphic-git": "^1.25.6",
     "jszip": "^3.10.1",
     "lucide-react": "^0.454.0",
     "monaco-editor": "^0.52.2",
