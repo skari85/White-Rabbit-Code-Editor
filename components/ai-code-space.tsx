@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { darcula, github } from 'react-syntax-highlighter/dist/styles';
 import { Copy, Check, Eye, EyeOff } from 'lucide-react';
 
 interface CodeBlock {
@@ -35,16 +35,16 @@ export function AICodeSpace({ codeBlocks, personality }: AICodeSpaceProps) {
 
   // Enhanced White Rabbit themed color scheme
   const whiteRabbitStyle = {
-    ...oneDark,
+    ...darcula,
     'pre[class*="language-"]': {
-      ...oneDark['pre[class*="language-"]'],
+      ...darcula['pre[class*="language-"]'],
       background: isKex ? '#0F1419' : '#0d1117',
       borderRadius: '8px',
       border: isKex ? '2px solid #00ffe1' : '1px solid #30363d',
       boxShadow: isKex ? '0 0 20px #00ffe155' : '0 4px 12px rgba(0, 0, 0, 0.3)',
     },
     'code[class*="language-"]': {
-      ...oneDark['code[class*="language-"]'],
+      ...darcula['code[class*="language-"]'],
       color: isKex ? '#BFBDB6' : '#e6edf3',
       fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace',
       fontSize: '14px',
@@ -185,7 +185,7 @@ export function AICodeSpace({ codeBlocks, personality }: AICodeSpaceProps) {
           <div className="relative">
             <SyntaxHighlighter
               language={selected.lang || 'javascript'}
-              style={isDarkTheme ? whiteRabbitStyle : oneLight}
+              style={isDarkTheme ? whiteRabbitStyle : github}
               showLineNumbers={true}
               lineNumberStyle={{
                 minWidth: '3em',

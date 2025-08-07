@@ -4,6 +4,7 @@ import { GeistMono } from 'geist/font/mono'
 import { AuthSessionProvider } from '@/components/session-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { CopyrightFooter } from '@/components/license-notice'
+import { ErrorTrackingProvider } from '@/components/error-tracking-provider'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
@@ -79,19 +80,21 @@ html {
         `}</style>
       </head>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthSessionProvider>
-            {children}
-            <CopyrightFooter />
-            <Analytics />
-            <SpeedInsights />
-          </AuthSessionProvider>
-        </ThemeProvider>
+        <ErrorTrackingProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthSessionProvider>
+              {children}
+              <CopyrightFooter />
+              <Analytics />
+              <SpeedInsights />
+            </AuthSessionProvider>
+          </ThemeProvider>
+        </ErrorTrackingProvider>
       </body>
     </html>
   )

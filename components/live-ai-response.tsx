@@ -15,8 +15,8 @@ import {
   Palette
 } from 'lucide-react';
 import { useLiveAIResponse } from '@/hooks/use-live-typing';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { darcula } from 'react-syntax-highlighter/dist/styles';
 
 interface LiveAIResponseProps {
   response: string;
@@ -233,7 +233,7 @@ export default function LiveAIResponse({
                     <div className="relative">
                       <SyntaxHighlighter
                         language={block.language}
-                        style={vscDarkPlus}
+                        style={darcula}
                         customStyle={{
                           margin: 0,
                           borderRadius: '6px',
