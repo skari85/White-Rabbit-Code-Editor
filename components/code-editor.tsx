@@ -23,6 +23,7 @@ import LiveCodingEngine from "@/components/live-coding-engine";
 import { useSession } from "next-auth/react";
 import { AdvancedLayoutSystem, LayoutConfig, PaneType } from "@/components/advanced-layout-system";
 import { ResizableLayoutRenderer } from "@/components/resizable-layout-renderer";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { LayoutControls } from "@/components/layout-controls";
 import { useLayoutPersistence } from "@/hooks/use-layout-persistence";
 import {
@@ -44,6 +45,9 @@ import AIEnhancedMonacoEditor from './ai-enhanced-monaco-editor';
 import { ErrorBoundary } from './error-boundary';
 import { useAutoSave } from '@/hooks/use-debounced-auto-save';
 import FileTabs from './file-tabs';
+import SplitEditorLayout from './split-editor-layout';
+import SplitControls, { useSplitKeyboardShortcuts } from './split-controls';
+import { useResponsiveLayout, useMobileLayout } from '@/hooks/use-responsive-layout';
 
 import LivePreview from './live-preview';
 import Marketplace from './marketplace';
@@ -194,6 +198,27 @@ export default function CodeEditor() {
   }, [setFileGenerationCallbacks, addNewFile, updateFileContent, setSelectedFile]);
   const [codeColor, setCodeColor] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
+
+  // Responsive layout
+  const responsiveConfig = useResponsiveLayout();
+  const mobileLayout = useMobileLayout();
+
+  // Split-screen state - disable on mobile/tablet
+  const [useSplitLayout, setUseSplitLayout] = useState(false);
+
+  // Automatically disable split layout on mobile/tablet
+  useEffect(() => {
+    if (responsiveConfig.shouldDisableSplits && useSplitLayout) {
+      setUseSplitLayout(false);
+    }
+  }, [responsiveConfig.shouldDisableSplits, useSplitLayout]);
+
+  // Split-screen keyboard shortcuts
+  useSplitKeyboardShortcuts(
+    () => !responsiveConfig.shouldDisableSplits && setUseSplitLayout(true), // Split horizontal
+    () => !responsiveConfig.shouldDisableSplits && setUseSplitLayout(true), // Split vertical
+    () => setUseSplitLayout(false) // Reset layout
+  );
 
   // Documentation state
   const [showDocumentation, setShowDocumentation] = useState(false);
@@ -518,9 +543,15 @@ export default function CodeEditor() {
 
 
   return (
-    <div className="flex h-screen bg-gray-900">
-      {/* Left Sidebar - File Explorer & AI Chat */}
-      <div className="w-96 bg-gray-800 border-r border-gray-700 flex flex-col h-screen overflow-hidden">
+    <div className="h-screen bg-gray-900">
+      <ResizablePanelGroup direction="horizontal" className="h-full">
+        {/* Left Sidebar - File Explorer & AI Chat */}
+        <ResizablePanel
+          defaultSize={responsiveConfig.sidebarDefaultSize}
+          minSize={responsiveConfig.sidebarMinSize}
+          maxSize={responsiveConfig.sidebarMaxSize}
+        >
+          <div className="bg-gray-800 border-r border-gray-700 flex flex-col h-full overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-gray-700 bg-gray-750">
           <div className="flex items-center justify-between">
@@ -700,10 +731,15 @@ export default function CodeEditor() {
             onFileSelect={setSelectedFile}
           />
         </div>
-      </div>
+          </div>
+        </ResizablePanel>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Resizable Handle */}
+        <ResizableHandle withHandle />
+
+        {/* Main Content Area */}
+        <ResizablePanel defaultSize={75} minSize={60}>
+          <div className="flex flex-col h-full overflow-hidden">
         {/* Top Bar */}
         <div className="bg-white border-b px-4 py-2">
           <div className="flex items-center justify-between">
@@ -746,6 +782,24 @@ export default function CodeEditor() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Split Controls - Hidden on mobile/tablet */}
+              {!responsiveConfig.shouldDisableSplits && (
+                <SplitControls
+                  onSplitHorizontal={() => {
+                    setUseSplitLayout(true);
+                    // Split functionality will be handled by the SplitEditorLayout component
+                  }}
+                  onSplitVertical={() => {
+                    setUseSplitLayout(true);
+                    // Split functionality will be handled by the SplitEditorLayout component
+                  }}
+                  onResetLayout={() => {
+                    setUseSplitLayout(false);
+                  }}
+                  showInToolbar={true}
+                />
+              )}
+
               <Button
                 onClick={handleCodeColorToggle}
                 variant="outline"
@@ -754,12 +808,12 @@ export default function CodeEditor() {
                 <RefreshCw className="w-4 h-4 mr-2" />
                 {codeColor ? 'Light' : 'Dark'}
               </Button>
-              
+
               <Button variant="outline" size="sm">
                 <Download className="w-4 h-4 mr-2" />
                 Export
               </Button>
-              
+
               <Button variant="outline" size="sm">
                 <Server className="w-4 h-4 mr-2" />
                 Deploy
@@ -815,47 +869,77 @@ export default function CodeEditor() {
 
                 {/* Code Editor and Side Panels */}
                 <div className="flex-1 flex">
-                  {/* Code Editor */}
+                  {/* Code Editor - Split Layout or Single Editor */}
                   <div className={`${
                     showDocumentation && showInspections ? 'flex-1' :
                     showDocumentation || showInspections ? 'flex-1' : 'w-full'
                   } transition-all duration-300`}>
-                    <ErrorBoundary>
-                      {useAIEnhancedEditor && aiConfigured ? (
-                        <AIEnhancedMonacoEditor
-                          value={getSelectedFileContent() || ''}
-                          onChange={(content) => {
-                            if (selectedFile && content !== undefined) {
-                              updateFileContent(selectedFile, content);
-                              autoSave.save({
-                                file: selectedFile,
-                                content
-                              });
-                            }
-                          }}
-                          language={getLanguageFromFileName(selectedFile)}
-                          theme={codeColor ? "hex-light" : "kex-dark"}
-                          height="100%"
-                          enableAICompletions={true}
-                        />
-                      ) : (
-                        <LazyMonacoEditor
-                          value={getSelectedFileContent() || ''}
-                          onChange={(content) => {
-                            if (selectedFile && content !== undefined) {
-                              updateFileContent(selectedFile, content);
-                              autoSave.save({
-                                file: selectedFile,
-                                content
-                              });
-                            }
-                          }}
-                          language={getLanguageFromFileName(selectedFile)}
-                          theme={codeColor ? "hex-light" : "kex-dark"}
-                          height="100%"
-                        />
-                      )}
-                    </ErrorBoundary>
+                    {useSplitLayout ? (
+                      <SplitEditorLayout
+                        files={files}
+                        selectedFile={selectedFile}
+                        onSelectFile={setSelectedFile}
+                        onCloseFile={handleCloseFile}
+                        onUpdateFileContent={(filename, content) => {
+                          updateFileContent(filename, content);
+                          autoSave.save({
+                            file: filename,
+                            content
+                          });
+                        }}
+                        getFileContent={getSelectedFileContent}
+                        getLanguageFromFileName={getLanguageFromFileName}
+                        hasUnsavedChanges={autoSave.hasUnsavedChanges}
+                        useAIEnhancedEditor={useAIEnhancedEditor}
+                        aiConfigured={aiConfigured}
+                        theme={codeColor ? "hex-light" : "kex-dark"}
+                        showDocumentation={showDocumentation}
+                        onToggleDocumentation={handleToggleDocumentation}
+                        hasDocumentation={hasDocumentation}
+                        showInspections={showInspections}
+                        onToggleInspections={handleToggleInspections}
+                        onRunInspections={handleRunInspections}
+                        inspectionCount={inspections.length}
+                        onToggleAIEditor={handleToggleAIEditor}
+                      />
+                    ) : (
+                      <ErrorBoundary>
+                        {useAIEnhancedEditor && aiConfigured ? (
+                          <AIEnhancedMonacoEditor
+                            value={getSelectedFileContent() || ''}
+                            onChange={(content) => {
+                              if (selectedFile && content !== undefined) {
+                                updateFileContent(selectedFile, content);
+                                autoSave.save({
+                                  file: selectedFile,
+                                  content
+                                });
+                              }
+                            }}
+                            language={getLanguageFromFileName(selectedFile)}
+                            theme={codeColor ? "hex-light" : "kex-dark"}
+                            height="100%"
+                            enableAICompletions={true}
+                          />
+                        ) : (
+                          <LazyMonacoEditor
+                            value={getSelectedFileContent() || ''}
+                            onChange={(content) => {
+                              if (selectedFile && content !== undefined) {
+                                updateFileContent(selectedFile, content);
+                                autoSave.save({
+                                  file: selectedFile,
+                                  content
+                                });
+                              }
+                            }}
+                            language={getLanguageFromFileName(selectedFile)}
+                            theme={codeColor ? "hex-light" : "kex-dark"}
+                            height="100%"
+                          />
+                        )}
+                      </ErrorBoundary>
+                    )}
                   </div>
 
                   {/* Right Side Panels */}
@@ -961,7 +1045,9 @@ export default function CodeEditor() {
             </div>
           )}
         </div>
-      </div>
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
 
       {/* BYOK AI Settings Modal */}
       <BYOKAISettings
