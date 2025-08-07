@@ -29,8 +29,12 @@ export class ErrorTrackingService {
 
   private constructor() {
     this.sessionId = this.generateSessionId();
-    this.setupGlobalErrorHandlers();
-    this.setupNetworkMonitoring();
+
+    // Only set up browser-specific handlers on the client side
+    if (typeof window !== 'undefined') {
+      this.setupGlobalErrorHandlers();
+      this.setupNetworkMonitoring();
+    }
   }
 
   static getInstance(): ErrorTrackingService {
@@ -104,6 +108,11 @@ export class ErrorTrackingService {
   }
 
   captureError(error: Partial<ErrorReport>): void {
+    // Skip error capture on server side
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     const errorReport: ErrorReport = {
       id: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       message: error.message || 'Unknown error',
@@ -133,7 +142,7 @@ export class ErrorTrackingService {
   }
 
   private async flushErrorQueue(): Promise<void> {
-    if (this.errorQueue.length === 0) return;
+    if (this.errorQueue.length === 0 || typeof window === 'undefined') return;
 
     const errors = [...this.errorQueue];
     this.errorQueue = [];
@@ -191,6 +200,8 @@ export class ErrorTrackingService {
   }
 
   getErrorReports(): ErrorReport[] {
+    if (typeof window === 'undefined') return [];
+
     try {
       return JSON.parse(localStorage.getItem('error_reports') || '[]');
     } catch {
@@ -199,6 +210,7 @@ export class ErrorTrackingService {
   }
 
   clearErrorReports(): void {
+    if (typeof window === 'undefined') return;
     localStorage.removeItem('error_reports');
   }
 }
