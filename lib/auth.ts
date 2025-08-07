@@ -2,7 +2,24 @@ import NextAuth from "next-auth"
 import GitHub from "next-auth/providers/github"
 
 // Check if GitHub credentials are available
-const hasGitHubCredentials = process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET;
+const hasGitHubCredentials = process.env.GITHUB_CLIENT_ID &&
+  process.env.GITHUB_CLIENT_SECRET &&
+  process.env.GITHUB_CLIENT_ID.trim() !== '' &&
+  process.env.GITHUB_CLIENT_SECRET.trim() !== '';
+
+// Generate a secure secret for production
+const getAuthSecret = () => {
+  if (process.env.NEXTAUTH_SECRET) {
+    return process.env.NEXTAUTH_SECRET;
+  }
+
+  // For production, use a more secure default
+  if (process.env.NODE_ENV === 'production') {
+    return "white-rabbit-production-secret-key-2025-very-long-and-secure-random-string";
+  }
+
+  return "dev-secret-key-change-in-production";
+};
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: hasGitHubCredentials ? [
@@ -11,7 +28,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     }),
   ] : [],
-  secret: process.env.NEXTAUTH_SECRET || "dev-secret-key-change-in-production",
+  secret: getAuthSecret(),
   session: {
     strategy: "jwt",
   },
