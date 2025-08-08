@@ -12,7 +12,8 @@ import {
   ArrowDown,
   ArrowRight,
   ArrowUp,
-  Zap
+  Zap,
+  BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -283,6 +284,22 @@ export default function AdvancedEditorToolbar({
               )}
             </div>
           )}
+        </div>
+
+        <Separator orientation="vertical" className="h-6" />
+
+        {/* Data Science Hub */}
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+            title="Open Data Science Hub"
+            onClick={() => window.open('/data-science', '_blank')}
+          >
+            <BarChart3 className="w-4 h-4" />
+            Data Science
+          </Button>
         </div>
 
         <Separator orientation="vertical" className="h-6" />

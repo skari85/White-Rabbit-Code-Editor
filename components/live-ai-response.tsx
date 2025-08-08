@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useLiveAIResponse } from '@/hooks/use-live-typing';
 import SyntaxHighlighter from 'react-syntax-highlighter';
-import { darcula } from 'react-syntax-highlighter/dist/styles';
+import { darcula } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 interface LiveAIResponseProps {
   response: string;
