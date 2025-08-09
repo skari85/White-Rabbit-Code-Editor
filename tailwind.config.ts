@@ -65,12 +65,12 @@ const config: Config = {
   			},
   			// White Rabbit custom colors
   			rabbit: {
-  				background: 'var(--hex-background)',
-  				'accent-1': 'var(--hex-accent-1)',
-  				'accent-2': 'var(--hex-accent-2)',
-  				foreground: 'var(--hex-foreground)',
-  				error: 'var(--hex-error)',
-  				subtle: 'var(--hex-subtle)'
+  				background: 'var(--rabbit-background)',
+  				'accent-1': 'var(--rabbit-accent-1)',
+  				'accent-2': 'var(--rabbit-accent-2)',
+  				foreground: 'var(--rabbit-foreground)',
+  				error: 'var(--rabbit-error)',
+  				subtle: 'var(--rabbit-subtle)'
   			}
   		},
   		borderRadius: {

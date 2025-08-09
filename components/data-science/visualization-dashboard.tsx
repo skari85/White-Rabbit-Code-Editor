@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, LineChart, PieChart, TrendingUp, Database, Zap } from 'lucide-react';
+import { BarChart3, LineChart, PieChart, ScatterChart, TrendingUp, Database } from 'lucide-react';
 import { DataConnectorService, DataConnection } from '@/lib/data-science/data-connector';
 
 // Dynamic import for Plotly to avoid SSR issues
@@ -210,7 +210,7 @@ export function VisualizationDashboard({ dataConnector, className }: Visualizati
   const chartTypeIcons = {
     line: LineChart,
     bar: BarChart3,
-    scatter: Zap,
+    scatter: ScatterChart,
     pie: PieChart,
     histogram: BarChart3,
     box: BarChart3,
