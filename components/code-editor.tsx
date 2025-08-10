@@ -271,6 +271,7 @@ export default function CodeEditor() {
     (window as any).wrOpenNewAppWizard = () => setShowNewApp(true)
     ;(window as any).wrOpenPublishModal = () => setShowPublish(true)
     ;(window as any).wrOpenStylePanel = () => setShowStyle(true)
+    ;(window as any).wrOpenGit = () => setViewMode('git')
     // Cleanup
     return () => {
       delete (window as any).wrOpenNewAppWizard
