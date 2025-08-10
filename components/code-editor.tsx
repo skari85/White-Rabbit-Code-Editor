@@ -9,7 +9,7 @@
  * For commercial licensing, contact: licensing@whiterabbit.dev
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 
@@ -153,6 +153,7 @@ export default function CodeEditor() {
   } = useAIAssistantEnhanced();
 
   const terminal = useTerminal();
+  const { getActiveSession, createSession, executeCommand } = terminal;
 
   const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace">("code");
   const [showLayoutControls, setShowLayoutControls] = useState(true);
@@ -312,7 +313,7 @@ export default function CodeEditor() {
       delete (window as any).wrRunTypecheck;
       delete (window as any).wrRunLint;
     };
-  }, [terminal]);
+  }, [getActiveSession, createSession, executeCommand]);
 
   // Command Palette integration (Cmd/Ctrl+K)
   const [showCommandPalette, setShowCommandPalette] = useState(false);

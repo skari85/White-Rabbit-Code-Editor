@@ -605,7 +605,8 @@ export class KeyboardShortcutsService {
   startListening(): void {
     if (this.isListening) return
 
-    document.addEventListener('keydown', this.handleKeyDown.bind(this))
+    // Use the same handler reference for add/remove
+    document.addEventListener('keydown', this.handleKeyDown)
     this.isListening = true
     console.log('⌨️ Keyboard shortcuts service started')
   }
@@ -614,13 +615,13 @@ export class KeyboardShortcutsService {
   stopListening(): void {
     if (!this.isListening) return
 
-    document.removeEventListener('keydown', this.handleKeyDown.bind(this))
+    document.removeEventListener('keydown', this.handleKeyDown)
     this.isListening = false
     console.log('⌨️ Keyboard shortcuts service stopped')
   }
 
   // Handle keydown events
-  private handleKeyDown(event: KeyboardEvent): void {
+  private handleKeyDown = (event: KeyboardEvent): void => {
     // Don't handle shortcuts when typing in input fields
     const target = event.target as HTMLElement
     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
