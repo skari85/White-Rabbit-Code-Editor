@@ -522,12 +522,96 @@ Please help me with this request by refining the existing code.`;
       const updatedMessages = [...messages, userMessage];
       saveMessages(updatedMessages);
 
-      // Stream response
+      // Stream response with real-time code application
       let fullContent = '';
+      let buffer = '';
+      let currentFile: { type: 'create' | 'update'; name: string; lang?: string; body: string; selected?: boolean } | null = null;
+
+      const headerRe = /(CREATE_FILE|UPDATE_FILE):([^\n]+)\n```(\w+)?\n/;
+
+      // Throttle live writes to the editor to avoid excessive re-renders
+      const THROTTLE_MS = 75;
+      const lastApplyAt: Record<string, number> = {};
+      const applyPartial = (cf: { type: 'create' | 'update'; name: string; body: string; selected?: boolean } | null, isFinal = false) => {
+        if (!cf) return;
+        if (!cf.selected && onFileSelect) {
+          onFileSelect(cf.name);
+          cf.selected = true;
+        }
+        const now = Date.now();
+        const last = lastApplyAt[cf.name] || 0;
+        if (isFinal || now - last >= THROTTLE_MS) {
+          if (cf.type === 'create' && onFileCreate) {
+            onFileCreate(cf.name, cf.body);
+          } else if (cf.type === 'update' && onFileUpdate) {
+            onFileUpdate(cf.name, cf.body);
+          }
+          lastApplyAt[cf.name] = now;
+        }
+      };
+
       for await (const chunk of aiService.sendMessageStream(updatedMessages)) {
         fullContent += chunk;
-        setStreamedMessage(fullContent);
+        buffer += chunk;
+
+        // Try to detect or continue a code block
+        let consumed = 0;
+        while (consumed < buffer.length) {
+          if (!currentFile) {
+            const headerMatch = buffer.slice(consumed).match(headerRe);
+            if (!headerMatch) break;
+            const [, kind, filename, lang] = headerMatch;
+            const headerLen = headerMatch[0].length;
+            const headerPos = consumed + (buffer.slice(consumed).search(headerRe) ?? 0);
+            consumed = headerPos + headerLen;
+            currentFile = { type: kind === 'CREATE_FILE' ? 'create' : 'update', name: filename.trim(), lang: lang?.toLowerCase(), body: '', selected: false };
+          }
+
+          // Append until we find closing ``` or run out
+          const rest = buffer.slice(consumed);
+          const closeIdx = rest.indexOf('```');
+          if (closeIdx === -1) {
+            // No close yet; append all rest to body
+            currentFile.body += rest;
+            consumed = buffer.length;
+
+            // Apply partial content live (throttled)
+            applyPartial(currentFile, false);
+
+            break;
+          } else {
+            // We have a closing fence within rest
+            const contentPart = rest.slice(0, closeIdx);
+            currentFile.body += contentPart;
+            consumed += closeIdx + 3; // skip closing ```
+
+            // Apply final content (unthrottled)
+            applyPartial(currentFile, true);
+            currentFile = null;
+            // Continue loop to look for next header in remaining buffer
+          }
+        }
+
+        // Trim buffer to unconsumed tail to avoid growth
+        buffer = buffer.slice(consumed);
+
+        // Update chat display with code removed/replaced
+        let cleaned = fullContent
+          .replace(/CREATE_FILE:[^\n]+\n```[\w]*\n[\s\S]*?\n```/g, '[code added to editor]')
+          .replace(/UPDATE_FILE:[^\n]+\n```[\w]*\n[\s\S]*?\n```/g, '[code updated in editor]');
+        setStreamedMessage(cleaned);
       }
+
+      // If a block was open but the stream ended, apply what we have
+      if (currentFile) {
+        applyPartial(currentFile, true);
+      }
+
+      // Clean final content for chat
+      fullContent = fullContent
+        .replace(/CREATE_FILE:[^\n]+\n```[\w]*\n[\s\S]*?\n```/g, '')
+        .replace(/UPDATE_FILE:[^\n]+\n```[\w]*\n[\s\S]*?\n```/g, '')
+        .trim() || "I've created/updated the files in your editor. Check the file tabs to see the changes!";
 
       // Create final assistant message
       const assistantMessage: AIMessage = {

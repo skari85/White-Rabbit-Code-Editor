@@ -141,6 +141,7 @@ export default function CodeEditor() {
   // AI Assistant
   const {
     sendMessage: sendAIMessage,
+    sendStreamingMessage: sendAIStreamingMessage,
     isLoading: aiLoading,
     settings: aiSettings,
     messages: aiMessages,
@@ -149,7 +150,9 @@ export default function CodeEditor() {
     saveSettings: updateAISettings,
     generateDocumentation,
     getCachedDocumentation,
-    setFileGenerationCallbacks
+    setFileGenerationCallbacks,
+    streamedMessage: aiStreamedMessage,
+    isStreaming: aiIsStreaming
   } = useAIAssistantEnhanced();
 
   const terminal = useTerminal();
@@ -189,11 +192,13 @@ export default function CodeEditor() {
           }
         };
 
-        addNewFile(name, getFileType(name));
-        // Track file creation
-        trackFileCreated(getFileType(name), name);
-        // Update content after file is created
-        setTimeout(() => updateFileContent(name, content), 100);
+        // Idempotent create: only add file once, then keep updating content
+        const exists = files.some(f => f.name === name);
+        if (!exists) {
+          addNewFile(name, getFileType(name));
+          trackFileCreated(getFileType(name), name);
+        }
+        updateFileContent(name, content);
       },
       onUpdate: (name: string, content: string) => {
         updateFileContent(name, content);
@@ -393,25 +398,18 @@ export default function CodeEditor() {
   // Enhanced AI integration with context awareness
   const handleSendMessage = useCallback(async (message: string) => {
     try {
-      // Simple context for AI
       const context = {
         files: files,
         selectedFile: selectedFile,
         appSettings: aiSettings
       };
 
-      const response = await sendAIMessage(message, context);
-
-      if (response) {
-        const changesApplied = parseAndApplyAIResponse(response.content);
-        if (changesApplied > 0) {
-          console.log(`Applied ${changesApplied} file changes from AI response`);
-        }
-      }
+      // Stream the response and let the assistant apply file commands directly
+      await sendAIStreamingMessage(message, context);
     } catch (error) {
       console.error('Error sending message to AI:', error);
     }
-  }, [sendAIMessage, files, selectedFile, parseAndApplyAIResponse, aiSettings]);
+  }, [sendAIStreamingMessage, files, selectedFile, aiSettings]);
 
   const handleCodeColorToggle = () => {
     setCodeColor(!codeColor);
@@ -826,7 +824,8 @@ export default function CodeEditor() {
               isConfigured={aiConfigured}
               settings={aiSettings}
               onSettingsChange={updateAISettings}
-              onCodeGenerated={handleCodeGenerated}
+              streamedMessage={aiStreamedMessage}
+              isStreaming={aiIsStreaming}
             />
           </div>
 

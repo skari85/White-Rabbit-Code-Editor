@@ -218,8 +218,19 @@ export function AIChat({
 
     // For assistant messages, use LiveAIResponse component
     if (!isUser) {
+      // For streamed assistant message, render simple live text (no typing animation)
+      if (isStreamed) {
+        return (
+          <div key={message.id || 'streamed'} className="mb-4">
+            <div className="rounded-lg px-4 py-3 bg-gray-700 text-gray-100 whitespace-pre-wrap text-sm">
+              {message.content}
+            </div>
+          </div>
+        );
+      }
+      // For finalized assistant messages, show typing animation with code extraction UI
       return (
-        <div key={message.id || (isStreamed ? 'streamed' : undefined)} className="mb-4">
+        <div key={message.id} className="mb-4">
           <LiveAIResponse
             response={message.content}
             onCodeGenerated={onCodeGenerated}
