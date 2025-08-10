@@ -30,6 +30,8 @@ interface CodeInspectionPanelProps {
   isLoading: boolean;
   onInspectionClick: (inspection: CodeInspection) => void;
   onQuickFix: (inspection: CodeInspection) => void;
+  onExplain?: (inspection: CodeInspection) => void;
+  onAutoFixAI?: (inspection: CodeInspection) => void;
   onRefresh: () => void;
   onClose: () => void;
   className?: string;
@@ -40,6 +42,8 @@ const CodeInspectionPanel: React.FC<CodeInspectionPanelProps> = ({
   isLoading,
   onInspectionClick,
   onQuickFix,
+  onExplain,
+  onAutoFixAI,
   onRefresh,
   onClose,
   className = ''
@@ -173,20 +177,52 @@ const CodeInspectionPanel: React.FC<CodeInspectionPanelProps> = ({
           </p>
         )}
         
-        {inspection.quickFix && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleQuickFix(inspection);
-            }}
-            className="text-xs h-6 px-2"
-          >
-            <Zap className="w-3 h-3 mr-1" />
-            {inspection.quickFix.title}
-          </Button>
-        )}
+        <div className="flex items-center gap-1 mt-1">
+          {onExplain && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onExplain(inspection);
+              }}
+              className="text-xs h-6 px-2"
+              title="Explain this issue"
+            >
+              <Info className="w-3 h-3 mr-1" />
+              Explain
+            </Button>
+          )}
+          {onAutoFixAI && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAutoFixAI(inspection);
+              }}
+              className="text-xs h-6 px-2"
+              title="Let AI propose a fix"
+            >
+              <Lightbulb className="w-3 h-3 mr-1" />
+              Auto-fix
+            </Button>
+          )}
+          {inspection.quickFix && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleQuickFix(inspection);
+              }}
+              className="text-xs h-6 px-2"
+            >
+              <Zap className="w-3 h-3 mr-1" />
+              {inspection.quickFix.title}
+            </Button>
+          )}
+        </div>
       </div>
       
       <div className="flex-shrink-0">

@@ -59,6 +59,7 @@ import NewAppWizard, { NewAppOptions } from './new-app-wizard';
 import PublishModal from './publish-modal';
 import StylePanel from './style-panel';
 import LiveDiffDock, { type DiffEntry } from './live-diff-dock';
+import MonacoDiffOverlay from './monaco-diff-overlay';
 import OnboardingModal from './onboarding-modal';
 import { CommandPalette } from './command-palette';
 import { KeyboardShortcutsService } from '@/lib/keyboard-shortcuts-service';
@@ -164,6 +165,8 @@ export default function CodeEditor() {
   const [activeLayout, setActiveLayout] = useState<LayoutConfig | null>(currentLayout);
   // Live diff tracking (simple per-file snapshot)
   const [diffs, setDiffs] = useState<Record<string, DiffEntry>>({});
+  const [openDiff, setOpenDiff] = useState<DiffEntry | null>(null);
+  const [openDiff, setOpenDiff] = useState<DiffEntry | null>(null);
 
   // Track user session
   useEffect(() => {
@@ -336,6 +339,10 @@ export default function CodeEditor() {
     ksInstance.addCommandPaletteItem({ id: 'section.pricing', title: 'Insert: Pricing Section', category: 'edit', command: 'section.insert', args: ['pricing'] });
     ksInstance.addCommandPaletteItem({ id: 'section.faq', title: 'Insert: FAQ Section', category: 'edit', command: 'section.insert', args: ['faq'] });
     ksInstance.addCommandPaletteItem({ id: 'section.testimonials', title: 'Insert: Testimonials Section', category: 'edit', command: 'section.insert', args: ['testimonials'] });
+    ksInstance.addCommandPaletteItem({ id: 'section.features', title: 'Insert: Features Section', category: 'edit', command: 'section.insert', args: ['features'] });
+    ksInstance.addCommandPaletteItem({ id: 'section.footer', title: 'Insert: Footer', category: 'edit', command: 'section.insert', args: ['footer'] });
+    ksInstance.addCommandPaletteItem({ id: 'section.contact', title: 'Insert: Contact Section', category: 'edit', command: 'section.insert', args: ['contact'] });
+    ksInstance.addCommandPaletteItem({ id: 'section.bloglist', title: 'Insert: Blog List', category: 'edit', command: 'section.insert', args: ['bloglist'] });
 
     ksInstance.registerHandler?.('section.insert', async (args?: any[]) => {
       const kind = args?.[0] as string;
@@ -940,7 +947,19 @@ export default function CodeEditor() {
             onApproveAll={() => {
               setDiffs({});
             }}
+            onOpenDiff={(filename) => {
+              const entry = diffs[filename];
+              if (entry) setOpenDiff(entry);
+            }}
           />
+          {openDiff && (
+            <MonacoDiffOverlay
+              filename={openDiff.filename}
+              original={openDiff.before}
+              modified={openDiff.after}
+              onClose={() => setOpenDiff(null)}
+            />
+          )}
         </div>
           </div>
         </ResizablePanel>
@@ -1182,6 +1201,14 @@ export default function CodeEditor() {
                             isLoading={inspectionLoading}
                             onInspectionClick={handleInspectionClick}
                             onQuickFix={handleQuickFix}
+                            onExplain={(inspection) => {
+                              const prompt = `Explain this issue in plain English and propose safe fixes.\n\nFile: ${selectedFile}\nIssue: ${inspection.message}\nCategory: ${inspection.category}\nRange: ${inspection.range.startLineNumber}:${inspection.range.startColumn}-${inspection.range.endLineNumber}:${inspection.range.endColumn}\n\nCode:\n\n\`\`\`${selectedFile.split('.').pop()}\n${getSelectedFileContent()}\n\`\`\``;
+                              handleSendMessage(prompt);
+                            }}
+                            onAutoFixAI={(inspection) => {
+                              const prompt = `Provide a minimal patch to fix this issue. Output only as UPDATE_FILE:${selectedFile} with a single \`\`\` block.\n\nIssue: ${inspection.message}\nCategory: ${inspection.category}\nRange: ${inspection.range.startLineNumber}:${inspection.range.startColumn}-${inspection.range.endLineNumber}:${inspection.range.endColumn}\n\nCurrent code:\n\n\`\`\`${selectedFile.split('.').pop()}\n${getSelectedFileContent()}\n\`\`\``;
+                              handleSendMessage(prompt);
+                            }}
                             onRefresh={handleRunInspections}
                             onClose={handleCloseInspections}
                             className="h-full"

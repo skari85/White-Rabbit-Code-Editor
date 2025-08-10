@@ -15,10 +15,11 @@ interface LiveDiffDockProps {
   diffs: DiffEntry[];
   onRevertChunk?: (filename: string) => void;
   onApproveAll?: () => void;
+  onOpenDiff?: (filename: string) => void;
   className?: string;
 }
 
-export default function LiveDiffDock({ diffs, onRevertChunk, onApproveAll, className = '' }: LiveDiffDockProps) {
+export default function LiveDiffDock({ diffs, onRevertChunk, onApproveAll, onOpenDiff, className = '' }: LiveDiffDockProps) {
   const changed = useMemo(() => diffs.filter(d => d.before !== d.after), [diffs]);
 
   if (changed.length === 0) return null;
@@ -38,10 +39,15 @@ export default function LiveDiffDock({ diffs, onRevertChunk, onApproveAll, class
         {changed.slice(-6).map(d => (
           <div key={d.filename} className="p-2 bg-gray-800/60 rounded border border-gray-700">
             <div className="flex items-center justify-between mb-1">
-              <div className="text-xs font-mono text-gray-300 truncate">{d.filename}</div>
-              {onRevertChunk && (
-                <Button variant="ghost" size="sm" className="h-7" onClick={() => onRevertChunk(d.filename)}>Revert</Button>
-              )}
+              <button className="text-xs font-mono text-gray-300 truncate text-left hover:underline" onClick={() => onOpenDiff?.(d.filename)}>{d.filename}</button>
+              <div className="flex items-center gap-1">
+                {onOpenDiff && (
+                  <Button variant="ghost" size="sm" className="h-7" onClick={() => onOpenDiff(d.filename)}>Diff</Button>
+                )}
+                {onRevertChunk && (
+                  <Button variant="ghost" size="sm" className="h-7" onClick={() => onRevertChunk(d.filename)}>Revert</Button>
+                )}
+              </div>
             </div>
             <pre className="text-[11px] leading-4 whitespace-pre-wrap text-gray-300"><code>{previewDiff(d.before, d.after)}</code></pre>
           </div>

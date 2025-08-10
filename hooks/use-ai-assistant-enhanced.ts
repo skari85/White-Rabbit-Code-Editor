@@ -375,10 +375,10 @@ export function useAIAssistantEnhanced() {
 
   // Send message to AI
   const sendMessage = useCallback(async (
-    content: string, 
-    context?: { 
-      files: any[], 
-      selectedFile: string, 
+    content: string,
+    context?: {
+      files: any[],
+      selectedFile: string,
       appSettings: any
     }
   ) => {
@@ -425,7 +425,7 @@ INSTRUCTIONS:
 - Only show the modified parts in your response
 
 Please help me with this request by refining the existing code.`;
-        
+
         userMessage.content = contextualContent;
       }
 
@@ -452,7 +452,7 @@ Please help me with this request by refining the existing code.`;
       const finalMessages = [...updatedMessages, response];
       saveMessages(finalMessages);
       return response;
-      
+
     } catch (error) {
       console.error('AI service error:', error);
       throw error;
@@ -463,10 +463,10 @@ Please help me with this request by refining the existing code.`;
 
   // Send streaming message to AI
   const sendStreamingMessage = useCallback(async (
-    content: string, 
-    context?: { 
-      files: any[], 
-      selectedFile: string, 
+    content: string,
+    context?: {
+      files: any[],
+      selectedFile: string,
       appSettings: any
     }
   ) => {
@@ -515,7 +515,7 @@ INSTRUCTIONS:
 - Only show the modified parts in your response
 
 Please help me with this request by refining the existing code.`;
-        
+
         userMessage.content = contextualContent;
       }
 
@@ -532,6 +532,11 @@ Please help me with this request by refining the existing code.`;
       // Throttle live writes to the editor to avoid excessive re-renders
       const THROTTLE_MS = 75;
       const lastApplyAt: Record<string, number> = {};
+
+      // Throttle background checks during streaming
+      const CHECK_THROTTLE_MS = 1200;
+      let lastCheckAt = 0;
+
       const applyPartial = (cf: { type: 'create' | 'update'; name: string; body: string; selected?: boolean } | null, isFinal = false) => {
         if (!cf) return;
         if (!cf.selected && onFileSelect) {
@@ -595,6 +600,16 @@ Please help me with this request by refining the existing code.`;
         // Trim buffer to unconsumed tail to avoid growth
         buffer = buffer.slice(consumed);
 
+        // Optionally run background checks during stream (throttled)
+        try {
+          const now = Date.now();
+          if (typeof window !== 'undefined' && now - lastCheckAt >= CHECK_THROTTLE_MS) {
+            (window as any).wrRunTypecheck?.();
+            (window as any).wrRunLint?.();
+            lastCheckAt = now;
+          }
+        } catch {}
+
         // Update chat display with code removed/replaced
         let cleaned = fullContent
           .replace(/CREATE_FILE:[^\n]+\n```[\w]*\n[\s\S]*?\n```/g, '[code added to editor]')
@@ -623,9 +638,18 @@ Please help me with this request by refining the existing code.`;
 
       const finalMessages = [...updatedMessages, assistantMessage];
       saveMessages(finalMessages);
-      
+
+      // Trigger background checks if available (non-blocking)
+      try {
+        if (typeof window !== 'undefined') {
+          (window as any).wrRunTypecheck?.();
+          (window as any).wrRunLint?.();
+        }
+      } catch {}
+
+
       return assistantMessage;
-      
+
     } catch (error) {
       console.error('AI service error:', error);
       throw error;
@@ -662,7 +686,7 @@ Please help me with this request by refining the existing code.`;
         content: 'Hello, please respond with "Connection successful" to test the API.',
         timestamp: new Date()
       };
-      
+
       await testService.sendMessage([testMessage]);
       return true;
     } catch (error) {
