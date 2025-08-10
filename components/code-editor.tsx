@@ -60,6 +60,7 @@ import PublishModal from './publish-modal';
 import StylePanel from './style-panel';
 import OnboardingModal from './onboarding-modal';
 import { CommandPalette } from './command-palette';
+import { KeyboardShortcutsService } from '@/lib/keyboard-shortcuts-service';
 
 // Dark Mode Toggle Component
 function DarkModeToggleButton() {
@@ -255,6 +256,12 @@ export default function CodeEditor() {
     ;(window as any).wrOpenPublishModal = () => setShowPublish(true)
     ;(window as any).wrOpenStylePanel = () => setShowStyle(true)
     return () => {
+      delete (window as any).wrOpenNewAppWizard
+      delete (window as any).wrOpenPublishModal
+      delete (window as any).wrOpenStylePanel
+    }
+  }, [])
+
   // Register run/build/lint/type-check handlers
   useEffect(() => {
     const ks = new KeyboardShortcutsService();
@@ -307,10 +314,6 @@ export default function CodeEditor() {
     };
   }, [terminal]);
 
-      delete (window as any).wrOpenNewAppWizard
-      delete (window as any).wrOpenPublishModal
-      delete (window as any).wrOpenStylePanel
-    }
   // Command Palette integration (Cmd/Ctrl+K)
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [ksInstance] = useState(() => new KeyboardShortcutsService());
@@ -325,7 +328,6 @@ export default function CodeEditor() {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
-  }, [])
 
   // Code inspection state
   const [showInspections, setShowInspections] = useState(false);
@@ -597,12 +599,6 @@ export default function CodeEditor() {
 
     } catch (error) {
       console.error('❌ Quick fix failed:', error);
-      {/* Onboarding modal (first-run and on-demand) */}
-      <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} />
-
-      {/* Command Palette */}
-      <CommandPalette keyboardService={ksInstance} open={showCommandPalette} onOpenChange={setShowCommandPalette} />
-
       // Don't throw the error to prevent UI crashes
       console.error('Quick fix error details:', error);
     }
@@ -719,10 +715,6 @@ export default function CodeEditor() {
                       alt={session.user.name || 'User'}
                       className="w-6 h-6 rounded-full"
                     />
-
-              {/* Overlays */}
-              <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} />
-              <CommandPalette keyboardService={ksInstance} open={showCommandPalette} onOpenChange={setShowCommandPalette} />
 
                   )}
                   <span className="text-xs text-gray-300">
@@ -1177,6 +1169,10 @@ export default function CodeEditor() {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      {/* Overlays */}
+      <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} />
+      <CommandPalette keyboardService={ksInstance} open={showCommandPalette} onOpenChange={setShowCommandPalette} />
 
       {/* BYOK AI Settings Modal */}
       <BYOKAISettings
