@@ -187,6 +187,9 @@ export default function AdvancedEditorToolbar({
           <Button variant="ghost" size="sm" onClick={() => (window as any).wrRunLint?.()} title="Lint (npm run lint)">
             <Wrench className="w-4 h-4" />
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => (window as any).wrOpenGit?.()} title="Open Git Panel">
+            <GitBranch className="w-4 h-4" />
+          </Button>
         </div>
 
         <Separator orientation="vertical" className="h-6" />

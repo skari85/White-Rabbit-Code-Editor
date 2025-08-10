@@ -51,6 +51,7 @@ import { useResponsiveLayout, useMobileLayout } from '@/hooks/use-responsive-lay
 
 import LivePreview from './live-preview';
 import Marketplace from './marketplace';
+import GitPanel from './git-panel';
 import AdvancedEditorToolbar from './advanced-editor-toolbar';
 import BYOKAISettings from './byok-ai-settings';
 import DocumentationPanel from './documentation-panel';
@@ -160,7 +161,7 @@ export default function CodeEditor() {
   const terminal = useTerminal();
   const { getActiveSession, createSession, executeCommand } = terminal;
 
-  const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace">("code");
+  const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace" | "git">("code");
   const [showLayoutControls, setShowLayoutControls] = useState(true);
   const [activeLayout, setActiveLayout] = useState<LayoutConfig | null>(currentLayout);
   // Live diff tracking (simple per-file snapshot)
@@ -270,10 +271,12 @@ export default function CodeEditor() {
     (window as any).wrOpenNewAppWizard = () => setShowNewApp(true)
     ;(window as any).wrOpenPublishModal = () => setShowPublish(true)
     ;(window as any).wrOpenStylePanel = () => setShowStyle(true)
+    // Cleanup
     return () => {
       delete (window as any).wrOpenNewAppWizard
       delete (window as any).wrOpenPublishModal
       delete (window as any).wrOpenStylePanel
+      delete (window as any).wrOpenGit
     }
   }, [])
 
@@ -286,23 +289,23 @@ export default function CodeEditor() {
     ks.addShortcut({ id: 'run.lint', name: 'Lint', description: 'Run linter', category: 'run', keys: ['Ctrl+Shift+L','Cmd+Shift+L'], command: 'run.lint', enabled: true, customizable: true });
 
     ks.registerHandler('run.dev', async () => {
-      if (!terminal.getActiveSession()) terminal.createSession('Dev');
-      await terminal.executeCommand('npm run dev', undefined, true);
+      const sid = terminal.getActiveSession() || terminal.createSession('Dev');
+      await terminal.executeCommand('npm run dev', sid?.id, true);
       setViewMode('terminal');
     });
     ks.registerHandler('run.build', async () => {
-      if (!terminal.getActiveSession()) terminal.createSession('Build');
-      await terminal.executeCommand('npm run build');
+      const sid = terminal.getActiveSession() || terminal.createSession('Build');
+      await terminal.executeCommand('npm run build', sid?.id);
       setViewMode('terminal');
     });
     ks.registerHandler('run.typecheck', async () => {
-      if (!terminal.getActiveSession()) terminal.createSession('TypeCheck');
-      await terminal.executeCommand('npx tsc -p .');
+      const sid = terminal.getActiveSession() || terminal.createSession('TypeCheck');
+      await terminal.executeCommand('npx tsc -p .', sid?.id);
       setViewMode('terminal');
     });
     ks.registerHandler('run.lint', async () => {
-      if (!terminal.getActiveSession()) terminal.createSession('Lint');
-      await terminal.executeCommand('npm run lint');
+      const sid = terminal.getActiveSession() || terminal.createSession('Lint');
+      await terminal.executeCommand('npm run lint', sid?.id);
       setViewMode('terminal');
     });
 
@@ -1217,6 +1220,13 @@ export default function CodeEditor() {
                     </div>
                   )}
                 </div>
+
+              {(viewMode as string) === "git" && (
+                <div className="h-full">
+                  <GitPanel className="h-full" />
+                </div>
+              )}
+
               </div>
             </div>
           )}

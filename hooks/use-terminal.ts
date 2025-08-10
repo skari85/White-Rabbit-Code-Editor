@@ -42,13 +42,14 @@ export function useTerminal() {
 
   // Execute command in a session
   const executeCommand = useCallback(async (
-    command: string, 
-    sessionId?: string, 
+    command: string,
+    sessionId?: string,
     isBackground: boolean = false
   ): Promise<TerminalCommand> => {
-    const targetSessionId = sessionId || activeSessionId;
+    let targetSessionId = sessionId || activeSessionId;
     if (!targetSessionId) {
-      throw new Error('No active terminal session');
+      // Auto-create a default terminal session to avoid race conditions
+      targetSessionId = createSession('Terminal');
     }
 
     const commandId = `cmd-${++commandIdRef.current}`;
@@ -95,6 +96,29 @@ export function useTerminal() {
         }
       } else if (command.includes('npm install') || command.includes('pnpm install') || command.includes('yarn')) {
         output = `Installing dependencies...\n✓ Dependencies installed successfully`;
+      } else if (command.startsWith('git ')) {
+        // Lightweight simulated git commands
+        if (command.startsWith('git init')) {
+          output = `Initialized empty Git repository in ${process.cwd?.() || '/repo'}\.git/`;
+        } else if (command.startsWith('git status')) {
+          output = `On branch main\n\nNo commits yet\n\nnothing to commit (create/copy files and use "git add" to track)`;
+        } else if (command.startsWith('git add')) {
+          output = `Files staged for commit.`;
+        } else if (command.startsWith('git commit')) {
+          const msgMatch = command.match(/-m\s+"([^"]*)"/);
+          const msg = msgMatch ? msgMatch[1] : 'update';
+          output = `[main (root-commit) abc1234] ${msg}\n 1 file changed, 1 insertion(+)`;
+        } else if (command.startsWith('git push')) {
+          output = `Pushing to origin main...\n✓ Push simulated (configure a remote to push for real)`;
+        } else if (command.startsWith('git branch')) {
+          output = `* main`;
+        } else if (command.startsWith('git log')) {
+          output = `abc1234 Initial commit\nabc1235 Update files`;
+        } else if (command.startsWith('git remote')) {
+          output = `Remote updated.`;
+        } else {
+          output = `git: command not recognized in demo environment.`;
+        }
       } else if (command.includes('ls') || command.includes('dir')) {
         output = `app/  components/  hooks/  lib/  public/  styles/  package.json  README.md`;
       } else if (command.includes('pwd')) {
@@ -103,7 +127,7 @@ export function useTerminal() {
         const newDir = command.replace('cd ', '').trim();
         output = `Changed directory to: ${newDir}`;
         // Update working directory in session
-        setSessions(prev => prev.map(session => 
+        setSessions(prev => prev.map(session =>
           session.id === targetSessionId
             ? { ...session, workingDirectory: newDir }
             : session
