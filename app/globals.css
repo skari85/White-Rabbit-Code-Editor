@@ -8,6 +8,7 @@
 
 /* Import Monaco Editor styles */
 @import '../styles/monaco-editor.css';
+@import '../styles/tokens.css';
 
 @layer utilities {
   .text-balance {

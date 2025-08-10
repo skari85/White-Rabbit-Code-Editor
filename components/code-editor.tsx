@@ -58,6 +58,7 @@ import CodeInspectionPanel from './code-inspection-panel';
 import NewAppWizard, { NewAppOptions } from './new-app-wizard';
 import PublishModal from './publish-modal';
 import StylePanel from './style-panel';
+import LiveDiffDock, { type DiffEntry } from './live-diff-dock';
 import OnboardingModal from './onboarding-modal';
 import { CommandPalette } from './command-palette';
 import { KeyboardShortcutsService } from '@/lib/keyboard-shortcuts-service';
@@ -161,6 +162,8 @@ export default function CodeEditor() {
   const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace">("code");
   const [showLayoutControls, setShowLayoutControls] = useState(true);
   const [activeLayout, setActiveLayout] = useState<LayoutConfig | null>(currentLayout);
+  // Live diff tracking (simple per-file snapshot)
+  const [diffs, setDiffs] = useState<Record<string, DiffEntry>>({});
 
   // Track user session
   useEffect(() => {
@@ -194,13 +197,17 @@ export default function CodeEditor() {
 
         // Idempotent create: only add file once, then keep updating content
         const exists = files.some(f => f.name === name);
+        const prev = files.find(f => f.name === name)?.content || '';
         if (!exists) {
           addNewFile(name, getFileType(name));
           trackFileCreated(getFileType(name), name);
         }
+        setDiffs(d => ({ ...d, [name]: { filename: name, before: d[name]?.before ?? prev, after: content } }));
         updateFileContent(name, content);
       },
       onUpdate: (name: string, content: string) => {
+        const prev = files.find(f => f.name === name)?.content || '';
+        setDiffs(d => ({ ...d, [name]: { filename: name, before: d[name]?.before ?? prev, after: content } }));
         updateFileContent(name, content);
       },
       onSelect: (name: string) => {
@@ -323,6 +330,74 @@ export default function CodeEditor() {
   // Command Palette integration (Cmd/Ctrl+K)
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [ksInstance] = useState(() => new KeyboardShortcutsService());
+  // Register Section Library commands in Command Palette
+  useEffect(() => {
+    ksInstance.addCommandPaletteItem({ id: 'section.hero', title: 'Insert: Hero Section', category: 'edit', command: 'section.insert', args: ['hero'] });
+    ksInstance.addCommandPaletteItem({ id: 'section.pricing', title: 'Insert: Pricing Section', category: 'edit', command: 'section.insert', args: ['pricing'] });
+    ksInstance.addCommandPaletteItem({ id: 'section.faq', title: 'Insert: FAQ Section', category: 'edit', command: 'section.insert', args: ['faq'] });
+    ksInstance.addCommandPaletteItem({ id: 'section.testimonials', title: 'Insert: Testimonials Section', category: 'edit', command: 'section.insert', args: ['testimonials'] });
+
+    ksInstance.registerHandler?.('section.insert', async (args?: any[]) => {
+      const kind = args?.[0] as string;
+      const snippet = getSectionSnippet(kind);
+      // Prefer index.html or create sections.html
+      const target = files.find(f => f.name === 'index.html') ? 'index.html' : 'sections.html';
+      if (!files.find(f => f.name === target)) {
+        addNewFile(target, 'html');
+      }
+      const existing = files.find(f => f.name === target)?.content || '';
+      const newContent = injectSection(existing, snippet);
+      updateFileContent(target, newContent);
+      setSelectedFile(target);
+    });
+  }, [ksInstance, files, addNewFile, updateFileContent, setSelectedFile]);
+
+  const getSectionSnippet = (kind: string): string => {
+    const brand = 'var(--brand)';
+    switch (kind) {
+      case 'hero':
+        return `<section class="hero" style="padding:48px 0">
+  <h1 style="font-size:40px;margin:0 0 12px">Build faster with White Rabbit</h1>
+  <p style="max-width:640px;color:#666">A modern, tokenized starter you can style in seconds. Ship pages with zero boilerplate.</p>
+  <div style="margin-top:16px"><a class="btn" style="background:${brand};color:white;padding:10px 16px;border-radius:8px;text-decoration:none" href="#">Get Started</a></div>
+</section>`;
+      case 'pricing':
+        return `<section class="pricing" style="padding:48px 0">
+  <h2 style="font-size:28px;margin-bottom:16px">Pricing</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+    <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px"><h3>Starter</h3><p>$0/mo</p><ul><li>Basic features</li></ul></div>
+    <div style="border:2px solid ${brand};border-radius:12px;padding:16px"><h3>Pro</h3><p>$12/mo</p><ul><li>All features</li></ul></div>
+  </div>
+</section>`;
+      case 'faq':
+        return `<section class="faq" style="padding:48px 0">
+  <h2 style="font-size:28px;margin-bottom:16px">FAQ</h2>
+  <details><summary>How do I deploy?</summary><p>Click Publish to deploy to Vercel in one step.</p></details>
+  <details><summary>Can I customize styles?</summary><p>Yes—change tokens in the Style panel.</p></details>
+</section>`;
+      case 'testimonials':
+        return `<section class="testimonials" style="padding:48px 0">
+  <h2 style="font-size:28px;margin-bottom:16px">Loved by makers</h2>
+  <blockquote style="border-left:4px solid ${brand};padding-left:12px">“I shipped my MVP in a weekend.” — Indie dev</blockquote>
+</section>`;
+      default:
+        return `<section style="padding:32px 0"><h2>New Section</h2><p>Content here</p></section>`;
+    }
+  };
+
+  const injectSection = (html: string, section: string): string => {
+    if (!html.trim()) {
+      return `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8"/>\n<meta name="viewport" content="width=device-width, initial-scale=1.0"/>\n<link rel="stylesheet" href="style.css"/>\n<title>New Page</title>\n</head>\n<body>\n${section}\n</body>\n</html>`;
+    }
+    if (html.includes('</main>')) {
+      return html.replace('</main>', `${section}\n</main>`);
+    }
+    if (html.includes('</body>')) {
+      return html.replace('</body>', `${section}\n</body>`);
+    }
+    return `${html}\n${section}`;
+  };
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -851,6 +926,20 @@ export default function CodeEditor() {
             }}
             onFileUpdate={updateFileContent}
             onFileSelect={setSelectedFile}
+          />
+          {/* Live Diff Dock */}
+          <LiveDiffDock
+            diffs={Object.values(diffs)}
+            onRevertChunk={(filename) => {
+              const entry = diffs[filename];
+              if (entry) {
+                updateFileContent(filename, entry.before);
+                setDiffs(prev => ({ ...prev, [filename]: { ...entry, after: entry.before } }));
+              }
+            }}
+            onApproveAll={() => {
+              setDiffs({});
+            }}
           />
         </div>
           </div>

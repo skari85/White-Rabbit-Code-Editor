@@ -88,7 +88,7 @@ export default function StylePanel({ open, onOpenChange }: StylePanelProps) {
         <div className="space-y-4">
           {/* Brand color */}
           <div className="space-y-2">
-            <Label>Brand Color</Label>
+            <Label>Brand Color <span className="text-xs text-gray-500">(writes var(--brand) in tokens.css)</span></Label>
             <div className="flex items-center gap-2">
               <input type="color" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="h-9 w-12 rounded" />
               <Input value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="font-mono text-xs" />

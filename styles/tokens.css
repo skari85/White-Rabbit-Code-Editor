@@ -1,0 +1,16 @@
+/* Design tokens for brand/theme, editable via StylePanel */
+:root {
+  --brand: #6c2fff; /* primary brand color */
+  --radius: 8px;    /* base border radius */
+  --shadow: 12px;   /* base shadow size */
+
+  /* font indirection for live swapping */
+  --font-sans: system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Example usage helpers (optional) */
+.token-rounded { border-radius: var(--radius); }
+.token-shadow { box-shadow: 0 0 var(--shadow) rgba(0,0,0,0.25); }
+.token-brand { color: var(--brand); }
+
