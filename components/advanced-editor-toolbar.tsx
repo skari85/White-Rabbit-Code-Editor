@@ -13,7 +13,9 @@ import {
   ArrowRight,
   ArrowUp,
   Zap,
-  BarChart3
+  BarChart3,
+  Rocket,
+  Palette
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -144,6 +146,25 @@ export default function AdvancedEditorToolbar({
   return (
     <div className={`bg-white border-b p-2 ${className}`}>
       <div className="flex items-center gap-2 flex-wrap">
+        {/* New App + Publish */}
+        <div className="flex items-center gap-1">
+          <Button variant="default" size="sm" className="flex items-center gap-2" onClick={() => (window as any).wrOpenNewAppWizard?.()}>
+            <Rocket className="w-4 h-4" /> New App
+          </Button>
+          <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={() => (window as any).wrOpenPublishModal?.()}>
+            <BarChart3 className="w-4 h-4" /> Publish
+          </Button>
+        </div>
+
+        {/* Style Panel */}
+        <div className="flex items-center gap-1">
+          <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={() => (window as any).wrOpenStylePanel?.()}>
+            <Palette className="w-4 h-4" /> Style
+          </Button>
+        </div>
+
+        <Separator orientation="vertical" className="h-6" />
+
         {/* Find & Replace */}
         <div className="flex items-center gap-1">
           <Button

@@ -55,6 +55,9 @@ import AdvancedEditorToolbar from './advanced-editor-toolbar';
 import BYOKAISettings from './byok-ai-settings';
 import DocumentationPanel from './documentation-panel';
 import CodeInspectionPanel from './code-inspection-panel';
+import NewAppWizard, { NewAppOptions } from './new-app-wizard';
+import PublishModal from './publish-modal';
+import StylePanel from './style-panel';
 
 // Dark Mode Toggle Component
 function DarkModeToggleButton() {
@@ -227,6 +230,23 @@ export default function CodeEditor() {
 
   // AI-enhanced editor state
   const [useAIEnhancedEditor, setUseAIEnhancedEditor] = useState(true);
+
+  // New App, Publish, Style modals
+  const [showNewApp, setShowNewApp] = useState(false)
+  const [showPublish, setShowPublish] = useState(false)
+  const [showStyle, setShowStyle] = useState(false)
+
+  useEffect(() => {
+    // Expose open functions globally for minimal invasive wiring
+    (window as any).wrOpenNewAppWizard = () => setShowNewApp(true)
+    ;(window as any).wrOpenPublishModal = () => setShowPublish(true)
+    ;(window as any).wrOpenStylePanel = () => setShowStyle(true)
+    return () => {
+      delete (window as any).wrOpenNewAppWizard
+      delete (window as any).wrOpenPublishModal
+      delete (window as any).wrOpenStylePanel
+    }
+  }, [])
 
   // Code inspection state
   const [showInspections, setShowInspections] = useState(false);
@@ -544,6 +564,26 @@ export default function CodeEditor() {
 
   return (
     <div className="h-screen bg-gray-900">
+      {/* New App Wizard & Publish Modals */}
+      <NewAppWizard
+        open={showNewApp}
+        onOpenChange={setShowNewApp}
+        onCreate={(opts: NewAppOptions) => {
+          // Minimal scaffold: set brand color var and create basic nav + pages
+          const css = `:root{--brand:${opts.brandColor};--radius:8px;--shadow:12px}`;
+          addNewFile('style.css', 'css');
+          updateFileContent('style.css', css);
+          // Basic index.html with nav and optional login
+          const navLogin = opts.authEnabled ? '<a href="#" class="nav-link">Login</a>' : '';
+          const logoTag = opts.logoUrl ? `<img src="${opts.logoUrl}" alt="${opts.name}" style="height:24px"/>` : opts.name;
+          const html = `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8"/>\n<meta name="viewport" content="width=device-width, initial-scale=1.0"/>\n<title>${opts.name}</title>\n<link rel="stylesheet" href="style.css"/>\n</head>\n<body>\n<nav class="navbar"><div class="brand">${logoTag}</div><div class="nav-links"><a href="#" class="nav-link">Home</a><a href="#" class="nav-link">Features</a>${navLogin}</div></nav>\n<main class="container">\n  <section class="hero"><h1>${opts.name}</h1><p>Welcome! Your app is ready.</p><a class="btn" href="#">Get Started</a></section>\n  <section class="features"><h2>Features</h2><ul><li>Fast setup</li><li>Clean design</li><li>Easy deploy</li></ul></section>\n</main>\n</body>\n</html>`;
+          addNewFile('index.html', 'html');
+          updateFileContent('index.html', html);
+          setSelectedFile('index.html');
+        }}
+      />
+      <PublishModal open={showPublish} onOpenChange={setShowPublish} files={files} />
+      <StylePanel open={showStyle} onOpenChange={setShowStyle} />
       <ResizablePanelGroup direction="horizontal" className="h-full">
         {/* Left Sidebar - File Explorer & AI Chat */}
         <ResizablePanel
