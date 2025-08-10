@@ -1,5 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
 
+@import '../styles/monaco-editor.css';
+@import '../styles/tokens.css';
 /* White Rabbit Custom Fonts */
 
 @tailwind base;
@@ -7,8 +9,7 @@
 @tailwind utilities;
 
 /* Import Monaco Editor styles */
-@import '../styles/monaco-editor.css';
-@import '../styles/tokens.css';
+
 
 @layer utilities {
   .text-balance {

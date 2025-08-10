@@ -3,7 +3,7 @@ const config = {
   plugins: {
     'postcss-import': {},
     tailwindcss: {},
-    'postcss-nesting': {},
+    // 'postcss-nesting': {}, // temporarily disabled until package is installed
     autoprefixer: {},
     // ...(process.env.NODE_ENV === 'production' ? { cssnano: {} } : {})
   },

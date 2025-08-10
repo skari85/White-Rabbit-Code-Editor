@@ -166,7 +166,6 @@ export default function CodeEditor() {
   // Live diff tracking (simple per-file snapshot)
   const [diffs, setDiffs] = useState<Record<string, DiffEntry>>({});
   const [openDiff, setOpenDiff] = useState<DiffEntry | null>(null);
-  const [openDiff, setOpenDiff] = useState<DiffEntry | null>(null);
 
   // Track user session
   useEffect(() => {
