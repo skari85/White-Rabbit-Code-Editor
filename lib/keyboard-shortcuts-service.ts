@@ -79,6 +79,33 @@ export class KeyboardShortcutsService {
     this.initializeCommandPalette()
   }
 
+  // Add a new shortcut at runtime
+  addShortcut(shortcut: KeyboardShortcut): void {
+    this.shortcuts.set(shortcut.id, shortcut)
+    for (const key of shortcut.keys) {
+      this.keyBindings.set(this.normalizeKey(key), shortcut.id)
+    }
+    // Also add to command palette if not present
+    if (!this.commandPalette.find(i => i.id === shortcut.id)) {
+      this.commandPalette.push({
+        id: shortcut.id,
+        title: shortcut.name,
+        description: shortcut.description,
+        category: shortcut.category,
+        command: shortcut.command,
+        args: shortcut.args,
+        keybinding: shortcut.keys[0]
+      })
+    }
+  }
+
+  // Add a command palette item without a shortcut
+  addCommandPaletteItem(item: CommandPaletteItem): void {
+    if (!this.commandPalette.find(i => i.id === item.id)) {
+      this.commandPalette.push(item)
+    }
+  }
+
   private initializeDefaultShortcuts(): void {
     const defaultShortcuts: KeyboardShortcut[] = [
       // File operations

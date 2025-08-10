@@ -58,6 +58,8 @@ import CodeInspectionPanel from './code-inspection-panel';
 import NewAppWizard, { NewAppOptions } from './new-app-wizard';
 import PublishModal from './publish-modal';
 import StylePanel from './style-panel';
+import OnboardingModal from './onboarding-modal';
+import { CommandPalette } from './command-palette';
 
 // Dark Mode Toggle Component
 function DarkModeToggleButton() {
@@ -235,6 +237,17 @@ export default function CodeEditor() {
   const [showNewApp, setShowNewApp] = useState(false)
   const [showPublish, setShowPublish] = useState(false)
   const [showStyle, setShowStyle] = useState(false)
+  // Onboarding modal state
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  useEffect(() => {
+    try {
+      const seen = localStorage.getItem('wr-onboarded');
+      if (!seen) setShowOnboarding(true);
+    } catch {}
+    (window as any).wrOpenOnboarding = () => setShowOnboarding(true);
+    return () => { delete (window as any).wrOpenOnboarding };
+  }, []);
+
 
   useEffect(() => {
     // Expose open functions globally for minimal invasive wiring
@@ -242,10 +255,76 @@ export default function CodeEditor() {
     ;(window as any).wrOpenPublishModal = () => setShowPublish(true)
     ;(window as any).wrOpenStylePanel = () => setShowStyle(true)
     return () => {
+  // Register run/build/lint/type-check handlers
+  useEffect(() => {
+    const ks = new KeyboardShortcutsService();
+    ks.addShortcut({ id: 'run.dev', name: 'Run Dev Server', description: 'Start dev server', category: 'run', keys: ['Ctrl+R','Cmd+R'], command: 'run.dev', enabled: true, customizable: true });
+    ks.addShortcut({ id: 'run.build', name: 'Build', description: 'Build project', category: 'run', keys: ['Ctrl+B','Cmd+B'], command: 'run.build', enabled: true, customizable: true });
+    ks.addShortcut({ id: 'run.typecheck', name: 'Type Check', description: 'TypeScript check', category: 'run', keys: ['Ctrl+Shift+T','Cmd+Shift+T'], command: 'run.typecheck', enabled: true, customizable: true });
+    ks.addShortcut({ id: 'run.lint', name: 'Lint', description: 'Run linter', category: 'run', keys: ['Ctrl+Shift+L','Cmd+Shift+L'], command: 'run.lint', enabled: true, customizable: true });
+
+    ks.registerHandler('run.dev', async () => {
+      if (!terminal.getActiveSession()) terminal.createSession('Dev');
+      await terminal.executeCommand('npm run dev', undefined, true);
+      setViewMode('terminal');
+    });
+    ks.registerHandler('run.build', async () => {
+      if (!terminal.getActiveSession()) terminal.createSession('Build');
+      await terminal.executeCommand('npm run build');
+      setViewMode('terminal');
+    });
+    ks.registerHandler('run.typecheck', async () => {
+      if (!terminal.getActiveSession()) terminal.createSession('TypeCheck');
+      await terminal.executeCommand('npx tsc -p .');
+      setViewMode('terminal');
+    });
+    ks.registerHandler('run.lint', async () => {
+      if (!terminal.getActiveSession()) terminal.createSession('Lint');
+      await terminal.executeCommand('npm run lint');
+      setViewMode('terminal');
+    });
+
+    ks.startListening();
+
+    // expose for toolbar buttons
+    (window as any).wrRunDev = () => ks.executeCommand('run.dev');
+    (window as any).wrRunBuild = () => ks.executeCommand('run.build');
+    (window as any).wrRunTypecheck = () => ks.executeCommand('run.typecheck');
+    (window as any).wrRunLint = () => ks.executeCommand('run.lint');
+    // add to command palette
+    ks.addCommandPaletteItem({ id: 'cmd.run.dev', title: 'Run Dev Server', category: 'run', command: 'run.dev', keybinding: 'Cmd+R' });
+    ks.addCommandPaletteItem({ id: 'cmd.run.build', title: 'Build', category: 'run', command: 'run.build', keybinding: 'Cmd+B' });
+    ks.addCommandPaletteItem({ id: 'cmd.run.typecheck', title: 'Type Check', category: 'run', command: 'run.typecheck', keybinding: 'Cmd+Shift+T' });
+    ks.addCommandPaletteItem({ id: 'cmd.run.lint', title: 'Lint', category: 'run', command: 'run.lint', keybinding: 'Cmd+Shift+L' });
+
+
+    return () => {
+      ks.stopListening();
+      delete (window as any).wrRunDev;
+      delete (window as any).wrRunBuild;
+      delete (window as any).wrRunTypecheck;
+      delete (window as any).wrRunLint;
+    };
+  }, [terminal]);
+
       delete (window as any).wrOpenNewAppWizard
       delete (window as any).wrOpenPublishModal
       delete (window as any).wrOpenStylePanel
     }
+  // Command Palette integration (Cmd/Ctrl+K)
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [ksInstance] = useState(() => new KeyboardShortcutsService());
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(true);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
   }, [])
 
   // Code inspection state
@@ -282,7 +361,7 @@ export default function CodeEditor() {
       case 'html': return '🌐';
       case 'css': return '🎨';
       case 'js': return '⚡';
-      case 'tsx': 
+      case 'tsx':
       case 'ts': return '🔷';
       case 'jsx': return '⚛️';
       case 'py': return '🐍';
@@ -518,6 +597,12 @@ export default function CodeEditor() {
 
     } catch (error) {
       console.error('❌ Quick fix failed:', error);
+      {/* Onboarding modal (first-run and on-demand) */}
+      <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} />
+
+      {/* Command Palette */}
+      <CommandPalette keyboardService={ksInstance} open={showCommandPalette} onOpenChange={setShowCommandPalette} />
+
       // Don't throw the error to prevent UI crashes
       console.error('Quick fix error details:', error);
     }
@@ -634,6 +719,11 @@ export default function CodeEditor() {
                       alt={session.user.name || 'User'}
                       className="w-6 h-6 rounded-full"
                     />
+
+              {/* Overlays */}
+              <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} />
+              <CommandPalette keyboardService={ksInstance} open={showCommandPalette} onOpenChange={setShowCommandPalette} />
+
                   )}
                   <span className="text-xs text-gray-300">
                     {session.user.name || session.user.email}

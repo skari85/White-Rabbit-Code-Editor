@@ -15,7 +15,10 @@ import {
   Zap,
   BarChart3,
   Rocket,
-  Palette
+  Palette,
+  Hammer,
+  Wrench,
+  Keyboard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -54,7 +57,7 @@ export default function AdvancedEditorToolbar({
   // Initialize debug session
   const startDebugging = () => {
     if (!selectedFile) return;
-    
+
     const file = files.find(f => f.name === selectedFile);
     if (!file) return;
 
@@ -96,11 +99,11 @@ export default function AdvancedEditorToolbar({
   // Toggle breakpoint
   const toggleBreakpoint = (line: number) => {
     if (!selectedFile) return;
-    
+
     const existingBreakpoint = breakpoints.find(
       bp => bp.file === selectedFile && bp.line === line
     );
-    
+
     if (existingBreakpoint) {
       debuggerService.removeBreakpoint(existingBreakpoint.id);
       setBreakpoints(prev => prev.filter(bp => bp.id !== existingBreakpoint.id));
@@ -113,7 +116,7 @@ export default function AdvancedEditorToolbar({
   // Format current file
   const formatCurrentFile = () => {
     if (!selectedFile) return;
-    
+
     const file = files.find(f => f.name === selectedFile);
     if (!file) return;
 
@@ -161,7 +164,32 @@ export default function AdvancedEditorToolbar({
           <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={() => (window as any).wrOpenStylePanel?.()}>
             <Palette className="w-4 h-4" /> Style
           </Button>
+        {/* Onboarding/Shortcuts */}
+        <div className="flex items-center gap-1">
+          <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={() => (window as any).wrOpenOnboarding?.()}>
+            <Keyboard className="w-4 h-4" /> Shortcuts
+          </Button>
         </div>
+
+        </div>
+
+        {/* Run Controls */}
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => (window as any).wrRunDev?.()} title="Run Dev (npm run dev)">
+            <Play className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => (window as any).wrRunBuild?.()} title="Build (npm run build)">
+            <Hammer className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => (window as any).wrRunTypecheck?.()} title="Type Check (tsc -p .)">
+            <Bug className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => (window as any).wrRunLint?.()} title="Lint (npm run lint)">
+            <Wrench className="w-4 h-4" />
+          </Button>
+        </div>
+
+        <Separator orientation="vertical" className="h-6" />
 
         <Separator orientation="vertical" className="h-6" />
 
@@ -235,9 +263,9 @@ export default function AdvancedEditorToolbar({
               >
                 <Square className="w-4 h-4" />
               </Button>
-              
+
               <Separator orientation="vertical" className="h-4" />
-              
+
               <Button
                 onClick={debugStepOver}
                 variant="outline"
@@ -264,7 +292,7 @@ export default function AdvancedEditorToolbar({
               </Button>
             </>
           )}
-          
+
           {breakpoints.length > 0 && (
             <Badge variant="secondary" className="text-xs ml-2">
               {breakpoints.length} breakpoints
@@ -285,7 +313,7 @@ export default function AdvancedEditorToolbar({
             <GitBranch className="w-4 h-4" />
             Git
           </Button>
-          
+
           {gitStatus && (
             <div className="flex items-center gap-2 ml-2">
               {gitStatus.staged.length > 0 && (
