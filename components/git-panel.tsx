@@ -38,9 +38,24 @@ export default function GitPanel({ className = '' }: GitPanelProps) {
         <div className="space-y-2">
           <label className="text-xs font-medium">Commit message</label>
           <Input value={commitMsg} onChange={(e) => setCommitMsg(e.target.value)} placeholder="feat: add feature" />
-          <Button size="sm" onClick={() => run(`git commit -m \"${commitMsg || 'update'}\"`)}>
-            <GitCommit className="w-4 h-4 mr-1" /> Commit
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button size="sm" variant="secondary" onClick={() => run(`git commit -m \"${commitMsg || 'update'}\"`)}>
+              <GitCommit className="w-4 h-4 mr-1" /> Commit (local)
+            </Button>
+            <Button
+              size="sm"
+              onClick={async () => {
+                // Collect files from editor via global hook
+                const files = (window as any).wrGetProjectFiles?.() || [];
+                const payload = { files: files.map((f: any) => ({ path: f.name, content: f.content })), message: commitMsg };
+                const res = await fetch('/api/git/commit', { method: 'POST', body: JSON.stringify(payload) });
+                const data = await res.json();
+                await run(res.ok ? `echo \"Committed ${data.commit}\"` : `echo \"Commit failed: ${data.error}\"`);
+              }}
+            >
+              <GitCommit className="w-4 h-4 mr-1" /> Commit (GitHub)
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-2">

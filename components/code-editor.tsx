@@ -169,6 +169,16 @@ export default function CodeEditor() {
   const [openDiff, setOpenDiff] = useState<DiffEntry | null>(null);
 
   // Track user session
+  // Expose project files for GitHub commit API (client-only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).wrGetProjectFiles = () => files.map(f => ({ name: f.name, content: f.content }));
+    }
+    return () => {
+      if (typeof window !== 'undefined') delete (window as any).wrGetProjectFiles;
+    };
+  }, [files]);
+
   useEffect(() => {
     const sessionStart = Date.now();
     trackUserSession('session_start');
