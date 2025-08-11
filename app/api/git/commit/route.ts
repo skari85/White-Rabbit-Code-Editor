@@ -1,22 +1,29 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
     const { files, message, branch } = await req.json();
 
-    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) {
-      return NextResponse.json({ error: 'Missing GITHUB_TOKEN or GITHUB_REPO' }, { status: 500 });
+    if (!process.env.GITHUB_REPO) {
+      return NextResponse.json({ error: 'Missing GITHUB_REPO' }, { status: 500 });
+    }
+
+    const session = await auth();
+    const token = (session as any)?.accessToken || process.env.GITHUB_TOKEN;
+    if (!token) {
+      return NextResponse.json({ error: 'Missing GitHub credentials' }, { status: 401 });
     }
 
     const repo = process.env.GITHUB_REPO!; // owner/repo
-    const defaultBranch = branch || process.env.GITHUB_DEFAULT_BRANCH || 'main';
+    const targetBranch = branch || process.env.GITHUB_DEFAULT_BRANCH || 'main';
 
     const gh = async (path: string, init?: RequestInit) => {
       const url = `https://api.github.com/repos/${repo}${path}`;
       const res = await fetch(url, {
         ...init,
         headers: {
-          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+          'Authorization': `Bearer ${token}`,
           'Accept': 'application/vnd.github+json',
           'X-GitHub-Api-Version': '2022-11-28',
           ...(init?.headers || {})
