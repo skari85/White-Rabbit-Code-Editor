@@ -148,7 +148,7 @@ For user authentication and future GitHub integrations:
 ## 📁 Project Structure
 
 ```
-white-rabbit/
+White-Rabbit-Code-Editor/
 ├── app/                    # Next.js app directory
 │   ├── globals.css        # Global styles
 │   ├── layout.tsx         # Root layout with analytics
@@ -286,6 +286,9 @@ For commercial use, enterprise licenses, or custom arrangements:
 © 2025 White Rabbit Team. All rights reserved.
 
 "White Rabbit" and associated logos are trademarks of White Rabbit Team.
+
+White Rabbit is an independent open-source project and is not affiliated with or endorsed by any third-party IDE vendor. JetBrains and related marks are trademarks of JetBrains s.r.o. All other trademarks are the property of their respective owners.
+
 
 See the [LICENSE](LICENSE) file for complete terms and conditions.
 

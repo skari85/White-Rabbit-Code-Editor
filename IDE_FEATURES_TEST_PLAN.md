@@ -1,4 +1,4 @@
-# BrainJets Features Integration Test Plan
+# IDE Features Integration Test Plan
 
 ## Smart Documentation Generator Testing
 

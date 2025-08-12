@@ -1,4 +1,4 @@
-# 🧠 BrainJets Features - Quick Setup Guide
+# 🧩 IDE Integration Notes - Quick Setup Guide
 
 ## 🚀 Getting Started in 5 Minutes
 
@@ -9,7 +9,7 @@
 4. **Test Connection**: Click "Test Connection" to verify it works
 5. **Save Settings**: Your configuration is saved locally
 
-### Step 2: Enable BrainJets Features
+### Step 2: Enable IDE Features
 1. **Open a Code File**: Create or open any JavaScript, TypeScript, or other supported file
 2. **Enable AI Completions**: Click the **"AI"** toggle button in the file tabs
 3. **Enable Documentation**: Click the **"Docs"** toggle button in the file tabs
@@ -137,7 +137,7 @@ NEXT_PUBLIC_ENABLE_CROSS_FILE_REFERENCES=true
 
 ## 📊 Feature Comparison
 
-| Feature | Basic Editor | BrainJets Enhanced |
+| Feature | Basic Editor | IDE Features Enhanced |
 |---------|-------------|-------------------|
 | Code Completion | Basic keywords | AI-powered context-aware |
 | Documentation | Manual writing | AI-generated comprehensive |

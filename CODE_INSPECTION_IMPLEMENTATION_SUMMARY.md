@@ -1,4 +1,4 @@
-# 🧠 JetBrains-Inspired Features - Implementation Summary
+# 🧠 Code Inspection Features - Implementation Summary
 
 ## 🎯 What We've Implemented
 
@@ -95,7 +95,7 @@
 
 ## 🎯 User Experience
 
-### JetBrains-like Workflow
+### Typical Workflow
 1. **Open File** → Automatic inspection analysis
 2. **View Issues** → Click "Issues" button in file tabs
 3. **Navigate to Problem** → Click inspection item
@@ -103,7 +103,7 @@
 5. **Re-analyze** → Automatic or manual refresh
 
 ### Visual Design
-- **Familiar Icons**: JetBrains-style error/warning indicators
+- **Familiar Interface**: Clear error/warning/info indicators
 - **Color Coding**: Red (errors), Yellow (warnings), Blue (info), Green (hints)
 - **Severity Badges**: Critical, Major, Minor classifications
 - **Category Icons**: Visual indicators for inspection types
