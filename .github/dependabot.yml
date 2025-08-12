@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # JS/TS deps (works with npm/pnpm/yarn because it reads package.json)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    labels: ["dependencies"]
+    rebase-strategy: "auto"
+
+  # Keep GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels: ["dependencies", "ci"]
