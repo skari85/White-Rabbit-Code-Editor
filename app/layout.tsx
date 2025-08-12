@@ -8,10 +8,36 @@ import { ErrorTrackingProvider } from '@/components/error-tracking-provider'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
+import JsonLd from './(components)/JsonLd'
+
+const base = "https://www.whiterabbit.onl"
 
 export const metadata: Metadata = {
-  title: 'White Rabbit Code Editor',
-  description: 'AI-Powered Application Builder - Create apps through conversation',
+  metadataBase: new URL(base),
+  title: {
+    default: "White Rabbit — Minimal, Open-Source Code Editor",
+    template: "%s · White Rabbit",
+  },
+  description:
+    "A clean, open code editor built by a visual artist — fast, minimal, and distraction-free.",
+  alternates: { canonical: base },
+  openGraph: {
+    type: "website",
+    url: base,
+    siteName: "White Rabbit",
+    title: "White Rabbit — Minimal, Open-Source Code Editor",
+    description:
+      "A clean, open code editor built by a visual artist — fast, minimal, and distraction-free.",
+    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "White Rabbit editor preview" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "White Rabbit — Minimal, Open-Source Code Editor",
+    description:
+      "A clean, open code editor built by a visual artist — fast, minimal, and distraction-free.",
+    images: ["/og.jpg"],
+  },
+  icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png" },
   generator: 'White Rabbit',
   manifest: '/manifest.json',
   appleWebApp: {
@@ -80,6 +106,7 @@ html {
         `}</style>
       </head>
       <body>
+        <JsonLd />
         <ErrorTrackingProvider>
           <ThemeProvider
             attribute="class"

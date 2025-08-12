@@ -1,8 +1,8 @@
-# 🧠 BrainJets Features - Tier 1 Implementation
+# 🔧 Advanced IDE Features - Tier 1 Implementation
 
 ## Overview
 
-BrainJets represents the next evolution of intelligent development tools integrated into Hex & Kex Code Editor. These AI-powered features enhance developer productivity through intelligent code analysis, documentation generation, and context-aware assistance.
+Advanced IDE Features represent the next evolution of intelligent development tools in this project. These AI-powered capabilities enhance developer productivity through intelligent code analysis, documentation generation, and context-aware assistance.
 
 ## 🎯 Tier 1 Features (v4.1.3)
 
@@ -162,7 +162,7 @@ NEXT_PUBLIC_ENABLE_SIGNATURE_HELP=true
 ### Debug Mode
 Enable debug mode by adding to console:
 ```javascript
-localStorage.setItem('brainjet-debug', 'true');
+localStorage.setItem('ide-features-debug', 'true');
 ```
 
 ## 🔮 Roadmap - Tier 2 Features
@@ -186,7 +186,7 @@ localStorage.setItem('brainjet-debug', 'true');
 ## 📚 Resources
 
 ### Documentation
-- [Testing Guide](./test-brainjet-features.md)
+- [Testing Guide](./IDE_FEATURES_TEST_PLAN.md)
 - [API Reference](./lib/ai-completion-service.ts)
 - [Component Documentation](./components/documentation-panel.tsx)
 
@@ -197,7 +197,7 @@ localStorage.setItem('brainjet-debug', 'true');
 
 ## 🤝 Contributing
 
-We welcome contributions to enhance BrainJets features:
+We welcome contributions to enhance these IDE features:
 
 1. **Bug Reports**: Use GitHub issues with detailed reproduction steps
 2. **Feature Requests**: Propose new AI-powered development tools
@@ -206,7 +206,7 @@ We welcome contributions to enhance BrainJets features:
 
 ## 📄 License
 
-BrainJets features are part of Hex & Kex Code Editor and follow the same MIT license terms.
+These IDE features are part of this project and follow the same license terms as the repository.
 
 ---
 

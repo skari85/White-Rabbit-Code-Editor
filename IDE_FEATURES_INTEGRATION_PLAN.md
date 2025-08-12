@@ -1,7 +1,7 @@
-# 🧠 JetBrains-Inspired Features Integration Plan
+# 🧠 IDE Features Integration Plan
 
 ## Overview
-Integrating the most powerful JetBrains IDE features into Hex & Kex Code Editor to create a world-class development experience.
+Integrating advanced IDE capabilities to create a world-class development experience. References to third-party IDEs are for interoperability context only; no affiliation.
 
 ## 🎯 Tier 1: Core Intelligence Features (Immediate Implementation)
 
