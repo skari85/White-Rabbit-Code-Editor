@@ -39,7 +39,9 @@ import {
   Settings,
   Sun,
   Moon,
-  Code
+  Code,
+  Rocket,
+  Keyboard
 } from "lucide-react";
 import LazyMonacoEditor from './lazy-monaco-editor';
 import AIEnhancedMonacoEditor from './ai-enhanced-monaco-editor';
@@ -66,6 +68,9 @@ import { CommandPalette } from './command-palette';
 import { KeyboardShortcutsService } from '@/lib/keyboard-shortcuts-service';
 import DarkModeToggleButton from './DarkModeToggleButton';
 import dynamic from 'next/dynamic';
+import EnhancedOnboarding from './enhanced-onboarding';
+import { HelpProvider, HelpButton } from './contextual-help';
+import EnhancedKeyboardShortcuts from './enhanced-keyboard-shortcuts';
 
 // Code splitting for heavy components
 const MonacoEditor = dynamic(() => import('./enhanced-monaco-editor'), {
@@ -769,6 +774,20 @@ export default function CodeEditor() {
     setSelectedFile(filename);
   }, [addNewFile, updateFileContent, setSelectedFile]);
 
+  const [showEnhancedOnboarding, setShowEnhancedOnboarding] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+
+  useEffect(() => {
+    // Check if user has completed onboarding
+    const hasCompletedOnboarding = localStorage.getItem('wr-onboarding-completed');
+    if (!hasCompletedOnboarding && !showEnhancedOnboarding) {
+      // Show onboarding after a short delay
+      const timer = setTimeout(() => {
+        setShowEnhancedOnboarding(true);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showEnhancedOnboarding]);
 
 
   // Show loading screen during initialization
@@ -1080,6 +1099,28 @@ export default function CodeEditor() {
                 >
                   <Code className="w-4 h-4 mr-2" />
                   Visual
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowEnhancedOnboarding(true)}
+                  className="flex items-center gap-2"
+                  title="Interactive Onboarding"
+                >
+                  <Rocket className="w-4 h-4 mr-2" />
+                  Onboarding
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowKeyboardShortcuts(true)}
+                  className="flex items-center gap-2"
+                  title="Keyboard Shortcuts"
+                >
+                  <Keyboard className="w-4 h-4 mr-2" />
+                  Shortcuts
                 </Button>
               </div>
             </div>
@@ -1393,6 +1434,18 @@ export default function CodeEditor() {
       {/* Overlays */}
       <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} />
       <CommandPalette keyboardService={ksInstance} open={showCommandPalette} onOpenChange={setShowCommandPalette} />
+      <EnhancedOnboarding
+        isOpen={showEnhancedOnboarding}
+        onClose={() => setShowEnhancedOnboarding(false)}
+        onComplete={() => {
+          setShowEnhancedOnboarding(false);
+          localStorage.setItem('wr-onboarding-completed', 'true');
+        }}
+      />
+      <EnhancedKeyboardShortcuts
+        isOpen={showKeyboardShortcuts}
+        onClose={() => setShowKeyboardShortcuts(false)}
+      />
 
       {/* BYOK AI Settings Modal */}
       <BYOKAISettings

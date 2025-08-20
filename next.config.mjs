@@ -28,10 +28,6 @@ const nextConfig = {
         use: { loader: 'worker-loader' },
       });
 
-export default withBundleAnalyzer(config);
-
-export default withBundleAnalyzer(config);
-
       // Prevent Monaco workers from causing issues
       config.resolve.alias = {
         ...config.resolve.alias,
