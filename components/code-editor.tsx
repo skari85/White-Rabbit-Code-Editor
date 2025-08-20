@@ -70,7 +70,7 @@ import DarkModeToggleButton from './DarkModeToggleButton';
 import dynamic from 'next/dynamic';
 import EnhancedOnboarding from './enhanced-onboarding';
 import { HelpProvider, HelpButton } from './contextual-help';
-import EnhancedKeyboardShortcuts from './enhanced-keyboard-shortcuts';
+import CompactKeyboardShortcuts from './compact-keyboard-shortcuts';
 
 // Code splitting for heavy components
 const MonacoEditor = dynamic(() => import('./enhanced-monaco-editor'), {
@@ -1442,7 +1442,7 @@ export default function CodeEditor() {
           localStorage.setItem('wr-onboarding-completed', 'true');
         }}
       />
-      <EnhancedKeyboardShortcuts
+      <CompactKeyboardShortcuts
         isOpen={showKeyboardShortcuts}
         onClose={() => setShowKeyboardShortcuts(false)}
       />
