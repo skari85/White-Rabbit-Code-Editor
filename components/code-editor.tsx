@@ -52,7 +52,6 @@ import { useResponsiveLayout, useMobileLayout } from '@/hooks/use-responsive-lay
 
 import LivePreview from './live-preview';
 import Marketplace from './marketplace';
-import GitPanel from './git-panel';
 import AdvancedEditorToolbar from './advanced-editor-toolbar';
 import BYOKAISettings from './byok-ai-settings';
 import DocumentationPanel from './documentation-panel';
@@ -66,7 +65,44 @@ import OnboardingModal from './onboarding-modal';
 import { CommandPalette } from './command-palette';
 import { KeyboardShortcutsService } from '@/lib/keyboard-shortcuts-service';
 import DarkModeToggleButton from './DarkModeToggleButton';
-import VisualProgrammingInterface from './visual-programming-interface';
+import dynamic from 'next/dynamic';
+
+// Code splitting for heavy components
+const MonacoEditor = dynamic(() => import('./enhanced-monaco-editor'), {
+  loading: () => (
+    <div className="h-full flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p className="text-sm text-gray-600">Loading Editor...</p>
+      </div>
+    </div>
+  ),
+  ssr: false
+});
+
+const VisualProgrammingInterface = dynamic(() => import('./visual-programming-interface'), {
+  loading: () => (
+    <div className="h-full flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p className="text-sm text-gray-600">Loading Visual Programming...</p>
+      </div>
+    </div>
+  ),
+  ssr: false
+});
+
+const GitPanel = dynamic(() => import('./git-panel'), {
+  loading: () => (
+    <div className="h-full flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p className="text-sm text-gray-600">Loading Git Panel...</p>
+      </div>
+    </div>
+  ),
+  ssr: false
+});
 
 export default function CodeEditor() {
   // Analytics
@@ -125,6 +161,34 @@ export default function CodeEditor() {
   // Live diff tracking (simple per-file snapshot)
   const [diffs, setDiffs] = useState<Record<string, DiffEntry>>({});
   const [openDiff, setOpenDiff] = useState<DiffEntry | null>(null);
+
+  // Loading states
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // Initialize app
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        setIsInitializing(true);
+        setLoadingMessage('Initializing application...');
+        
+        // Initialize default project
+        await initializeDefaultProject();
+        
+        // Initialize layout system
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate async init
+        
+        setIsInitializing(false);
+      } catch (error) {
+        console.error('Failed to initialize app:', error);
+        setIsInitializing(false);
+      }
+    };
+
+    initializeApp();
+  }, [initializeDefaultProject]);
 
   // Track user session
   // Expose project files for GitHub commit API (client-only)
@@ -706,6 +770,24 @@ export default function CodeEditor() {
   }, [addNewFile, updateFileContent, setSelectedFile]);
 
 
+
+  // Show loading screen during initialization
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">White Rabbit Code Editor</h2>
+          <p className="text-gray-600 mb-4">{loadingMessage}</p>
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-gray-900">
