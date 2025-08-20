@@ -64,51 +64,7 @@ import MonacoDiffOverlay from './monaco-diff-overlay';
 import OnboardingModal from './onboarding-modal';
 import { CommandPalette } from './command-palette';
 import { KeyboardShortcutsService } from '@/lib/keyboard-shortcuts-service';
-
-// Dark Mode Toggle Component
-function DarkModeToggleButton() {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const { trackThemeToggle } = useAnalytics();
-
-  // Prevent hydration mismatch by only rendering after mount
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    // Return a placeholder that matches the server render
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-8 w-8 p-0"
-        title="Toggle theme"
-        disabled
-      >
-        <Moon className="w-4 h-4" />
-      </Button>
-    );
-  }
-
-  const handleThemeToggle = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    trackThemeToggle(newTheme);
-  };
-
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleThemeToggle}
-      className="h-8 w-8 p-0"
-      title="Toggle theme"
-    >
-      {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-    </Button>
-  );
-}
+import DarkModeToggleButton from './DarkModeToggleButton';
 
 export default function CodeEditor() {
   // Analytics
@@ -300,23 +256,35 @@ export default function CodeEditor() {
     ks.addShortcut({ id: 'run.lint', name: 'Lint', description: 'Run linter', category: 'run', keys: ['Ctrl+Shift+L','Cmd+Shift+L'], command: 'run.lint', enabled: true, customizable: true });
 
     ks.registerHandler('run.dev', async () => {
-      const sid = terminal.getActiveSession() || terminal.createSession('Dev');
-      await terminal.executeCommand('npm run dev', sid?.id, true);
+      // Implement type narrowing for terminal session
+      const sid = terminal.getActiveSession();
+      if (typeof sid !== 'string' && sid) {
+        await terminal.executeCommand('npm run dev', sid.id, true);
+      }
       setViewMode('terminal');
     });
     ks.registerHandler('run.build', async () => {
-      const sid = terminal.getActiveSession() || terminal.createSession('Build');
-      await terminal.executeCommand('npm run build', sid?.id);
+      // Implement type narrowing for terminal session
+      const sid = terminal.getActiveSession();
+      if (typeof sid !== 'string' && sid) {
+        await terminal.executeCommand('npm run build', sid.id);
+      }
       setViewMode('terminal');
     });
     ks.registerHandler('run.typecheck', async () => {
-      const sid = terminal.getActiveSession() || terminal.createSession('TypeCheck');
-      await terminal.executeCommand('npx tsc -p .', sid?.id);
+      // Implement type narrowing for terminal session
+      const sid = terminal.getActiveSession();
+      if (typeof sid !== 'string' && sid) {
+        await terminal.executeCommand('npx tsc -p .', sid.id);
+      }
       setViewMode('terminal');
     });
     ks.registerHandler('run.lint', async () => {
-      const sid = terminal.getActiveSession() || terminal.createSession('Lint');
-      await terminal.executeCommand('npm run lint', sid?.id);
+      // Implement type narrowing for terminal session
+      const sid = terminal.getActiveSession();
+      if (typeof sid !== 'string' && sid) {
+        await terminal.executeCommand('npm run lint', sid.id);
+      }
       setViewMode('terminal');
     });
 
