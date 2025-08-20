@@ -53,7 +53,7 @@ import SplitControls, { useSplitKeyboardShortcuts } from './split-controls';
 import { useResponsiveLayout, useMobileLayout } from '@/hooks/use-responsive-layout';
 
 import LivePreview from './live-preview';
-import Marketplace from './marketplace';
+import ExtensionMarketplace from './extension-marketplace';
 import AdvancedEditorToolbar from './advanced-editor-toolbar';
 import BYOKAISettings from './byok-ai-settings';
 import DocumentationPanel from './documentation-panel';
@@ -774,6 +774,46 @@ export default function CodeEditor() {
     setSelectedFile(filename);
   }, [addNewFile, updateFileContent, setSelectedFile]);
 
+  // Helper function to get file type from language
+  const getFileTypeFromLanguage = (language: string): 'html' | 'css' | 'js' | 'json' | 'md' | 'tsx' | 'ts' | 'py' | 'txt' => {
+    const lang = language.toLowerCase();
+    switch (lang) {
+      case 'javascript':
+      case 'js':
+        return 'js';
+      case 'typescript':
+      case 'ts':
+        return 'tsx';
+      case 'html':
+        return 'html';
+      case 'css':
+        return 'css';
+      case 'json':
+        return 'json';
+      case 'markdown':
+      case 'md':
+        return 'md';
+      case 'python':
+      case 'py':
+        return 'py';
+      case 'php':
+      case 'java':
+      case 'c':
+      case 'cpp':
+      case 'c++':
+      case 'csharp':
+      case 'c#':
+      case 'go':
+      case 'rust':
+      case 'ruby':
+      case 'swift':
+      case 'kotlin':
+        return 'txt'; // Map unsupported languages to txt
+      default:
+        return 'txt';
+    }
+  };
+
   const [showEnhancedOnboarding, setShowEnhancedOnboarding] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
 
@@ -992,6 +1032,17 @@ export default function CodeEditor() {
               onSettingsChange={updateAISettings}
               streamedMessage={aiStreamedMessage}
               isStreaming={aiIsStreaming}
+              onCodeGenerated={(filename, content, language) => {
+                // Create a new file with the AI-generated code
+                const fileType = getFileTypeFromLanguage(language);
+                addNewFile(filename, fileType);
+                setTimeout(() => updateFileContent(filename, content), 100);
+                setSelectedFile(filename);
+                setViewMode('code');
+                
+                // Show success notification
+                console.log(`AI generated file: ${filename} with ${language} code`);
+              }}
             />
           </div>
 
@@ -1423,7 +1474,7 @@ export default function CodeEditor() {
 
           {(viewMode as string) === "marketplace" && (
             <div className="h-full p-4">
-              <Marketplace className="h-full" />
+              <ExtensionMarketplace className="h-full" />
             </div>
           )}
         </div>
