@@ -480,7 +480,7 @@ export default function CodeEditor() {
   // Auto-save functionality
   const autoSave = useAutoSave({
     delay: 2000,
-    onSave: async (data) => {
+    onSave: async (data: any) => {
       console.log('Auto-saving:', data);
     }
   });
