@@ -173,6 +173,7 @@ export default function VisualProgrammingInterface({
 
   // Add progress tracking and workspace statistics
   const [workspaceStats, setWorkspaceStats] = useState({ blocks: 0, connections: 0, complexity: 0 });
+  const [blocklyError, setBlocklyError] = useState<string | null>(null);
 
   const quickStartSteps = [
     {
@@ -202,11 +203,15 @@ export default function VisualProgrammingInterface({
     const initBlockly = async () => {
       try {
         setIsLoading(true);
+        console.log('Initializing Blockly...');
         
         // Dynamic import of Blockly to avoid SSR issues
         const Blockly = await import('blockly');
+        console.log('Blockly imported successfully:', Blockly);
         
         if (blocklyContainerRef.current) {
+          console.log('Container found, creating workspace...');
+          
           // Create Blockly workspace
           const workspace = Blockly.inject(blocklyContainerRef.current, {
             toolbox: {
@@ -289,6 +294,7 @@ export default function VisualProgrammingInterface({
             }
           });
 
+          console.log('Workspace created successfully:', workspace);
           workspaceRef.current = workspace as any;
 
           // Add change listener to generate code
@@ -299,68 +305,45 @@ export default function VisualProgrammingInterface({
                 if (!workspace || typeof (workspace as any).getCode !== 'function') {
                   return;
                 }
-
+                
                 const code = (workspace as any).getCode('JavaScript');
-                if (code && typeof code === 'string') {
-                  onCodeGenerated(code, 'javascript');
-                  
-                  // Safely update workspace statistics
-                  try {
-                    if (typeof (workspace as any).getAllBlocks === 'function') {
-                      const allBlocks = (workspace as any).getAllBlocks(false);
-                      if (Array.isArray(allBlocks)) {
-                        const blocks = allBlocks.length;
-                        const connections = allBlocks.filter((block: any) => {
-                          try {
-                            return block && typeof block.getConnections_ === 'function' && 
-                                   block.getConnections_().some((conn: any) => conn && typeof conn.isConnected === 'function' && conn.isConnected());
-                          } catch {
-                            return false;
-                          }
-                        }).length;
-                        const complexity = Math.min(100, Math.round((blocks * 10) + (connections * 5)));
-                        
-                        setWorkspaceStats({ blocks, connections, complexity });
-                      }
-                    }
-                  } catch (statsError) {
-                    console.warn('Could not calculate workspace statistics:', statsError);
-                    // Set default values if statistics calculation fails
-                    setWorkspaceStats({ blocks: 0, connections: 0, complexity: 0 });
-                  }
-                }
+                console.log('Code generated from workspace:', code);
+                
+                // Update workspace statistics
+                updateWorkspaceStats();
               } catch (error) {
-                console.warn('Error generating code from Blockly workspace:', error);
-                // Don't throw error, just log it as a warning
+                console.error('Error generating code:', error);
               }
             }
           });
 
-          // Load template if selected
-          if (currentTemplate) {
-            loadTemplate(currentTemplate);
+          // Add some demo blocks to get started
+          try {
+            const demoBlock = workspace.newBlock('text_print');
+            demoBlock.setFieldValue('Hello from Visual Programming!', 'TEXT');
+            demoBlock.moveBy(100, 100);
+            console.log('Demo block added successfully');
+          } catch (error) {
+            console.warn('Could not add demo block:', error);
           }
+
+          setIsLoading(false);
+          console.log('Blockly initialization completed');
+        } else {
+          console.error('Blockly container not found');
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error('Failed to initialize Blockly:', error);
-      } finally {
-        setIsLoading(false);
-      }
+              } catch (error) {
+          console.error('Failed to initialize Blockly:', error);
+          setIsLoading(false);
+          setBlocklyError(error instanceof Error ? error.message : 'Unknown error occurred');
+        }
     };
 
-    initBlockly();
-
-    return () => {
-      try {
-        if (workspaceRef.current && typeof (workspaceRef.current as any).dispose === 'function') {
-          (workspaceRef.current as any).dispose();
-        }
-        workspaceRef.current = null;
-      } catch (error) {
-        console.warn('Error disposing Blockly workspace:', error);
-      }
-    };
-  }, [onCodeGenerated, currentTemplate]);
+    // Initialize after a short delay to ensure DOM is ready
+    const timer = setTimeout(initBlockly, 100);
+    return () => clearTimeout(timer);
+  }, [onCodeGenerated]);
 
   // Enhanced template loading with demo mode
   const loadTemplate = (templateId: string) => {
@@ -420,6 +403,35 @@ export default function VisualProgrammingInterface({
       console.warn('Could not copy template to clipboard:', error);
       // Fallback: show template data in console
       console.log('Template data:', template);
+    }
+  };
+
+  // Update workspace statistics
+  const updateWorkspaceStats = () => {
+    if (workspaceRef.current) {
+      try {
+        if (typeof (workspaceRef.current as any).getAllBlocks === 'function') {
+          const allBlocks = (workspaceRef.current as any).getAllBlocks(false);
+          if (Array.isArray(allBlocks)) {
+            const blocks = allBlocks.length;
+            const connections = allBlocks.filter((block: any) => {
+              try {
+                return block && typeof block.getConnections_ === 'function' && 
+                       block.getConnections_().some((conn: any) => conn && typeof conn.isConnected === 'function' && conn.isConnected());
+              } catch {
+                return false;
+              }
+            }).length;
+            const complexity = Math.min(100, Math.round((blocks * 10) + (connections * 5)));
+            
+            setWorkspaceStats({ blocks, connections, complexity });
+          }
+        }
+      } catch (statsError) {
+        console.warn('Could not calculate workspace statistics:', statsError);
+        // Set default values if statistics calculation fails
+        setWorkspaceStats({ blocks: 0, connections: 0, complexity: 0 });
+      }
     }
   };
 
@@ -496,6 +508,45 @@ export default function VisualProgrammingInterface({
             <div className="absolute inset-0 flex items-center justify-center">
               <Loader2 className="w-8 h-8 animate-spin" />
               <span className="ml-2">Loading Blockly...</span>
+            </div>
+          ) : blocklyError ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center p-8">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <X className="w-8 h-8 text-red-600" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Blockly Failed to Load</h3>
+                <p className="text-gray-600 mb-4">{blocklyError}</p>
+                <Button
+                  onClick={() => {
+                    setBlocklyError(null);
+                    setIsLoading(true);
+                    // Re-initialize Blockly
+                    setTimeout(() => {
+                      const initBlockly = async () => {
+                        try {
+                          const Blockly = await import('blockly');
+                          if (blocklyContainerRef.current) {
+                            const workspace = Blockly.inject(blocklyContainerRef.current, {
+                              toolbox: { kind: 'categoryToolbox', contents: [] },
+                              scrollbars: true,
+                              trashcan: true
+                            });
+                            workspaceRef.current = workspace as any;
+                            setIsLoading(false);
+                          }
+                        } catch (error) {
+                          setBlocklyError(error instanceof Error ? error.message : 'Unknown error occurred');
+                          setIsLoading(false);
+                        }
+                      };
+                      initBlockly();
+                    }, 100);
+                  }}
+                >
+                  Retry
+                </Button>
+              </div>
             </div>
           ) : (
             <div 

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { AIMessage, AI_PROVIDERS, AISettings } from '@/lib/ai-config';
-import { Send, Trash2, User, Loader2, ChevronDown, Settings2, Target, Wand2 } from 'lucide-react';
+import { Send, Trash2, User, Loader2, ChevronDown, Settings2, Target, Wand2, Code, Download, Copy } from 'lucide-react';
 import PromptOptimizerComponent from './prompt-optimizer';
 import LiveAIResponse from './live-ai-response';
 
@@ -228,6 +228,7 @@ export function AIChat({
           </div>
         );
       }
+      
       // For finalized assistant messages, show typing animation with code extraction UI
       return (
         <div key={message.id} className="mb-4">
@@ -236,6 +237,9 @@ export function AIChat({
             onCodeGenerated={onCodeGenerated}
             className="w-full"
           />
+          
+          {/* Code Insertion Buttons */}
+          {renderCodeInsertionButtons(message.content)}
         </div>
       );
     }
@@ -274,6 +278,143 @@ export function AIChat({
         )}
       </div>
     );
+  };
+
+  // Render code insertion buttons for AI responses
+  const renderCodeInsertionButtons = (content: string) => {
+    const codeBlocks = extractCodeBlocks(content);
+    
+    if (codeBlocks.length === 0) return null;
+
+    return (
+      <div className="mt-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
+        <div className="flex items-center gap-2 mb-2">
+          <Code className="w-4 h-4 text-blue-400" />
+          <span className="text-sm font-medium text-gray-300">Insert Code into Editor</span>
+        </div>
+        
+        <div className="space-y-2">
+          {codeBlocks.map((block, index) => (
+            <div key={index} className="flex items-center gap-2 p-2 bg-gray-700 rounded border border-gray-600">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs text-gray-400 bg-gray-600 px-2 py-1 rounded">
+                    {block.language || 'text'}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {block.code.length} characters
+                  </span>
+                </div>
+                <div className="text-xs text-gray-300 font-mono truncate">
+                  {block.code.substring(0, 100)}{block.code.length > 100 ? '...' : ''}
+                </div>
+              </div>
+              
+              <div className="flex gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertCodeIntoEditor(block.code, block.language)}
+                  className="h-7 px-2 text-xs"
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  Insert
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(block.code)}
+                  className="h-7 px-2 text-xs"
+                >
+                  <Copy className="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Extract code blocks from AI response
+  const extractCodeBlocks = (content: string) => {
+    const codeBlocks: { code: string; language: string }[] = [];
+    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+    
+    let match;
+    while ((match = codeBlockRegex.exec(content)) !== null) {
+      codeBlocks.push({
+        language: match[1] || 'text',
+        code: match[2]
+      });
+    }
+    
+    return codeBlocks;
+  };
+
+  // Insert code into the Monaco editor
+  const insertCodeIntoEditor = (code: string, language: string) => {
+    if (onCodeGenerated) {
+      // Generate a filename based on language and timestamp
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const extension = getFileExtension(language);
+      const filename = `ai-generated-${timestamp}.${extension}`;
+      
+      onCodeGenerated(filename, code, language);
+      
+      // Show success message
+      console.log(`Code inserted into editor as ${filename}`);
+    }
+  };
+
+  // Get file extension from language
+  const getFileExtension = (language: string): string => {
+    const lang = language.toLowerCase();
+    switch (lang) {
+      case 'javascript':
+      case 'js':
+        return 'js';
+      case 'typescript':
+      case 'ts':
+        return 'ts';
+      case 'html':
+        return 'html';
+      case 'css':
+        return 'css';
+      case 'json':
+        return 'json';
+      case 'markdown':
+      case 'md':
+        return 'md';
+      case 'python':
+      case 'py':
+        return 'py';
+      case 'php':
+        return 'php';
+      case 'java':
+        return 'java';
+      case 'c':
+        return 'c';
+      case 'cpp':
+      case 'c++':
+        return 'cpp';
+      case 'csharp':
+      case 'c#':
+        return 'cs';
+      case 'go':
+        return 'go';
+      case 'rust':
+        return 'rs';
+      case 'ruby':
+        return 'rb';
+      case 'swift':
+        return 'swift';
+      case 'kotlin':
+        return 'kt';
+      default:
+        return 'txt';
+    }
   };
 
   // Return early if not configured
