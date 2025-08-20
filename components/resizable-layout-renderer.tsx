@@ -199,7 +199,7 @@ export function ResizableLayoutRenderer({
         {visiblePanes.map((pane, index) => (
           <React.Fragment key={pane.id}>
             <ResizablePanel
-              defaultSize={pane.size}
+              defaultSize={Math.min(pane.size, pane.maxSize || 80)}
               minSize={pane.minSize || 20}
               maxSize={pane.maxSize || 80}
               onResize={(size) => handlePaneResize(pane.id, size)}
@@ -237,12 +237,16 @@ export function ResizableLayoutRenderer({
       <ResizablePanelGroup direction="vertical" className="h-full">
         {panesByRow.map((rowPanes, rowIndex) => (
           <React.Fragment key={rowIndex}>
-            <ResizablePanel defaultSize={100 / rows}>
+            <ResizablePanel 
+              defaultSize={Math.min(100 / rows, 80)} 
+              minSize={20} 
+              maxSize={80}
+            >
               <ResizablePanelGroup direction="horizontal" className="h-full">
                 {rowPanes.map((pane, colIndex) => (
                   <React.Fragment key={pane.id}>
                     <ResizablePanel
-                      defaultSize={pane.size}
+                      defaultSize={Math.min(pane.size, pane.maxSize || 70)}
                       minSize={pane.minSize || 15}
                       maxSize={pane.maxSize || 70}
                       onResize={(size) => handlePaneResize(pane.id, size)}

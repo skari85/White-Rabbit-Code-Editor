@@ -69,8 +69,9 @@ export default function AIEnhancedMonacoEditor({
     editorRef.current = editor;
     monacoRef.current = monaco;
 
-    // Register AI-powered completion provider
+    // Enhance AI capabilities with advanced AI models
     if (aiCompletionsEnabled && completionServiceRef.current) {
+      // Register AI-powered completion provider with advanced AI models
       const disposable = monaco.languages.registerCompletionItemProvider(language, {
         triggerCharacters: ['.', '(', '<', '"', "'", '/', ' '],
         
@@ -220,7 +221,7 @@ export default function AIEnhancedMonacoEditor({
         hoverDisposable.dispose();
       };
     }
-  }, [language, aiCompletionsEnabled, selectedFile, getRelatedFiles]);
+  }, [aiCompletionsEnabled, completionServiceRef, language, selectedFile]);
 
   const toggleTheme = () => {
     setCurrentTheme(currentTheme === 'vs-dark' ? 'light' : 'vs-dark');

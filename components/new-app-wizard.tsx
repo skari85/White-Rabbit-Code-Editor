@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,6 +49,9 @@ export default function NewAppWizard({ open, onOpenChange, onCreate }: NewAppWiz
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>New App Setup</DialogTitle>
+          <DialogDescription>
+            This wizard will help you create a new app. You can customize it later.
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs value={`step-${step}`} className="w-full">

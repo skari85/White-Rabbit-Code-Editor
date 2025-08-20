@@ -31,6 +31,12 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
+    // Filter out ResizeObserver errors as they're not critical
+    if (error.message?.includes('ResizeObserver')) {
+      console.warn('ResizeObserver error caught by boundary, ignoring:', error.message);
+      return { hasError: false };
+    }
+    
     return {
       hasError: true,
       error,
@@ -39,6 +45,12 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Filter out ResizeObserver errors
+    if (error.message?.includes('ResizeObserver')) {
+      console.warn('ResizeObserver error caught by boundary, ignoring:', error.message);
+      return;
+    }
+
     this.setState({
       error,
       errorInfo
@@ -140,6 +152,11 @@ User Agent: ${navigator.userAgent}
 
   render() {
     if (this.state.hasError) {
+      // Filter out ResizeObserver errors from rendering fallback
+      if (this.state.error?.message?.includes('ResizeObserver')) {
+        return this.props.children;
+      }
+
       // Custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;

@@ -38,7 +38,8 @@ import {
   Package,
   Settings,
   Sun,
-  Moon
+  Moon,
+  Code
 } from "lucide-react";
 import LazyMonacoEditor from './lazy-monaco-editor';
 import AIEnhancedMonacoEditor from './ai-enhanced-monaco-editor';
@@ -65,6 +66,7 @@ import OnboardingModal from './onboarding-modal';
 import { CommandPalette } from './command-palette';
 import { KeyboardShortcutsService } from '@/lib/keyboard-shortcuts-service';
 import DarkModeToggleButton from './DarkModeToggleButton';
+import VisualProgrammingInterface from './visual-programming-interface';
 
 export default function CodeEditor() {
   // Analytics
@@ -117,7 +119,7 @@ export default function CodeEditor() {
   const terminal = useTerminal();
   const { getActiveSession, createSession, executeCommand } = terminal;
 
-  const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace" | "git">("code");
+  const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace" | "git" | "visual">("code");
   const [showLayoutControls, setShowLayoutControls] = useState(true);
   const [activeLayout, setActiveLayout] = useState<LayoutConfig | null>(currentLayout);
   // Live diff tracking (simple per-file snapshot)
@@ -989,6 +991,14 @@ export default function CodeEditor() {
                   <Package className="w-4 h-4 mr-2" />
                   Extensions
                 </Button>
+                <Button
+                  variant={viewMode === "visual" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("visual")}
+                >
+                  <Code className="w-4 h-4 mr-2" />
+                  Visual
+                </Button>
               </div>
             </div>
 
@@ -1203,6 +1213,30 @@ export default function CodeEditor() {
               {(viewMode as string) === "git" && (
                 <div className="h-full">
                   <GitPanel className="h-full" />
+                </div>
+              )}
+
+              {(viewMode as string) === "visual" && (
+                <div className="h-full">
+                  <VisualProgrammingInterface
+                    onCodeGenerated={(code, language) => {
+                      // Create a new file with the generated code
+                      const fileName = `visual-generated.${language === 'javascript' ? 'js' : 'js'}`;
+                      addNewFile(fileName, 'js');
+                      setTimeout(() => updateFileContent(fileName, code), 100);
+                      setSelectedFile(fileName);
+                      setViewMode('code');
+                    }}
+                    onSaveTemplate={(template) => {
+                      console.log('Template saved:', template);
+                      // Implementation for saving templates
+                    }}
+                    onLoadTemplate={(template) => {
+                      console.log('Template loaded:', template);
+                      // Implementation for loading templates
+                    }}
+                    className="h-full"
+                  />
                 </div>
               )}
 

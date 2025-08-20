@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     };
 
     // Get the latest commit SHA on the target branch
-    const ref = await gh(`/git/ref/heads/${defaultBranch}`);
+    const ref = await gh(`/git/ref/heads/${targetBranch}`);
     const latestCommitSha = ref.object.sha as string;
 
     // Get the tree SHA for the latest commit
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     });
 
     // Update the branch ref to point to the new commit
-    await gh(`/git/refs/heads/${defaultBranch}`, {
+    await gh(`/git/refs/heads/${targetBranch}`, {
       method: 'PATCH',
       body: JSON.stringify({ sha: newCommit.sha, force: true })
     });

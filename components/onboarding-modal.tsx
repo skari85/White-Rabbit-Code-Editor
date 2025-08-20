@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -48,6 +48,9 @@ export default function OnboardingModal({ open, onOpenChange }: OnboardingModalP
           <DialogTitle className="flex items-center gap-2">
             <Keyboard className="w-4 h-4" /> Getting Started & Shortcuts
           </DialogTitle>
+          <DialogDescription>
+            Learn the basics of using White Rabbit Code Editor and discover useful keyboard shortcuts.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">

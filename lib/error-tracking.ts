@@ -113,6 +113,11 @@ export class ErrorTrackingService {
       return;
     }
 
+    // Filter out non-critical browser errors
+    if (this.shouldSkipError(error)) {
+      return;
+    }
+
     const errorReport: ErrorReport = {
       id: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       message: error.message || 'Unknown error',
@@ -139,6 +144,31 @@ export class ErrorTrackingService {
     if (this.isOnline) {
       this.flushErrorQueue();
     }
+  }
+
+  private shouldSkipError(error: Partial<ErrorReport>): boolean {
+    const message = error.message || '';
+    
+    // Skip ResizeObserver errors (common with Monaco Editor and resizable components)
+    if (message.includes('ResizeObserver loop completed with undelivered notifications')) {
+      return true;
+    }
+    
+    // Skip other common browser errors that aren't critical
+    if (message.includes('Script error')) {
+      return true;
+    }
+    
+    if (message.includes('ResizeObserver loop limit exceeded')) {
+      return true;
+    }
+    
+    // Skip errors from external scripts or browser extensions
+    if (message.includes('Extension context invalidated')) {
+      return true;
+    }
+    
+    return false;
   }
 
   private async flushErrorQueue(): Promise<void> {
