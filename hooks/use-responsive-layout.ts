@@ -77,15 +77,15 @@ export function useResponsiveLayout(): ResponsiveLayoutConfig {
                        screenSize.isDesktop ? 3 : 4
 
   const sidebarDefaultSize = screenSize.isMobile ? 100 : // Full width on mobile
-                            screenSize.isTablet ? 35 :
+                            screenSize.isTablet ? 30 :
                             screenSize.isDesktop ? 25 : 20
 
   const sidebarMinSize = screenSize.isMobile ? 100 :
-                        screenSize.isTablet ? 25 :
+                        screenSize.isTablet ? 20 :
                         screenSize.isDesktop ? 20 : 15
 
   const sidebarMaxSize = screenSize.isMobile ? 100 :
-                        screenSize.isTablet ? 50 :
+                        screenSize.isTablet ? 45 :
                         screenSize.isDesktop ? 40 : 35
 
   return {
@@ -143,8 +143,8 @@ export function getResponsivePanelSizes(screenSize: ScreenSize) {
   
   if (screenSize.isTablet) {
     return {
-      sidebar: { default: 35, min: 25, max: 50 },
-      editor: { default: 65, min: 50, max: 75 }
+      sidebar: { default: 30, min: 20, max: 45 },
+      editor: { default: 70, min: 55, max: 80 }
     }
   }
   

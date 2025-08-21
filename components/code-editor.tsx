@@ -1121,7 +1121,10 @@ export default function CodeEditor() {
         <ResizableHandle withHandle />
 
         {/* Main Content Area */}
-        <ResizablePanel defaultSize={75} minSize={60}>
+        <ResizablePanel 
+          defaultSize={100 - responsiveConfig.sidebarDefaultSize} 
+          minSize={100 - responsiveConfig.sidebarMaxSize}
+        >
           <div className="flex flex-col h-full overflow-hidden">
         {/* Top Bar */}
         <div className="bg-white border-b px-4 py-2">
