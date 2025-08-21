@@ -1,159 +1,428 @@
-/* Monaco Editor Visual Fixes */
+/* Monaco Editor Visual Fixes - Enhanced for Smooth Animations */
 
-/* Prevent blinking cursor animations that can cause visual glitches */
+/* Prevent unwanted blinking cursor animations while preserving smooth transitions */
 .monaco-editor .cursors-layer .cursor {
   animation: none !important;
-  transition: none !important;
+  transition: all 0.1s ease !important;
 }
 
-/* Prevent blinking line highlights */
+/* Enhanced current line highlighting with smooth transitions */
 .monaco-editor .view-overlays .current-line {
   animation: none !important;
-  transition: opacity 0.1s ease !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Fix scrollbar blinking issues */
+/* Enhanced scrollbar with smooth interactions */
 .monaco-scrollable-element > .scrollbar > .slider {
   animation: none !important;
-  transition: background-color 0.1s ease !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Prevent minimap blinking */
+/* Prevent minimap blinking while maintaining smooth interactions */
 .monaco-editor .minimap {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
 .monaco-editor .minimap .minimap-slider {
   animation: none !important;
-  transition: opacity 0.1s ease !important;
+  transition: all 0.2s ease !important;
 }
 
 /* Fix overview ruler blinking */
 .monaco-editor .overview-ruler {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Prevent suggestion widget blinking */
+/* Enhanced suggestion widget with smooth animations */
 .monaco-editor .suggest-widget {
   animation: none !important;
+  transition: all 0.3s ease !important;
 }
 
-/* Fix bracket matching highlights */
+/* Enhanced bracket matching with smooth transitions */
 .monaco-editor .bracket-match {
   animation: none !important;
-  transition: background-color 0.1s ease !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Prevent find widget blinking */
+/* Enhanced find widget with smooth interactions */
 .monaco-editor .find-widget {
   animation: none !important;
+  transition: all 0.3s ease !important;
 }
 
-/* Fix hover widget stability */
+/* Enhanced hover widget with smooth fade-in */
 .monaco-editor .monaco-hover {
   animation: none !important;
+  transition: all 0.3s ease !important;
 }
 
-/* Prevent parameter hints blinking */
+/* Enhanced parameter hints with smooth transitions */
 .monaco-editor .parameter-hints-widget {
   animation: none !important;
+  transition: all 0.3s ease !important;
 }
 
-/* Fix line number blinking */
+/* Enhanced line numbers with smooth color transitions */
 .monaco-editor .line-numbers {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Prevent glyph margin blinking */
+/* Enhanced glyph margin with smooth interactions */
 .monaco-editor .glyph-margin {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Fix folding controls */
+/* Enhanced folding controls with smooth transitions */
 .monaco-editor .folding {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Prevent selection blinking */
+/* Enhanced selection with smooth transitions */
 .monaco-editor .selected-text {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Fix word highlight blinking */
+/* Enhanced word highlighting with smooth transitions */
 .monaco-editor .wordHighlight,
 .monaco-editor .wordHighlightStrong {
   animation: none !important;
-  transition: background-color 0.1s ease !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Prevent ruler blinking */
+/* Enhanced rulers with smooth transitions */
 .monaco-editor .rulers {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Fix indent guides */
+/* Enhanced indent guides with smooth transitions */
 .monaco-editor .indent-guides {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Prevent margin blinking */
+/* Enhanced margin with smooth transitions */
 .monaco-editor .margin {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Fix editor container stability */
+/* Enhanced editor container with smooth theme transitions */
 .monaco-editor {
   animation: none !important;
-  transition: none !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 }
 
-/* Prevent any webkit animations that might cause blinking */
-.monaco-editor * {
-  -webkit-animation: none !important;
-  -moz-animation: none !important;
-  -o-animation: none !important;
-  animation: none !important;
-}
-
-/* Ensure stable rendering */
+/* Enhanced view lines with smooth transitions */
 .monaco-editor .view-lines {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
 .monaco-editor .view-line {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Fix any potential blinking in the editor viewport */
+/* Enhanced editor scrollable with smooth interactions */
 .monaco-editor .editor-scrollable {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
 .monaco-editor .lines-content {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Prevent decorations from blinking */
+/* Enhanced view overlays with smooth transitions */
 .monaco-editor .view-overlays {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Fix any blinking in the editor zones */
+/* Enhanced view zones with smooth transitions */
 .monaco-editor .view-zones {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Ensure stable editor widget rendering */
+/* Enhanced editor widget with smooth transitions */
 .monaco-editor .editor-widget {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Fix any potential blinking in content widgets */
+/* Enhanced content widgets with smooth transitions */
 .monaco-editor .contentWidgets {
   animation: none !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Prevent overlay widgets from blinking */
+/* Enhanced overlay widgets with smooth transitions */
 .monaco-editor .overlayWidgets {
   animation: none !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Enhanced scrollable element with smooth scrolling */
+.monaco-editor .monaco-scrollable-element {
+  scroll-behavior: smooth !important;
+}
+
+/* Enhanced current line ripple effect */
+.monaco-editor .view-lines .current-line {
+  position: relative !important;
+  overflow: hidden !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Enhanced current line ripple animation */
+.monaco-editor .view-lines .current-line::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(90deg, 
+    rgba(100, 100, 120, 0.15) 0%, 
+    rgba(100, 100, 120, 0.25) 50%, 
+    rgba(100, 100, 120, 0.15) 100%) !important;
+  transform: scaleX(0) !important;
+  transform-origin: left !important;
+  animation: ripple-highlight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+  z-index: 1 !important;
+}
+
+/* Enhanced focus field ripple effect */
+.monaco-editor .view-lines .current-line.focused::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(100, 150, 255, 0.3) 0%,
+    rgba(100, 150, 255, 0.1) 70%,
+    transparent 100%
+  ) !important;
+  animation: focus-pulse 0.6s ease-out forwards !important;
+  z-index: 2 !important;
+}
+
+/* Enhanced ripple animation keyframes */
+@keyframes ripple-highlight {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* Enhanced focus pulse animation */
+@keyframes focus-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+}
+
+/* Enhanced scrollbar styling */
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider {
+  background: rgba(121, 121, 121, 0.4) !important;
+  transition: all 0.2s ease !important;
+  border-radius: 4px !important;
+}
+
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider:hover {
+  background: rgba(121, 121, 121, 0.7) !important;
+  transform: scaleX(1.1) !important;
+}
+
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider.active {
+  background: rgba(191, 191, 191, 0.4) !important;
+  box-shadow: 0 0 8px rgba(191, 191, 191, 0.3) !important;
+}
+
+/* Enhanced breakpoint decorations */
+.breakpoint-decoration {
+  transition: all 0.3s ease !important;
+}
+
+.breakpoint-decoration:hover {
+  background-color: rgba(255, 0, 0, 0.3) !important;
+  border-left-width: 4px !important;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.3) !important;
+}
+
+.breakpoint-glyph {
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(255, 0, 0, 0.3) !important;
+}
+
+.breakpoint-glyph:hover {
+  transform: scale(1.2) !important;
+  box-shadow: 0 4px 8px rgba(255, 0, 0, 0.4) !important;
+}
+
+/* Enhanced error and warning decorations */
+.monaco-editor .squiggly-error {
+  animation: error-pulse 2s ease-in-out infinite !important;
+}
+
+.monaco-editor .squiggly-warning {
+  animation: warning-pulse 2s ease-in-out infinite !important;
+}
+
+.monaco-editor .squiggly-info {
+  animation: info-pulse 2s ease-in-out infinite !important;
+}
+
+@keyframes error-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes warning-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes info-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* Enhanced bracket matching */
+.monaco-editor .bracket-match {
+  animation: bracket-pulse 2s ease-in-out infinite !important;
+}
+
+@keyframes bracket-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Enhanced cursor animations */
+.monaco-editor .cursor {
+  transition: all 0.1s ease !important;
+}
+
+.monaco-editor .cursor.blinking {
+  animation: cursor-blink 1s infinite !important;
+}
+
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Enhanced suggestion widget */
+.monaco-editor .suggest-widget .monaco-list .monaco-list-row:hover {
+  background-color: rgba(9, 71, 113, 0.5) !important;
+  transition: background-color 0.2s ease !important;
+}
+
+/* Enhanced hover widget */
+.monaco-editor .monaco-hover {
+  animation: hover-fade-in 0.2s ease-out !important;
+}
+
+@keyframes hover-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced context menu */
+.monaco-menu {
+  animation: menu-slide-in 0.2s ease-out !important;
+}
+
+@keyframes menu-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Enhanced loading spinner */
+.monaco-editor-loading .spinner {
+  box-shadow: 0 0 20px rgba(0, 122, 204, 0.3) !important;
+}
+
+/* Responsive enhancements */
+@media (max-width: 768px) {
+  .monaco-editor .margin {
+    transition: width 0.3s ease !important;
+  }
+  
+  .monaco-editor .minimap {
+    transition: opacity 0.3s ease !important;
+  }
+  
+  .monaco-editor .suggest-widget {
+    transition: max-width 0.3s ease !important;
+  }
+}
+
+/* High contrast mode enhancements */
+@media (prefers-contrast: high) {
+  .monaco-editor .squiggly-error,
+  .monaco-editor .squiggly-warning,
+  .monaco-editor .bracket-match {
+    transition: border-width 0.2s ease !important;
+  }
+}
+
+/* Reduced motion preferences with graceful degradation */
+@media (prefers-reduced-motion: reduce) {
+  .monaco-editor .view-lines .current-line::before {
+    animation: none !important;
+    transform: scaleX(1) !important;
+  }
+  
+  .monaco-editor .view-lines .current-line.focused::after {
+    animation: none !important;
+    opacity: 0.7 !important;
+    transform: scale(1) !important;
+  }
+  
+  .monaco-editor .monaco-scrollable-element {
+    scroll-behavior: auto !important;
+  }
 }
