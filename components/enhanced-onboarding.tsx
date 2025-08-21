@@ -248,41 +248,41 @@ export default function EnhancedOnboarding({ isOpen, onClose, onComplete }: Enha
   const isLastStep = currentStep === ONBOARDING_STEPS.length - 1;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm sm:max-w-2xl lg:max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="border-b p-4 flex items-center justify-between">
+        <div className="border-b p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
               <Rocket className="w-5 h-5 text-white" />
             </div>
-            <div>
-              <h2 className="text-xl font-bold">White Rabbit Code Editor</h2>
-              <p className="text-sm text-gray-600">Interactive Onboarding</p>
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold truncate">White Rabbit Code Editor</h2>
+              <p className="text-xs sm:text-sm text-gray-600">Interactive Onboarding</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setAutoProgress(!autoProgress)}
-              className={autoProgress ? 'bg-green-100 border-green-300' : ''}
+              className={`text-xs ${autoProgress ? 'bg-green-100 border-green-300' : ''}`}
             >
               {autoProgress ? 'Auto' : 'Manual'}
             </Button>
-            <Button variant="ghost" size="sm" onClick={skipToEnd}>
+            <Button variant="ghost" size="sm" onClick={skipToEnd} className="text-xs">
               Skip All
             </Button>
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-xs">
               <X className="w-4 h-4" />
             </Button>
           </div>
         </div>
 
         {/* Progress Bar */}
-        <div className="px-4 py-2 bg-gray-50">
-          <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+        <div className="px-3 sm:px-4 py-2 bg-gray-50">
+          <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 mb-2">
             <span>Progress: {Math.round(progress)}%</span>
             <span>Step {currentStep + 1} of {ONBOARDING_STEPS.length}</span>
           </div>
@@ -290,49 +290,49 @@ export default function EnhancedOnboarding({ isOpen, onClose, onComplete }: Enha
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[60vh]">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="p-3 sm:p-6 overflow-y-auto max-h-[50vh] sm:max-h-[60vh]">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6">
             {/* Main Content */}
-            <div className="lg:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+            <div>
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   {currentStepData.icon}
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold">{currentStepData.title}</h3>
-                  <Badge variant={currentStepData.category === 'core' ? 'default' : currentStepData.category === 'features' ? 'secondary' : 'outline'}>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-2">{currentStepData.title}</h3>
+                  <Badge variant={currentStepData.category === 'core' ? 'default' : currentStepData.category === 'features' ? 'secondary' : 'outline'} className="text-xs">
                     {currentStepData.category}
                   </Badge>
                 </div>
               </div>
 
-              <p className="text-gray-700 mb-6 leading-relaxed">
+              <p className="text-gray-700 mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base">
                 {currentStepData.description}
               </p>
 
               {/* Actions */}
-              <div className="mb-6">
-                <h4 className="font-medium mb-3 flex items-center gap-2">
+              <div className="mb-4 sm:mb-6">
+                <h4 className="font-medium mb-3 flex items-center gap-2 text-sm sm:text-base">
                   <Play className="w-4 h-4" />
                   Try These Actions:
                 </h4>
                 <div className="space-y-2">
                   {currentStepData.actions.map((action, index) => (
                     <div key={index} className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm">{action}</span>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                      <span className="text-xs sm:text-sm">{action}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Tips */}
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowTips(!showTips)}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-xs sm:text-sm"
                 >
                   <HelpCircle className="w-4 h-4" />
                   {showTips ? 'Hide' : 'Show'} Pro Tips
@@ -340,11 +340,11 @@ export default function EnhancedOnboarding({ isOpen, onClose, onComplete }: Enha
                 
                 {showTips && (
                   <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <h5 className="font-medium text-blue-900 mb-2">💡 Pro Tips:</h5>
-                    <ul className="space-y-1 text-sm text-blue-800">
+                    <h5 className="font-medium text-blue-900 mb-2 text-sm">💡 Pro Tips:</h5>
+                    <ul className="space-y-1 text-xs sm:text-sm text-blue-800">
                       {currentStepData.tips.map((tip, index) => (
                         <li key={index} className="flex items-start gap-2">
-                          <span className="text-blue-600">•</span>
+                          <span className="text-blue-600 flex-shrink-0">•</span>
                           <span>{tip}</span>
                         </li>
                       ))}
@@ -354,8 +354,8 @@ export default function EnhancedOnboarding({ isOpen, onClose, onComplete }: Enha
               </div>
             </div>
 
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
+            {/* Sidebar - Hidden on mobile, shown on larger screens */}
+            <div className="hidden lg:block lg:col-span-1">
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm">Onboarding Steps</CardTitle>
@@ -404,37 +404,41 @@ export default function EnhancedOnboarding({ isOpen, onClose, onComplete }: Enha
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="border-t p-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        {/* Footer - Always visible and mobile-friendly */}
+        <div className="border-t p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-2 order-2 sm:order-1">
             <Button
               variant="outline"
               onClick={prevStep}
               disabled={currentStep === 0}
+              size="sm"
+              className="text-xs sm:text-sm"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft className="w-4 h-4 mr-1 sm:mr-2" />
               Previous
             </Button>
             
             <Button
               variant="outline"
               onClick={() => setShowTips(!showTips)}
+              size="sm"
+              className="text-xs sm:text-sm"
             >
-              <HelpCircle className="w-4 h-4 mr-2" />
+              <HelpCircle className="w-4 h-4 mr-1 sm:mr-2" />
               {showTips ? 'Hide' : 'Show'} Tips
             </Button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 order-1 sm:order-2">
             {!isLastStep ? (
-              <Button onClick={completeStep} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={completeStep} className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm">
                 Next
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-4 h-4 ml-1 sm:ml-2" />
               </Button>
             ) : (
-              <Button onClick={onComplete} className="bg-green-600 hover:bg-green-700">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Complete Onboarding
+              <Button onClick={onComplete} className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm">
+                <CheckCircle className="w-4 h-4 mr-1 sm:mr-2" />
+                Complete
               </Button>
             )}
           </div>

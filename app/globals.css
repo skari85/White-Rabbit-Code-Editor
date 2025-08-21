@@ -41,6 +41,83 @@
   background-color: rgba(59, 130, 246, 0.2);
   border-left: 2px solid #3b82f6;
 }
+
+/* Code Chronoscope Effects */
+@keyframes ink-bleed {
+  0% {
+    background-color: rgba(34, 197, 94, 0.3);
+    transform: scale(1.02);
+  }
+  50% {
+    background-color: rgba(34, 197, 94, 0.2);
+  }
+  100% {
+    background-color: rgba(34, 197, 94, 0.1);
+    transform: scale(1);
+  }
+}
+
+@keyframes heat-pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.chronoscope-heat-line {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.chronoscope-heat-line.hot {
+  animation: heat-pulse 2s infinite;
+}
+
+.chronoscope-ghost-line {
+  transition: all 0.5s ease;
+  position: relative;
+}
+
+.chronoscope-ghost-line.added {
+  animation: ink-bleed 0.8s ease-out;
+}
+
+.chronoscope-ghost-line.removed {
+  opacity: 0.3;
+  text-decoration: line-through;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, transparent 100%);
+}
+
+.chronoscope-timeline-marker {
+  position: relative;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.chronoscope-commit-glow {
+  position: relative;
+}
+
+.chronoscope-commit-glow::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6, #3b82f6);
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.chronoscope-commit-glow:hover::before {
+  opacity: 0.3;
+}
 /* White Rabbit Custom Fonts */
 
 @tailwind base;

@@ -1,35 +1,52 @@
-'use client';
+/**
+ * White Rabbit Code Editor - Marketplace Component
+ * Copyright (c) 2025 White Rabbit Team. All rights reserved.
+ * 
+ * This software is licensed for personal and educational use only.
+ * Commercial use requires a separate license agreement.
+ * 
+ * For licensing information, see LICENSE file.
+ * For commercial licensing, contact: licensing@whiterabbit.dev
+ */
 
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Switch } from '@/components/ui/switch'
 import {
-  MarketplaceExtension,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Search,
+  Download,
+  Trash2,
+  Settings,
+  Star,
+  CheckCircle,
+  Package,
+  TrendingUp,
+  Crown,
+  Filter,
+  Grid3X3,
+  List
+} from 'lucide-react'
+import { 
+  MarketplaceService, 
+  MarketplaceExtension, 
   InstalledExtension,
-  MarketplaceService,
   ExtensionCategory,
   EXTENSION_CATEGORIES
-} from '@/lib/marketplace';
-import APISetupGuide from './api-setup-guide';
-import { 
-  Search, 
-  Download, 
-  Star, 
-  Shield, 
-  Clock, 
-  Package, 
-  Settings,
-  Trash2,
-  Power,
-  PowerOff,
-  ExternalLink,
-  Filter,
-  TrendingUp,
-  Award
-} from 'lucide-react';
+} from '@/lib/marketplace'
+import APISetupGuide from './api-setup-guide'
 
 interface MarketplaceProps {
   className?: string;
@@ -42,6 +59,7 @@ export default function Marketplace({ className }: MarketplaceProps) {
   const [installedExtensions, setInstalledExtensions] = useState<InstalledExtension[]>([]);
   const [activeTab, setActiveTab] = useState('browse');
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     loadExtensions();
@@ -49,40 +67,65 @@ export default function Marketplace({ className }: MarketplaceProps) {
   }, [searchQuery, selectedCategory]);
 
   const loadExtensions = () => {
-    setLoading(true);
-    const results = MarketplaceService.searchExtensions(searchQuery, selectedCategory || undefined);
-    setExtensions(results);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const results = MarketplaceService.searchExtensions(searchQuery, selectedCategory || undefined);
+      setExtensions(results);
+    } catch (error) {
+      console.error('Failed to load extensions:', error);
+      setExtensions([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadInstalledExtensions = () => {
-    const installed = MarketplaceService.getInstalledExtensions();
-    setInstalledExtensions(installed);
+    try {
+      const installed = MarketplaceService.getInstalledExtensions();
+      setInstalledExtensions(installed);
+    } catch (error) {
+      console.error('Failed to load installed extensions:', error);
+      setInstalledExtensions([]);
+    }
   };
 
   const handleInstall = async (extension: MarketplaceExtension) => {
     try {
       MarketplaceService.installExtension(extension);
       loadInstalledExtensions();
-      // Show success message
+      console.log(`✅ Successfully installed: ${extension.displayName}`);
     } catch (error) {
       console.error('Installation failed:', error);
-      // Show error message
     }
   };
 
   const handleUninstall = (extensionId: string) => {
-    MarketplaceService.uninstallExtension(extensionId);
-    loadInstalledExtensions();
+    try {
+      MarketplaceService.uninstallExtension(extensionId);
+      loadInstalledExtensions();
+      console.log(`🗑️ Successfully uninstalled extension: ${extensionId}`);
+    } catch (error) {
+      console.error('Uninstall failed:', error);
+    }
   };
 
   const handleToggleExtension = (extensionId: string, enabled: boolean) => {
-    MarketplaceService.toggleExtension(extensionId, enabled);
-    loadInstalledExtensions();
+    try {
+      MarketplaceService.toggleExtension(extensionId, enabled);
+      loadInstalledExtensions();
+      console.log(`${enabled ? '✅' : '❌'} ${enabled ? 'Enabled' : 'Disabled'}: ${extensionId}`);
+    } catch (error) {
+      console.error('Toggle failed:', error);
+    }
   };
 
   const isInstalled = (extensionId: string) => {
-    return MarketplaceService.isExtensionInstalled(extensionId);
+    try {
+      return MarketplaceService.isExtensionInstalled(extensionId);
+    } catch (error) {
+      console.error('Error checking if extension is installed:', error);
+      return false;
+    }
   };
 
   const formatNumber = (num: number) => {
@@ -91,155 +134,166 @@ export default function Marketplace({ className }: MarketplaceProps) {
     return num.toString();
   };
 
-  const ExtensionCard = ({ extension }: { extension: MarketplaceExtension }) => (
-    <Card className="h-full hover:shadow-lg transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">{extension.icon}</div>
-            <div>
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                {extension.displayName}
-                {extension.verified && (
-                  <Shield className="w-3 h-3 text-blue-500" title="Verified Publisher" />
-                )}
-                {extension.featured && (
-                  <Award className="w-3 h-3 text-yellow-500" title="Featured" />
-                )}
-              </CardTitle>
-              <p className="text-xs text-gray-500">by {extension.publisher}</p>
+  const getCategoryIcon = (category: ExtensionCategory) => {
+    const categoryInfo = EXTENSION_CATEGORIES.find(cat => cat.id === category);
+    return categoryInfo ? categoryInfo.icon : '📦';
+  };
+
+  const ExtensionCard = ({ extension }: { extension: MarketplaceExtension }) => {
+    const installed = isInstalled(extension.id);
+    
+    return (
+      <Card className="h-full">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{extension.icon}</span>
+              <div>
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  {extension.displayName}
+                  {extension.verified && (
+                    <CheckCircle className="w-3 h-3 text-blue-500" />
+                  )}
+                  {extension.featured && (
+                    <Star className="w-3 h-3 text-yellow-500" />
+                  )}
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  by {extension.publisher}
+                </p>
+              </div>
             </div>
-          </div>
-          <Badge variant={extension.pricing === 'free' ? 'secondary' : 'default'} className="text-xs">
-            {extension.pricing === 'free' ? 'Free' : 
-             extension.pricing === 'paid' ? `$${extension.price}` : 'Freemium'}
-          </Badge>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-3">
-        <p className="text-sm text-gray-600 line-clamp-2">{extension.description}</p>
-        
-        <div className="flex items-center gap-4 text-xs text-gray-500">
-          <div className="flex items-center gap-1">
-            <Download className="w-3 h-3" />
-            {formatNumber(extension.downloads)}
-          </div>
-          <div className="flex items-center gap-1">
-            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-            {extension.rating}
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            {new Date(extension.lastUpdated).toLocaleDateString()}
-          </div>
-        </div>
-        
-        <div className="flex flex-wrap gap-1">
-          {extension.tags.slice(0, 3).map(tag => (
-            <Badge key={tag} variant="outline" className="text-xs">
-              {tag}
-            </Badge>
-          ))}
-          {extension.tags.length > 3 && (
             <Badge variant="outline" className="text-xs">
-              +{extension.tags.length - 3}
+              {extension.category}
             </Badge>
-          )}
-        </div>
+          </div>
+        </CardHeader>
         
-        <div className="pt-2">
-          {isInstalled(extension.id) ? (
-            <Button size="sm" variant="outline" className="w-full" disabled>
-              <Package className="w-3 h-3 mr-1" />
-              Installed
-            </Button>
-          ) : (
-            <Button 
-              size="sm" 
-              className="w-full" 
-              onClick={() => handleInstall(extension)}
-            >
-              <Download className="w-3 h-3 mr-1" />
-              Install
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {extension.description}
+          </p>
+          
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span>⭐ {extension.rating}</span>
+              <span>📥 {formatNumber(extension.downloads)}</span>
+            </div>
+            <span>v{extension.version}</span>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              {extension.tags && extension.tags.slice(0, 2).map((tag, index) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+            
+            {installed ? (
+              <Button variant="outline" size="sm" onClick={() => handleUninstall(extension.id)}>
+                <Trash2 className="w-3 h-3 mr-1" />
+                Uninstall
+              </Button>
+            ) : (
+              <Button size="sm" onClick={() => handleInstall(extension)}>
+                <Download className="w-3 h-3 mr-1" />
+                Install
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const InstalledExtensionCard = ({ extension }: { extension: InstalledExtension }) => (
     <Card className="h-full">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">{extension.icon}</div>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">{extension.icon}</span>
             <div>
-              <CardTitle className="text-sm font-semibold">{extension.displayName}</CardTitle>
-              <p className="text-xs text-gray-500">v{extension.version}</p>
+              <CardTitle className="text-sm font-medium">{extension.displayName}</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                by {extension.publisher}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => handleToggleExtension(extension.id, !extension.enabled)}
-              className="p-1"
-            >
-              {extension.enabled ? (
-                <Power className="w-4 h-4 text-green-500" />
-              ) : (
-                <PowerOff className="w-4 h-4 text-gray-400" />
-              )}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => handleUninstall(extension.id)}
-              className="p-1 text-red-500 hover:text-red-700"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <Switch
+              checked={extension.enabled}
+              onCheckedChange={(enabled) => handleToggleExtension(extension.id, enabled)}
+            />
+            <Badge variant="outline" className="text-xs">
+              {extension.category}
+            </Badge>
           </div>
         </div>
       </CardHeader>
       
       <CardContent className="space-y-3">
-        <p className="text-sm text-gray-600 line-clamp-2">{extension.description}</p>
+        <p className="text-sm text-muted-foreground line-clamp-2">
+          {extension.description}
+        </p>
         
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>Installed {new Date(extension.installedAt).toLocaleDateString()}</span>
-          <Badge variant={extension.enabled ? 'default' : 'secondary'} className="text-xs">
-            {extension.enabled ? 'Enabled' : 'Disabled'}
-          </Badge>
-        </div>
-        
-        {extension.config && Object.keys(extension.config).length > 0 && (
-          <Button size="sm" variant="outline" className="w-full">
-            <Settings className="w-3 h-3 mr-1" />
-            Configure
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-muted-foreground">
+            <span>Installed: {new Date(extension.installedAt).toLocaleDateString()}</span>
+          </div>
+          
+          <Button variant="outline" size="sm" onClick={() => handleUninstall(extension.id)}>
+            <Trash2 className="w-3 h-3 mr-1" />
+            Uninstall
           </Button>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
 
   return (
     <div className={className}>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Extension Marketplace</h1>
+          <p className="text-muted-foreground">
+            Discover and install powerful extensions to enhance your coding experience
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant={viewMode === 'grid' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('grid')}
+          >
+            <Grid3X3 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+          >
+            <List className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="browse">Browse</TabsTrigger>
-          <TabsTrigger value="installed">Installed ({installedExtensions.length})</TabsTrigger>
+          <TabsTrigger value="installed">Installed</TabsTrigger>
           <TabsTrigger value="featured">Featured</TabsTrigger>
-          <TabsTrigger value="setup">API Setup</TabsTrigger>
+          <TabsTrigger value="trending">Trending</TabsTrigger>
+          <TabsTrigger value="setup">Setup</TabsTrigger>
         </TabsList>
         
         <TabsContent value="browse" className="space-y-4">
-          {/* Search and Filters */}
-          <div className="space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          {/* Search and Filter */}
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search extensions..."
                 value={searchQuery}
@@ -248,35 +302,43 @@ export default function Marketplace({ className }: MarketplaceProps) {
               />
             </div>
             
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              <Button
-                size="sm"
-                variant={selectedCategory === '' ? 'default' : 'outline'}
-                onClick={() => setSelectedCategory('')}
-              >
-                All
-              </Button>
-              {EXTENSION_CATEGORIES.map(category => (
-                <Button
-                  key={category.id}
-                  size="sm"
-                  variant={selectedCategory === category.id ? 'default' : 'outline'}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className="whitespace-nowrap"
-                >
-                  <span className="mr-1">{category.icon}</span>
-                  {category.name}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Filter className="w-4 h-4 mr-2" />
+                  {selectedCategory || 'All Categories'}
                 </Button>
-              ))}
-            </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => setSelectedCategory('')}>
+                  All Categories
+                </DropdownMenuItem>
+                {EXTENSION_CATEGORIES.map(category => (
+                  <DropdownMenuItem key={category.id} onClick={() => setSelectedCategory(category.id)}>
+                    <span className="mr-2">{category.icon}</span>
+                    {category.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
           {/* Extensions Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {extensions.map(extension => (
-              <ExtensionCard key={extension.id} extension={extension} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-muted-foreground">Loading extensions...</p>
+            </div>
+          ) : (
+            <div className={viewMode === 'grid' 
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" 
+              : "space-y-4"
+            }>
+              {extensions.map(extension => (
+                <ExtensionCard key={extension.id} extension={extension} />
+              ))}
+            </div>
+          )}
           
           {extensions.length === 0 && !loading && (
             <div className="text-center py-8 text-gray-500">
@@ -288,7 +350,10 @@ export default function Marketplace({ className }: MarketplaceProps) {
         
         <TabsContent value="installed" className="space-y-4">
           {installedExtensions.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className={viewMode === 'grid' 
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" 
+              : "space-y-4"
+            }>
               {installedExtensions.map(extension => (
                 <InstalledExtensionCard key={extension.id} extension={extension} />
               ))}
@@ -308,9 +373,31 @@ export default function Marketplace({ className }: MarketplaceProps) {
         </TabsContent>
         
         <TabsContent value="featured" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className={viewMode === 'grid' 
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" 
+            : "space-y-4"
+          }>
             {MarketplaceService.getFeaturedExtensions().map(extension => (
               <ExtensionCard key={extension.id} extension={extension} />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="trending" className="space-y-4">
+          <div className={viewMode === 'grid' 
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" 
+            : "space-y-4"
+          }>
+            {MarketplaceService.getTopExtensions(12).map(extension => (
+              <div key={extension.id} className="relative">
+                <ExtensionCard extension={extension} />
+                <div className="absolute top-2 right-2">
+                  <Badge variant="default" className="bg-green-600">
+                    <TrendingUp className="w-3 h-3 mr-1" />
+                    Trending
+                  </Badge>
+                </div>
+              </div>
             ))}
           </div>
         </TabsContent>

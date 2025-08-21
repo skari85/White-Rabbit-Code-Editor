@@ -46,97 +46,146 @@ export default function NewAppWizard({ open, onOpenChange, onCreate }: NewAppWiz
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="w-full max-w-sm sm:max-w-lg md:max-w-2xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle>New App Setup</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-base sm:text-lg">New App Setup</DialogTitle>
+          <DialogDescription className="text-sm">
             This wizard will help you create a new app. You can customize it later.
           </DialogDescription>
         </DialogHeader>
-
-        <Tabs value={`step-${step}`} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-4">
-            <TabsTrigger value="step-0">Name & Logo</TabsTrigger>
-            <TabsTrigger value="step-1">Template</TabsTrigger>
-            <TabsTrigger value="step-2">Theme</TabsTrigger>
-            <TabsTrigger value="step-3">Auth</TabsTrigger>
-            <TabsTrigger value="step-4">Deploy</TabsTrigger>
-          </TabsList>
-
-          {/* Step 0: Name & Logo */}
-          <TabsContent value="step-0" className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="app-name">App Name</Label>
-              <Input id="app-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="My Indie App" />
+        
+        <div className="space-y-4 sm:space-y-6 max-h-[60vh] overflow-y-auto">
+          {step === 0 && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">App Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
+                  placeholder="My Awesome App"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Logo URL (optional)</label>
+                <input
+                  type="url"
+                  value={logoUrl}
+                  onChange={(e) => setLogoUrl(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
+                  placeholder="https://example.com/logo.png"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="logo-url">Logo URL (optional)</Label>
-              <div className="flex gap-2">
-                <Input id="logo-url" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://...logo.png" />
-                <div className="w-10 h-10 border rounded flex items-center justify-center bg-white">
-                  {logoUrl ? <img src={logoUrl} alt="logo" className="object-contain w-8 h-8" /> : <ImageIcon className="w-4 h-4 text-gray-400" />}
+          )}
+          
+          {step === 1 && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Template</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                  {['landing', 'dashboard', 'blog', 'ecommerce'].map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setTemplate(t as NewAppTemplate)}
+                      className={`p-3 border rounded-lg text-left transition-colors ${
+                        template === t
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="font-medium text-sm capitalize">{t}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {t === 'landing' && 'Landing page with hero, features, and contact'}
+                        {t === 'dashboard' && 'Admin dashboard with charts and tables'}
+                        {t === 'blog' && 'Blog with articles and categories'}
+                        {t === 'ecommerce' && 'Online store with products and cart'}
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
-          </TabsContent>
-
-          {/* Step 1: Template */}
-          <TabsContent value="step-1" className="space-y-3">
-            <div className="grid grid-cols-3 gap-3">
-              {([
-                { id: 'landing', name: 'Landing Page', desc: 'Hero, Features, Pricing, FAQ, Contact' },
-                { id: 'portfolio', name: 'Portfolio', desc: 'Projects grid, About, Contact' },
-                { id: 'saas', name: 'SaaS Shell', desc: 'Dashboard shell, Auth-ready' },
-              ] as Array<{id: NewAppTemplate; name: string; desc: string}>).map(t => (
-                <Card key={t.id} className={`cursor-pointer ${template === t.id ? 'ring-2 ring-primary' : ''}`} onClick={() => setTemplate(t.id)}>
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-sm font-medium">{t.name}</div>
-                        <div className="text-xs text-muted-foreground">{t.desc}</div>
-                      </div>
-                      {template === t.id && <Badge className="text-[10px]" variant="secondary"><Check className="w-3 h-3 mr-1" />Selected</Badge>}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* Step 2: Theme */}
-          <TabsContent value="step-2" className="space-y-4">
-            <div className="space-y-2">
-              <Label>Brand Color</Label>
+          )}
+          
+          {step === 2 && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Brand Color</label>
+                <div className="flex items-center gap-3 mt-2">
+                  <input
+                    type="color"
+                    value={brandColor}
+                    onChange={(e) => setBrandColor(e.target.value)}
+                    className="w-12 h-12 border rounded cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={brandColor}
+                    onChange={(e) => setBrandColor(e.target.value)}
+                    className="flex-1 px-3 py-2 border rounded-md text-sm font-mono"
+                  />
+                </div>
+              </div>
+              
               <div className="flex items-center gap-2">
-                <input type="color" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="h-9 w-12 rounded" />
-                <Input value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="font-mono text-xs" />
+                <input
+                  type="checkbox"
+                  id="auth"
+                  checked={authEnabled}
+                  onChange={(e) => setAuthEnabled(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="auth" className="text-sm">
+                  Enable authentication (login/signup)
+                </label>
               </div>
             </div>
-            <div className="text-xs text-muted-foreground">You can tweak fonts and radius later in Style panel.</div>
-          </TabsContent>
-
-          {/* Step 3: Auth */}
-          <TabsContent value="step-3" className="space-y-3">
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={authEnabled} onChange={(e) => setAuthEnabled(e.target.checked)} />
-              Enable simple login button (static stub)
-            </label>
-            <div className="text-xs text-muted-foreground">Adds a Login button in the nav and a simple modal placeholder. You can wire real auth later.</div>
-          </TabsContent>
-
-          {/* Step 4: Deploy */}
-          <TabsContent value="step-4" className="space-y-2">
-            <div className="text-sm text-muted-foreground">Finish to scaffold your app. Use the Publish button to deploy. You can connect a custom domain later.</div>
-          </TabsContent>
-        </Tabs>
-
-        <div className="flex justify-between pt-2">
-          <Button variant="outline" onClick={back} disabled={step === 0}>Back</Button>
-          {step < 4 ? (
-            <Button onClick={next}>Next</Button>
-          ) : (
-            <Button onClick={create}>Create App</Button>
           )}
+          
+          {step === 3 && (
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-sm mb-2">App Summary</h4>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <div><strong>Name:</strong> {name}</div>
+                  <div><strong>Template:</strong> {template}</div>
+                  <div><strong>Brand Color:</strong> <span className="inline-block w-4 h-4 rounded border" style={{backgroundColor: brandColor}}></span> {brandColor}</div>
+                  <div><strong>Authentication:</strong> {authEnabled ? 'Enabled' : 'Disabled'}</div>
+                </div>
+              </div>
+              
+              <div className="text-sm text-gray-600">
+                Click "Create App" to generate your new application with these settings.
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center justify-between pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={back}
+            disabled={step === 0}
+            size="sm"
+            className="text-xs sm:text-sm"
+          >
+            Back
+          </Button>
+          
+          <div className="flex gap-2">
+            {step < 3 ? (
+              <Button onClick={next} size="sm" className="text-xs sm:text-sm">
+                Next
+              </Button>
+            ) : (
+              <Button onClick={create} size="sm" className="text-xs sm:text-sm">
+                Create App
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
