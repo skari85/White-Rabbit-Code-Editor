@@ -97,12 +97,15 @@
   "devDependencies": {
     "@next/bundle-analyzer": "^15.5.0",
     "@types/jszip": "^3.4.0",
-    "@types/next-auth": "^3.13.0",
     "@types/node": "^22",
-    "@types/react": "^19.1.10",
+    "@types/react": "^19",
     "@types/react-dom": "^19",
-    "postcss": "^8.5",
-    "tailwindcss": "^3.4.17",
+    "eslint": "^9",
+    "eslint-config-next": "15.2.4",
+    "postcss": "^8.4.49",
     "typescript": "^5"
+  },
+  "overrides": {
+    "prismjs": "^1.30.0"
   }
 }
