@@ -22,7 +22,9 @@ import {
   X,
   Zap,
   FileText,
-  Settings
+  Settings,
+  Sparkles,
+  BarChart3
 } from 'lucide-react';
 
 interface OnboardingStep {
@@ -101,6 +103,16 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     tips: ['Preview updates automatically as you type', 'Use the device selector for responsive testing', 'Toggle between code and preview']
   },
   {
+    id: 'visual-tools',
+    title: 'Visual Tools',
+    description: 'Explore Git History, Smart File Tree, and Code Flow visualizers in one place.',
+    icon: <Sparkles className="w-6 h-6" />,
+    category: 'features',
+    duration: 60,
+    actions: ['Open Visual Tools from the top bar', 'Or use the FAB on the home screen', 'Switch between Git History, File Tree, and Code Flow tabs'],
+    tips: ['Use fullscreen for focused exploration', 'Great for quick project orientation']
+  },
+  {
     id: 'terminal',
     title: 'Integrated Terminal',
     description: 'Run commands, install packages, and manage your development environment.',
@@ -111,14 +123,24 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     tips: ['Use Ctrl+` to toggle terminal', 'Terminal supports all standard commands', 'Use the Terminal tab for Git operations']
   },
   {
+    id: 'data-science',
+    title: 'Data Science Hub',
+    description: 'Plot, analyze, and explore data with built-in visual tools for data workflows.',
+    icon: <BarChart3 className="w-6 h-6" />,
+    category: 'features',
+    duration: 60,
+    actions: ['Open the Data Science page', 'Create a quick plot', 'Explore pipeline components'],
+    tips: ['Great for CSV exploration', 'Use alongside the editor for notebooks or scripts']
+  },
+  {
     id: 'customization',
     title: 'Customization',
     description: 'Personalize your editor with themes, fonts, and layout options.',
     icon: <Palette className="w-6 h-6" />,
     category: 'features',
     duration: 60,
-    actions: ['Open Style panel', 'Change theme', 'Adjust fonts and colors'],
-    tips: ['Use the Style panel for quick customization', 'Changes apply instantly', 'Save your favorite themes']
+    actions: ['Open Style panel', 'Change theme', 'Adjust fonts, radius, and shadows'],
+    tips: ['Style changes apply instantly', 'Use layout controls to reconfigure panes']
   },
   
   // Advanced Features
@@ -141,6 +163,16 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     duration: 120,
     actions: ['Open AI Chat', 'Ask for code help', 'Get debugging assistance'],
     tips: ['Be specific in your questions', 'AI can help with multiple languages', 'Use for code review and optimization']
+  },
+  {
+    id: 'editor-ux',
+    title: 'Polished Editor UX',
+    description: 'Experience a breathing caret and Focus Field ripple highlighting for calmer, tactile feedback.',
+    icon: <Eye className="w-6 h-6" />,
+    category: 'advanced',
+    duration: 30,
+    actions: ['Click a line to see the ripple highlight', 'Observe the gentle caret fade'],
+    tips: ['Animations respect reduced motion settings', 'Designed to reduce visual fatigue']
   },
   {
     id: 'deployment',
