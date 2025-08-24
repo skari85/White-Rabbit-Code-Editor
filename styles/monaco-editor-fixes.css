@@ -203,6 +203,29 @@
   z-index: 1 !important;
 }
 
+/* Focus Field – line ripple from click origin */
+.monaco-editor .wr-focus-line {
+  position: relative !important;
+}
+
+.monaco-editor .wr-focus-line::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: linear-gradient(90deg, rgba(108, 47, 255, 0.10), rgba(0, 255, 225, 0.10)) !important;
+  transform: scaleX(0) !important;
+  transform-origin: 50% 50% !important; /* overridden per click via injected style */
+  animation: wr-line-ripple 0.28s ease-out forwards !important;
+  pointer-events: none !important;
+}
+
+@keyframes wr-line-ripple {
+  to { transform: scaleX(1); }
+}
+
 /* Enhanced focus field ripple effect */
 .monaco-editor .view-lines .current-line.focused::after {
   content: '' !important;
@@ -431,6 +454,11 @@
   
   .monaco-editor .monaco-scrollable-element {
     scroll-behavior: auto !important;
+  }
+  .monaco-editor .wr-focus-line::before {
+    animation: none !important;
+    transform: none !important;
+    opacity: 0.6 !important;
   }
   /* Disable caret animation for users who prefer reduced motion */
   .monaco-editor .cursors-layer .cursor,

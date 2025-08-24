@@ -287,6 +287,62 @@ export default function SimpleCodeEditor({
           language={editorLanguage}
           theme={currentTheme}
           options={editorOptions}
+          onMount={(editor: any, monaco: any) => {
+            let focusDecorationIds: string[] = [];
+            const injectOriginStyle = (className: string, originPercent: number) => {
+              const style = document.createElement('style');
+              style.setAttribute('data-wr-focus-style', className);
+              style.textContent = `.monaco-editor .${className}::before{transform-origin:${Math.max(0, Math.min(100, originPercent))}% 50% !important;}`;
+              document.head.appendChild(style);
+              setTimeout(() => {
+                document.querySelectorAll(`style[data-wr-focus-style="${className}"]`).forEach(n => n.remove());
+              }, 600);
+            };
+
+            const applyFocusRipple = (lineNumber: number, column?: number) => {
+              try {
+                const model = editor.getModel();
+                if (!model) return;
+                const className = `wr-focus-line-${Date.now()}`;
+                let origin = 50;
+                try {
+                  const start = editor.getScrolledVisiblePosition({ lineNumber, column: 1 });
+                  const end = editor.getScrolledVisiblePosition({ lineNumber, column: model.getLineMaxColumn(lineNumber) });
+                  const hit = editor.getScrolledVisiblePosition({ lineNumber, column: Math.max(1, Math.min(model.getLineMaxColumn(lineNumber), column || 1)) });
+                  if (start && end && hit) {
+                    const span = Math.max(1, (end.left - start.left));
+                    origin = ((hit.left - start.left) / span) * 100;
+                  }
+                } catch {}
+                injectOriginStyle(className, origin);
+                focusDecorationIds = editor.deltaDecorations(
+                  focusDecorationIds,
+                  [
+                    {
+                      range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                      options: { isWholeLine: true, className: `wr-focus-line ${className}`, zIndex: 5 }
+                    }
+                  ]
+                );
+              } catch {}
+            };
+
+            const mouseDownDispose = editor.onMouseDown((e: any) => {
+              if (!e?.target?.position) return;
+              const { lineNumber, column } = e.target.position;
+              applyFocusRipple(lineNumber, column);
+            });
+
+            const cursorDispose = editor.onDidChangeCursorPosition((e: any) => {
+              if (!e?.position) return;
+              applyFocusRipple(e.position.lineNumber);
+            });
+
+            editor.onDidDispose(() => {
+              mouseDownDispose?.dispose?.();
+              cursorDispose?.dispose?.();
+            });
+          }}
           loading={
             <div style={{
               display: 'flex',

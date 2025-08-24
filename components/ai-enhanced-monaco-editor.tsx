@@ -68,6 +68,71 @@ export default function AIEnhancedMonacoEditor({
   const handleEditorDidMount = useCallback((editor: any, monaco: any) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
+    // Focus Field ripple line highlighting
+    let focusDecorationIds: string[] = [];
+    const injectOriginStyle = (className: string, originPercent: number) => {
+      const style = document.createElement('style');
+      style.setAttribute('data-wr-focus-style', className);
+      style.textContent = `.monaco-editor .${className}::before{transform-origin:${Math.max(0, Math.min(100, originPercent))}% 50% !important;}`;
+      document.head.appendChild(style);
+      setTimeout(() => {
+        document.querySelectorAll(`style[data-wr-focus-style="${className}"]`).forEach(n => n.remove());
+      }, 600);
+    };
+
+    const applyFocusRipple = (lineNumber: number, column?: number) => {
+      try {
+        const model = editor.getModel();
+        if (!model) return;
+        const className = `wr-focus-line-${Date.now()}`;
+
+        // Compute origin percent along the line
+        let origin = 50;
+        try {
+          const start = editor.getScrolledVisiblePosition({ lineNumber, column: 1 });
+          const end = editor.getScrolledVisiblePosition({ lineNumber, column: model.getLineMaxColumn(lineNumber) });
+          const hit = editor.getScrolledVisiblePosition({ lineNumber, column: Math.max(1, Math.min(model.getLineMaxColumn(lineNumber), column || 1)) });
+          if (start && end && hit) {
+            const span = Math.max(1, (end.left - start.left));
+            origin = ((hit.left - start.left) / span) * 100;
+          }
+        } catch {}
+        injectOriginStyle(className, origin);
+
+        focusDecorationIds = editor.deltaDecorations(
+          focusDecorationIds,
+          [
+            {
+              range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+              options: {
+                isWholeLine: true,
+                className: `wr-focus-line ${className}`,
+                zIndex: 5
+              }
+            }
+          ]
+        );
+      } catch {}
+    };
+
+    const mouseDownDispose = editor.onMouseDown((e: any) => {
+      if (!e?.target?.position) return;
+      const { lineNumber, column } = e.target.position;
+      applyFocusRipple(lineNumber, column);
+    });
+
+    const cursorDispose = editor.onDidChangeCursorPosition((e: any) => {
+      if (!e?.position) return;
+      // Quick ripple centered for keyboard nav
+      applyFocusRipple(e.position.lineNumber);
+    });
+
+    // Cleanup
+    editor.onDidDispose(() => {
+      mouseDownDispose?.dispose?.();
+      cursorDispose?.dispose?.();
+    });
+
 
     // Enhance AI capabilities with advanced AI models
     if (aiCompletionsEnabled && completionServiceRef.current) {
