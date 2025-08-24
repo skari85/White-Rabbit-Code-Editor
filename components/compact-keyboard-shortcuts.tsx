@@ -400,7 +400,7 @@ export default function CompactKeyboardShortcuts({ isOpen, onClose }: CompactKey
                 key={shortcut.id}
                 className={`p-2 rounded border transition-colors ${
                   !shortcut.isEnabled 
-                    ? 'opacity-60 bg-gray-50 dark:bg-gray-700' 
+                    ? 'bg-gray-100 dark:bg-gray-700' 
                     : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
