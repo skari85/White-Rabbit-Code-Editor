@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { CopyrightFooter } from '@/components/license-notice'
 import { ErrorTrackingProvider } from '@/components/error-tracking-provider'
 import { HelpProvider } from '@/components/contextual-help'
+import { NotificationProvider } from '@/components/ui/notification-system'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
@@ -116,12 +117,14 @@ html {
             disableTransitionOnChange
           >
             <AuthSessionProvider>
-              <HelpProvider>
-                {children}
-              </HelpProvider>
-              <CopyrightFooter />
-              <Analytics />
-              <SpeedInsights />
+              <NotificationProvider>
+                <HelpProvider>
+                  {children}
+                </HelpProvider>
+                <CopyrightFooter />
+                <Analytics />
+                <SpeedInsights />
+              </NotificationProvider>
             </AuthSessionProvider>
           </ThemeProvider>
         </ErrorTrackingProvider>

@@ -306,7 +306,7 @@ export default function AIEnhancedMonacoEditor({
     // Selection and cursor
     selectOnLineNumbers: true,
     selectionHighlight: true,
-    occurrencesHighlight: true,
+    occurrencesHighlight: 'singleFile' as const,
     cursorBlinking: 'smooth' as const,
     cursorSmoothCaretAnimation: 'on' as const,
     cursorWidth: 2,

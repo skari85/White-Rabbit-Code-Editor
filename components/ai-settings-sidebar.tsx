@@ -154,9 +154,9 @@ export default function AISettingsSidebar({
               <Key className="w-3 h-3" />
               API Key
               {currentProvider.id === 'ollama' ? (
-                <Globe className="w-3 h-3 text-green-500" title="Local/Self-hosted" />
+                <Globe className="w-3 h-3 text-green-500" />
               ) : (
-                <Lock className="w-3 h-3 text-orange-500" title="External API" />
+                <Lock className="w-3 h-3 text-orange-500" />
               )}
             </Label>
             <div className="relative">

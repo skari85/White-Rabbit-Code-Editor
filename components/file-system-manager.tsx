@@ -12,6 +12,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import MonacoEditor, { MonacoEditorRef, MonacoEditorLoading } from '@/components/monaco-editor';
 import { useSimpleLocalStorage } from '@/hooks/use-simple-local-storage';
+import { LoadingOverlay, FileLoadingSpinner } from '@/components/ui/loading-spinner';
+import { useNotifications, notificationUtils } from '@/components/ui/notification-system';
 import { PersonalityMode } from '@/lib/personality-system';
 import { getLanguageFromFileName } from '@/lib/monaco-config';
 import { 
@@ -70,9 +72,11 @@ const FileSystemManager: React.FC<FileSystemManagerProps> = ({
   const [newFileName, setNewFileName] = useState('');
   const [newFolderName, setNewFolderName] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  
+  const [isLoading, setIsLoading] = useState(false);
+
   const editorRef = useRef<MonacoEditorRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const notifications = useNotifications();
 
   // Get active file
   const activeFile = activeFileId ? files[activeFileId] : null;
@@ -88,37 +92,47 @@ const FileSystemManager: React.FC<FileSystemManagerProps> = ({
 
   // Create new file
   const createFile = useCallback((name: string, parentId?: string) => {
-    const id = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const newFile: FileItem = {
-      id,
-      name,
-      content: '',
-      language: getLanguageFromFileName(name),
-      isModified: false,
-      isDirectory: false,
-      parentId,
-      lastModified: new Date(),
-      size: 0
-    };
+    setIsLoading(true);
 
-    setFiles((prev: Record<string, FileItem>) => {
-      const updated = { ...prev, [id]: newFile };
-      
-      // Update parent folder if exists
-      if (parentId && updated[parentId]) {
-        updated[parentId] = {
-          ...updated[parentId],
-          children: [...(updated[parentId].children || []), id]
-        };
-      }
-      
-      return updated;
-    });
+    try {
+      const id = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const newFile: FileItem = {
+        id,
+        name,
+        content: '',
+        language: getLanguageFromFileName(name),
+        isModified: false,
+        isDirectory: false,
+        parentId,
+        lastModified: new Date(),
+        size: 0
+      };
 
-    // Open the new file
-    openFile(id);
-    return id;
-  }, [setFiles]);
+      setFiles((prev: Record<string, FileItem>) => {
+        const updated = { ...prev, [id]: newFile };
+
+        // Update parent folder if exists
+        if (parentId && updated[parentId]) {
+          updated[parentId] = {
+            ...updated[parentId],
+            children: [...(updated[parentId].children || []), id]
+          };
+        }
+
+        return updated;
+      });
+
+      // Open the new file
+      openFile(id);
+      notifications.success('File Created', `${name} has been created successfully`);
+      return id;
+    } catch (error) {
+      notifications.error('File Creation Failed', `Failed to create ${name}`);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setFiles, notifications]);
 
   // Create new folder
   const createFolder = useCallback((name: string, parentId?: string) => {
@@ -406,9 +420,10 @@ const FileSystemManager: React.FC<FileSystemManagerProps> = ({
   }, [newFolderName, selectedFolderId, createFolder]);
 
   return (
-    <div className={cn('flex h-full', className)}>
-      {/* File Explorer Sidebar */}
-      <div className="w-64 border-r border-gray-800 flex flex-col">
+    <LoadingOverlay isLoading={isLoading} text="Processing file operation...">
+      <div className={cn('flex h-full', className)}>
+        {/* File Explorer Sidebar */}
+        <div className="w-64 border-r border-gray-800 flex flex-col">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm">Files</CardTitle>
@@ -579,6 +594,7 @@ const FileSystemManager: React.FC<FileSystemManagerProps> = ({
         </div>
       </div>
     </div>
+    </LoadingOverlay>
   );
 };
 

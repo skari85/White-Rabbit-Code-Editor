@@ -320,9 +320,10 @@ interface ContextualHelpProps {
   isVisible: boolean;
   topic: string | null;
   onClose: () => void;
+  onTopicChange?: (topic: string) => void;
 }
 
-export function ContextualHelp({ isVisible, topic, onClose }: ContextualHelpProps) {
+export function ContextualHelp({ isVisible, topic, onClose, onTopicChange }: ContextualHelpProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
@@ -396,7 +397,7 @@ export function ContextualHelp({ isVisible, topic, onClose }: ContextualHelpProp
                       ? 'bg-blue-100 border border-blue-300'
                       : 'hover:bg-white'
                   }`}
-                  onClick={() => setCurrentTopic(topic)}
+                  onClick={() => onTopicChange?.(topic.id)}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -457,7 +458,7 @@ export function ContextualHelp({ isVisible, topic, onClose }: ContextualHelpProp
                             key={relatedId}
                             variant="outline"
                             size="sm"
-                            onClick={() => setCurrentTopic(related)}
+                            onClick={() => onTopicChange?.(related.id)}
                             className="flex items-center gap-2"
                           >
                             {related.icon}

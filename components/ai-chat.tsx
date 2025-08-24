@@ -324,7 +324,7 @@ export function AIChat({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => copyToClipboard(block.code)}
+                  onClick={() => copyToClipboard(block.code, 'code')}
                   className="h-7 px-2 text-xs"
                 >
                   <Copy className="w-3 h-3" />

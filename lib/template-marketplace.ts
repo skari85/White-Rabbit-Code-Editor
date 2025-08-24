@@ -164,148 +164,37 @@ export class TemplateMarketplace {
   }
 
   private initializeMarketplace(): void {
-    // Initialize with sample templates
-    this.templates = [
-      {
-        id: 'modern-portfolio',
-        name: 'Modern Portfolio',
-        description: 'A sleek, responsive portfolio template with dark mode support',
-        category: 'portfolio',
-        tags: ['responsive', 'dark-mode', 'modern', 'portfolio'],
-        author: 'DesignPro',
-        version: '2.1.0',
-        downloads: 15420,
-        rating: 4.8,
-        reviewCount: 234,
-        price: 0,
-        featured: true,
-        preview: {
-          images: ['/templates/modern-portfolio-1.jpg', '/templates/modern-portfolio-2.jpg'],
-          demoUrl: 'https://modern-portfolio-demo.vercel.app'
-        },
-        files: this.generateSampleFiles('portfolio'),
-        dependencies: ['react', 'tailwindcss', 'framer-motion'],
-        framework: 'React',
-        difficulty: 'intermediate',
-        lastUpdated: new Date('2024-01-15'),
-        createdAt: new Date('2023-06-01'),
-        license: 'MIT',
-        documentation: 'Complete setup guide and customization instructions included.',
-        changelog: [
-          {
-            version: '2.1.0',
-            date: new Date('2024-01-15'),
-            changes: ['Added dark mode toggle', 'Improved mobile responsiveness', 'Updated dependencies']
-          }
-        ]
-      },
-      {
-        id: 'ecommerce-starter',
-        name: 'E-commerce Starter',
-        description: 'Full-featured e-commerce template with cart, checkout, and admin panel',
-        category: 'e-commerce',
-        tags: ['ecommerce', 'shopping', 'cart', 'payment', 'admin'],
-        author: 'ShopBuilder',
-        version: '1.5.2',
-        downloads: 8930,
-        rating: 4.6,
-        reviewCount: 156,
-        price: 49,
-        featured: true,
-        preview: {
-          images: ['/templates/ecommerce-1.jpg', '/templates/ecommerce-2.jpg'],
-          demoUrl: 'https://ecommerce-starter-demo.vercel.app'
-        },
-        files: this.generateSampleFiles('ecommerce'),
-        dependencies: ['next', 'stripe', 'prisma', 'tailwindcss'],
-        framework: 'Next.js',
-        difficulty: 'advanced',
-        lastUpdated: new Date('2024-01-10'),
-        createdAt: new Date('2023-03-15'),
-        license: 'Commercial'
-      },
-      {
-        id: 'blog-minimal',
-        name: 'Minimal Blog',
-        description: 'Clean and minimal blog template with markdown support',
-        category: 'blog',
-        tags: ['blog', 'minimal', 'markdown', 'clean'],
-        author: 'BlogCraft',
-        version: '1.2.0',
-        downloads: 12340,
-        rating: 4.7,
-        reviewCount: 89,
-        price: 0,
-        featured: false,
-        preview: {
-          images: ['/templates/blog-minimal-1.jpg'],
-          demoUrl: 'https://minimal-blog-demo.vercel.app'
-        },
-        files: this.generateSampleFiles('blog'),
-        dependencies: ['gatsby', 'markdown', 'styled-components'],
-        framework: 'Gatsby',
-        difficulty: 'beginner',
-        lastUpdated: new Date('2023-12-20'),
-        createdAt: new Date('2023-08-01'),
-        license: 'MIT'
-      }
-    ];
+    // Initialize with empty templates - will be loaded from API in production
+    this.templates = [];
+    this.components = [];
 
-    // Initialize with sample components
-    this.components = [
-      {
-        id: 'animated-button',
-        name: 'Animated Button',
-        description: 'Beautiful animated button with hover effects and loading states',
-        category: 'ui',
-        tags: ['button', 'animation', 'hover', 'loading'],
-        author: 'UIComponents',
-        code: this.generateSampleComponentCode('button'),
-        props: [
-          { name: 'variant', type: 'string', required: false, default: 'primary', description: 'Button variant' },
-          { name: 'loading', type: 'boolean', required: false, default: false, description: 'Loading state' },
-          { name: 'disabled', type: 'boolean', required: false, default: false, description: 'Disabled state' }
-        ],
-        examples: [
-          {
-            title: 'Basic Usage',
-            code: '<AnimatedButton>Click me</AnimatedButton>',
-            description: 'Simple button with default styling'
-          }
-        ],
-        framework: 'React',
-        dependencies: ['framer-motion'],
-        rating: 4.9,
-        downloads: 5670,
-        price: 0,
-        preview: {
-          codePreview: 'const AnimatedButton = ({ children, ...props }) => { ... }'
-        },
-        lastUpdated: new Date('2024-01-05')
-      }
-    ];
+    // Load templates from API or local storage
+    this.loadTemplatesFromAPI();
+  }
 
-    // Initialize with sample plugins
-    this.plugins = [
-      {
-        id: 'auto-formatter',
-        name: 'Auto Formatter',
-        description: 'Automatically format code on save with customizable rules',
-        category: 'editor',
-        author: 'DevTools',
-        version: '1.3.0',
-        code: this.generateSamplePluginCode('formatter'),
-        configuration: [
-          { key: 'formatOnSave', type: 'boolean', label: 'Format on Save', description: 'Automatically format code when saving', default: true, required: false },
-          { key: 'indentSize', type: 'number', label: 'Indent Size', description: 'Number of spaces for indentation', default: 2, required: false }
-        ],
-        permissions: ['file:write', 'editor:modify'],
-        rating: 4.5,
-        downloads: 3420,
-        price: 0,
-        lastUpdated: new Date('2024-01-08')
+  private async loadTemplatesFromAPI(): Promise<void> {
+    try {
+      // In production, this would load from your API
+      // For now, we'll use a minimal set of starter templates
+      this.templates = [];
+      this.components = [];
+      this.plugins = [];
+
+      // Load from localStorage if available
+      const savedTemplates = localStorage.getItem('wr-custom-templates');
+      if (savedTemplates) {
+        try {
+          this.templates = JSON.parse(savedTemplates);
+        } catch (error) {
+          // Handle parsing error
+        }
       }
-    ];
+    } catch (error) {
+      // Handle API error - fallback to empty state
+      this.templates = [];
+      this.components = [];
+      this.plugins = [];
+    }
   }
 
   // Search templates

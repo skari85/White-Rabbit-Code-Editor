@@ -180,7 +180,7 @@ export default function WhiteRabbitLayoutSwitcher({
               fileName={selectedFile?.name || 'untitled'}
               onJumpToFunction={(line) => console.log('Jump to line:', line)}
               onEditFunction={(func) => console.log('Edit function:', func)}
-              personality="hex"
+              personality="rabbit"
               isVisible={true}
               onToggleVisibility={(visible) => console.log('Toggle visibility:', visible)}
             />

@@ -150,7 +150,7 @@ export const getLanguageFromFileName = (fileName: string): string => {
   }
 };
 
-export const getEditorOptions = (config: Partial<MonacoConfig> = {}): any => {
+export const getEditorOptions = (language?: string, config: Partial<MonacoConfig> = {}, personality?: string): any => {
   const finalConfig = { ...defaultMonacoConfig, ...config };
   
   return {
@@ -185,4 +185,30 @@ export const getEditorOptions = (config: Partial<MonacoConfig> = {}): any => {
       strings: true,
     },
   };
+};
+
+// Main configuration function
+export const configureMonaco = async (monaco: Monaco) => {
+  if (typeof window === 'undefined') return;
+
+  await configureMonacoThemes(monaco);
+
+  // Configure TypeScript compiler options
+  monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+    target: monaco.languages.typescript.ScriptTarget.ES2020,
+    allowNonTsExtensions: true,
+    moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+    module: monaco.languages.typescript.ModuleKind.CommonJS,
+    noEmit: true,
+    esModuleInterop: true,
+    jsx: monaco.languages.typescript.JsxEmit.React,
+    reactNamespace: 'React',
+    allowJs: true,
+    typeRoots: ['node_modules/@types']
+  });
+
+  monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+    target: monaco.languages.typescript.ScriptTarget.ES2020,
+    allowNonTsExtensions: true
+  });
 };

@@ -25,7 +25,7 @@ export function MagicalEditor({
   onCodeChange,
   className = ''
 }: MagicalEditorProps) {
-  const [personality, setPersonality] = useState<PersonalityMode>('hex');
+  const [personality, setPersonality] = useState<PersonalityMode>('rabbit');
   const [code, setCode] = useState(initialCode);
   const [cursorPosition, setCursorPosition] = useState({ line: 0, column: 0 });
   const [showDNAThreads, setShowDNAThreads] = useState(false);

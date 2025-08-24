@@ -71,7 +71,7 @@ export const useMonaco = (props: UseMonacoProps): MonacoEditorInstance => {
         if (!monacoInstance) {
           monacoInstance = await import('monaco-editor');
           // Configure Monaco Editor with our settings
-          configureMonaco(monacoInstance, config);
+          configureMonaco(monacoInstance);
         }
         setIsLoaded(true);
       } catch (error) {
@@ -82,11 +82,10 @@ export const useMonaco = (props: UseMonacoProps): MonacoEditorInstance => {
     loadMonaco();
   }, [isClient, config]);
 
-  // Initialize editor
-  useEffect(() => {
-    if (!isLoaded || !monacoInstance || !containerRef.current) return;
+  // Initialize editor function
+  const initializeEditor = useCallback((container: HTMLDivElement) => {
+    if (!isLoaded || !monacoInstance) return;
 
-    const container = containerRef.current;
     const editorLanguage = language || getLanguageFromFileName(fileName || '');
     const editorOptions = getEditorOptions(editorLanguage, config, personality);
 
@@ -98,6 +97,35 @@ export const useMonaco = (props: UseMonacoProps): MonacoEditorInstance => {
     });
 
     editorRef.current = editor;
+
+    // Setup change listener
+    const disposable = editor.onDidChangeModelContent(() => {
+      if (onChange) {
+        onChange(editor.getValue());
+      }
+    });
+
+    // Setup cursor position listener
+    const cursorDisposable = editor.onDidChangeCursorPosition((e) => {
+      if (onCursorPositionChange) {
+        onCursorPositionChange({ line: e.position.lineNumber, column: e.position.column });
+      }
+    });
+
+    return () => {
+      disposable.dispose();
+      cursorDisposable.dispose();
+      editor.dispose();
+    };
+  }, [isLoaded, monacoInstance, language, fileName, config, personality, value, readOnly, onChange, onCursorPositionChange]);
+
+  // Initialize editor when container is available
+  useEffect(() => {
+    if (!isLoaded || !monacoInstance || !containerRef.current) return;
+
+    const cleanup = initializeEditor(containerRef.current);
+    return cleanup;
+  }, [initializeEditor]);
 
   // Update editor value when prop changes
   useEffect(() => {
@@ -112,21 +140,25 @@ export const useMonaco = (props: UseMonacoProps): MonacoEditorInstance => {
 
   // Update editor language when it changes
   useEffect(() => {
-    if (editorRef.current) {
+    if (editorRef.current && monacoInstance) {
       const model = editorRef.current.getModel();
       if (model) {
-        monaco.editor.setModelLanguage(model, editorLanguage);
+        const editorLanguage = language || getLanguageFromFileName(fileName || '');
+        monacoInstance.editor.setModelLanguage(model, editorLanguage);
       }
     }
-  }, [editorLanguage]);
+  }, [language, fileName, monacoInstance]);
 
   // Update theme when personality changes
   useEffect(() => {
-    if (editorRef.current) {
-      const theme = getTheme();
-      monaco.editor.setTheme(theme);
+    if (editorRef.current && monacoInstance) {
+      const theme = config.theme || 'vs-dark';
+      monacoInstance.editor.setTheme(theme);
     }
-  }, [getTheme]);
+  }, [config.theme, monacoInstance]);
+
+  // Breakpoints state
+  const [breakpoints, setBreakpoints] = useState<number[]>([]);
 
   // Breakpoint management
   const toggleBreakpoint = useCallback((line: number) => {
@@ -134,11 +166,11 @@ export const useMonaco = (props: UseMonacoProps): MonacoEditorInstance => {
       const newBreakpoints = prev.includes(line)
         ? prev.filter(bp => bp !== line)
         : [...prev, line];
-      
+
       // Update editor decorations
-      if (editorRef.current) {
+      if (editorRef.current && monacoInstance) {
         const decorations = newBreakpoints.map(bp => ({
-          range: new monaco.Range(bp, 1, bp, 1),
+          range: new monacoInstance!.Range(bp, 1, bp, 1),
           options: {
             isWholeLine: true,
             className: 'breakpoint-decoration',
@@ -148,10 +180,10 @@ export const useMonaco = (props: UseMonacoProps): MonacoEditorInstance => {
         }));
         editorRef.current.deltaDecorations([], decorations);
       }
-      
+
       return newBreakpoints;
     });
-  }, []);
+  }, [monacoInstance]);
 
   // API methods
   const focus = useCallback(() => {
@@ -180,16 +212,16 @@ export const useMonaco = (props: UseMonacoProps): MonacoEditorInstance => {
 
   const insertText = useCallback((text: string) => {
     const editor = editorRef.current;
-    if (!editor) return;
+    if (!editor || !monacoInstance) return;
 
     const position = editor.getPosition();
     if (position) {
       editor.executeEdits('insert-text', [{
-        range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+        range: new monacoInstance.Range(position.lineNumber, position.column, position.lineNumber, position.column),
         text
       }]);
     }
-  }, []);
+  }, [monacoInstance]);
 
   const formatDocument = useCallback(() => {
     editorRef.current?.getAction('editor.action.formatDocument')?.run();
@@ -228,8 +260,10 @@ export const useMonaco = (props: UseMonacoProps): MonacoEditorInstance => {
   }, [breakpoints]);
 
   const setTheme = useCallback((theme: string) => {
-    monaco.editor.setTheme(theme);
-  }, []);
+    if (monacoInstance) {
+      monacoInstance.editor.setTheme(theme);
+    }
+  }, [monacoInstance]);
 
   const resize = useCallback(() => {
     editorRef.current?.layout();
@@ -238,11 +272,11 @@ export const useMonaco = (props: UseMonacoProps): MonacoEditorInstance => {
   // Set container ref and initialize editor
   const setContainer = useCallback((container: HTMLDivElement | null) => {
     containerRef.current = container;
-    if (container && isConfigured) {
+    if (container && isLoaded) {
       const cleanup = initializeEditor(container);
       return cleanup;
     }
-  }, [initializeEditor, isConfigured]);
+  }, [initializeEditor, isLoaded]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -256,7 +290,7 @@ export const useMonaco = (props: UseMonacoProps): MonacoEditorInstance => {
 
   return {
     editor: editorRef.current,
-    monaco,
+    monaco: monacoInstance,
     focus,
     getValue,
     setValue,

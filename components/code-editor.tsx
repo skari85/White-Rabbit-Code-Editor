@@ -9,9 +9,8 @@
  * For commercial licensing, contact: licensing@whiterabbit.dev
  */
 
-import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useTheme } from "next-themes";
 
 import { useCodeBuilder, FileContent } from "@/hooks/use-code-builder";
 import { useAIAssistantEnhanced } from "@/hooks/use-ai-assistant-enhanced";
@@ -21,11 +20,7 @@ import { AIChat } from "@/components/ai-chat";
 import { useTerminal } from "@/hooks/use-terminal";
 import LiveCodingEngine from "@/components/live-coding-engine";
 import { useSession } from "next-auth/react";
-import { AdvancedLayoutSystem, LayoutConfig, PaneType } from "@/components/advanced-layout-system";
-import { ResizableLayoutRenderer } from "@/components/resizable-layout-renderer";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { LayoutControls } from "@/components/layout-controls";
-import { useLayoutPersistence } from "@/hooks/use-layout-persistence";
 import {
   Download,
   ExternalLink,
@@ -37,8 +32,6 @@ import {
   RefreshCw,
   Package,
   Settings,
-  Sun,
-  Moon,
   Code,
   Rocket,
   Keyboard
@@ -50,7 +43,7 @@ import { useAutoSave } from '@/hooks/use-debounced-auto-save';
 import FileTabs from './file-tabs';
 import SplitEditorLayout from './split-editor-layout';
 import SplitControls, { useSplitKeyboardShortcuts } from './split-controls';
-import { useResponsiveLayout, useMobileLayout } from '@/hooks/use-responsive-layout';
+import { useResponsiveLayout } from '@/hooks/use-responsive-layout';
 
 import LivePreview from './live-preview';
 import ExtensionMarketplace from './extension-marketplace';
@@ -69,21 +62,14 @@ import { KeyboardShortcutsService } from '@/lib/keyboard-shortcuts-service';
 import DarkModeToggleButton from './DarkModeToggleButton';
 import dynamic from 'next/dynamic';
 import EnhancedOnboarding from './enhanced-onboarding';
-import { HelpProvider, HelpButton } from './contextual-help';
 import CompactKeyboardShortcuts from './compact-keyboard-shortcuts';
+import { LoadingSpinner, LoadingOverlay, AILoadingSpinner, FileLoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorDisplay, AIError, FileError, NetworkError } from '@/components/ui/error-display';
+import { useNotifications, notificationUtils } from '@/components/ui/notification-system';
+import { useIDEShortcuts, useAIShortcuts } from '@/hooks/use-keyboard-shortcuts';
+import { useFormValidation, fileValidation, aiSettingsValidation } from '@/hooks/use-form-validation';
 
 // Code splitting for heavy components
-const MonacoEditor = dynamic(() => import('./enhanced-monaco-editor'), {
-  loading: () => (
-    <div className="h-full flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-        <p className="text-sm text-gray-600">Loading Editor...</p>
-      </div>
-    </div>
-  ),
-  ssr: false
-});
 
 const VisualProgrammingInterface = dynamic(() => import('./visual-programming-interface'), {
   loading: () => (
@@ -113,19 +99,40 @@ export default function CodeEditor() {
   // Analytics
   const {
     trackFileCreated,
-    trackPreviewOpened,
-    trackAIInteraction,
-    trackFeatureUsed,
     trackUserSession
   } = useAnalytics();
 
-  // Layout System
-  const {
-    currentLayout,
-    customLayouts,
-    saveCurrentLayout,
-    isLoading: layoutLoading
-  } = useLayoutPersistence();
+  // Notifications
+  const notifications = useNotifications();
+
+  // Keyboard shortcuts
+  useIDEShortcuts({
+    onSave: () => {
+      if (selectedFile) {
+        const notif = notificationUtils.fileSaved(selectedFile);
+        notifications.success(notif.title, notif.description);
+      }
+    },
+    onNew: () => {
+      const fileName = prompt('Enter file name:');
+      if (fileName) {
+        addNewFile(fileName, 'txt');
+        setSelectedFile(fileName);
+        notifications.success('File Created', `${fileName} has been created`);
+      }
+    },
+    onToggleTerminal: () => setViewMode(prev => prev === 'terminal' ? 'code' : 'terminal'),
+    onToggleSidebar: () => {
+      // Toggle sidebar logic would go here
+    }
+  });
+
+  useAIShortcuts({
+    onAIChat: () => setViewMode('code'), // Focus on AI chat
+    onGenerateCode: () => {
+      // Trigger AI code generation
+    }
+  });
 
   // Code Builder hooks
   const {
@@ -136,13 +143,11 @@ export default function CodeEditor() {
     addNewFile,
     deleteFile,
     getSelectedFileContent,
-    parseAndApplyAIResponse,
     initializeDefaultProject
   } = useCodeBuilder();
 
   // AI Assistant
   const {
-    sendMessage: sendAIMessage,
     sendStreamingMessage: sendAIStreamingMessage,
     isLoading: aiLoading,
     settings: aiSettings,
@@ -161,14 +166,11 @@ export default function CodeEditor() {
   const { getActiveSession, createSession, executeCommand } = terminal;
 
   const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace" | "git" | "visual">("code");
-  const [showLayoutControls, setShowLayoutControls] = useState(true);
-  const [activeLayout, setActiveLayout] = useState<LayoutConfig | null>(currentLayout);
   // Live diff tracking (simple per-file snapshot)
   const [diffs, setDiffs] = useState<Record<string, DiffEntry>>({});
   const [openDiff, setOpenDiff] = useState<DiffEntry | null>(null);
 
   // Loading states
-  const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -187,7 +189,7 @@ export default function CodeEditor() {
         
         setIsInitializing(false);
       } catch (error) {
-        console.error('Failed to initialize app:', error);
+        // Log error to monitoring service in production
         setIsInitializing(false);
       }
     };
@@ -260,7 +262,6 @@ export default function CodeEditor() {
 
   // Responsive layout
   const responsiveConfig = useResponsiveLayout();
-  const mobileLayout = useMobileLayout();
 
   // Split-screen state - disable on mobile/tablet
   const [useSplitLayout, setUseSplitLayout] = useState(false);
@@ -480,8 +481,8 @@ export default function CodeEditor() {
   // Auto-save functionality
   const autoSave = useAutoSave({
     delay: 2000,
-    onSave: async (data: any) => {
-      console.log('Auto-saving:', data);
+    onSave: async () => {
+      // Auto-save completed
     }
   });
 
@@ -531,6 +532,8 @@ export default function CodeEditor() {
 
   // Enhanced AI integration with context awareness
   const handleSendMessage = useCallback(async (message: string) => {
+    const loadingId = notifications.loading('AI Processing', 'Generating response...');
+
     try {
       const context = {
         files: files,
@@ -540,10 +543,14 @@ export default function CodeEditor() {
 
       // Stream the response and let the assistant apply file commands directly
       await sendAIStreamingMessage(message, context);
+      notifications.removeNotification(loadingId);
+      notifications.success('AI Response', 'Response generated successfully');
     } catch (error) {
-      console.error('Error sending message to AI:', error);
+      notifications.removeNotification(loadingId);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      notifications.error('AI Error', `Failed to generate response: ${errorMessage}`);
     }
-  }, [sendAIStreamingMessage, files, selectedFile, aiSettings]);
+  }, [sendAIStreamingMessage, files, selectedFile, aiSettings, notifications]);
 
   const handleCodeColorToggle = () => {
     setCodeColor(!codeColor);
@@ -565,17 +572,23 @@ export default function CodeEditor() {
   const handleGenerateDocumentation = useCallback(async (fileName: string, code: string) => {
     if (!fileName || !code.trim()) return;
 
+    const loadingId = notifications.loading('Generating Documentation', `Creating documentation for ${fileName}...`);
     setDocumentationLoading(true);
+
     try {
       const fileType = fileName.split('.').pop()?.toLowerCase() || 'txt';
       const documentation = await generateDocumentation(code, fileName, fileType);
       setDocumentationData(documentation);
+      notifications.removeNotification(loadingId);
+      notifications.success('Documentation Generated', `Documentation for ${fileName} is ready`);
     } catch (error) {
-      console.error('Failed to generate documentation:', error);
+      notifications.removeNotification(loadingId);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      notifications.error('Documentation Error', `Failed to generate documentation: ${errorMessage}`);
     } finally {
       setDocumentationLoading(false);
     }
-  }, [generateDocumentation]);
+  }, [generateDocumentation, notifications]);
 
   const handleCloseDocumentation = useCallback(() => {
     setShowDocumentation(false);
@@ -592,12 +605,12 @@ export default function CodeEditor() {
 
   const handleRunInspections = useCallback(async () => {
     if (!selectedFile || !getSelectedFileContent()) {
-      console.warn('No file selected or content available for inspection');
+      notifications.warning('No File Selected', 'Please select a file to run inspections');
       return;
     }
 
+    const loadingId = notifications.loading('Running Code Inspection', `Analyzing ${selectedFile}...`);
     setInspectionLoading(true);
-    console.log('🔍 Starting code inspection for:', selectedFile);
 
     try {
       // Import the service dynamically to avoid SSR issues
@@ -621,8 +634,6 @@ export default function CodeEditor() {
                       fileType === 'html' ? 'html' :
                       'javascript';
 
-      console.log('🔍 Running inspection with language:', language);
-
       const results = await service.inspectCode(
         getSelectedFileContent(),
         selectedFile,
@@ -630,18 +641,19 @@ export default function CodeEditor() {
         { files: files.slice(0, 5).map(f => ({ name: f.name, content: f.content })) }
       );
 
-      console.log('✅ Inspection completed. Found', results.length, 'issues');
       setInspections(results);
+      notifications.removeNotification(loadingId);
 
-      // Show success notification
       if (results.length === 0) {
-        console.log('🎉 No issues found in', selectedFile);
+        notifications.success('Code Inspection Complete', 'No issues found in your code!');
       } else {
-        console.log('⚠️ Found', results.length, 'issues in', selectedFile);
+        notifications.info('Code Inspection Complete', `Found ${results.length} issue${results.length > 1 ? 's' : ''} to review`);
       }
 
     } catch (error) {
-      console.error('❌ Code inspection failed:', error);
+      notifications.removeNotification(loadingId);
+      notifications.error('Inspection Error', 'Failed to run code inspection. Using fallback analysis.');
+
       setInspections([]);
 
       // Add some basic fallback inspections for demonstration
@@ -666,11 +678,9 @@ export default function CodeEditor() {
     } finally {
       setInspectionLoading(false);
     }
-  }, [selectedFile, getSelectedFileContent, aiConfigured, aiSettings, files]);
+  }, [selectedFile, getSelectedFileContent, aiConfigured, aiSettings, files, notifications]);
 
   const handleInspectionClick = useCallback((inspection: any) => {
-    console.log('🎯 Navigating to inspection:', inspection);
-
     // If the inspection is for a different file, switch to that file first
     if (inspection.fileName && inspection.fileName !== selectedFile) {
       setSelectedFile(inspection.fileName);
@@ -691,49 +701,36 @@ export default function CodeEditor() {
             }
           });
           monacoContainer.dispatchEvent(event);
-
-          console.log('📍 Navigated to line', inspection.range.startLineNumber);
-        } else {
-          console.warn('Monaco editor not found for navigation');
         }
       } catch (error) {
-        console.error('Failed to navigate to inspection location:', error);
+        // Handle navigation error silently
       }
     }, 100);
   }, [selectedFile, setSelectedFile]);
 
   const handleQuickFix = useCallback(async (inspection: any) => {
     if (!inspection.quickFix || !selectedFile) {
-      console.warn('No quick fix available or no file selected');
       return;
     }
-
-    console.log('🔧 Applying quick fix:', inspection.quickFix.title);
 
     try {
       const { QuickFixService } = await import('@/lib/code-inspection-service');
       const currentCode = getSelectedFileContent();
 
       if (!currentCode) {
-        console.warn('No content available for quick fix');
         return;
       }
 
       const fixedCode = QuickFixService.applyQuickFix(currentCode, inspection.quickFix);
       updateFileContent(selectedFile, fixedCode);
 
-      console.log('✅ Quick fix applied successfully');
-
       // Re-run inspections after applying fix to see if issue is resolved
       setTimeout(() => {
-        console.log('🔄 Re-running inspections after quick fix...');
         handleRunInspections();
       }, 500);
 
     } catch (error) {
-      console.error('❌ Quick fix failed:', error);
-      // Don't throw the error to prevent UI crashes
-      console.error('Quick fix error details:', error);
+      // Handle quick fix error silently
     }
   }, [selectedFile, getSelectedFileContent, updateFileContent, handleRunInspections]);
 
@@ -748,31 +745,7 @@ export default function CodeEditor() {
     return !!cached;
   }, [selectedFile, getCachedDocumentation]);
 
-  // Memoize the onCodeGenerated callback to prevent infinite re-renders
-  const handleCodeGenerated = useCallback((filename: string, content: string) => {
-    // Determine file type from extension
-    const getFileType = (name: string): 'html' | 'css' | 'js' | 'json' | 'md' | 'tsx' | 'ts' | 'py' | 'txt' => {
-      const ext = name.split('.').pop()?.toLowerCase();
-      switch (ext) {
-        case 'html': case 'htm': return 'html';
-        case 'css': return 'css';
-        case 'js': case 'jsx': return 'js';
-        case 'ts': return 'ts';
-        case 'tsx': return 'tsx';
-        case 'json': return 'json';
-        case 'md': return 'md';
-        case 'py': return 'py';
-        default: return 'txt';
-      }
-    };
 
-    // Add the generated file to the project
-    addNewFile(filename, getFileType(filename));
-    // Update the file content
-    updateFileContent(filename, content);
-    // Select the newly created file
-    setSelectedFile(filename);
-  }, [addNewFile, updateFileContent, setSelectedFile]);
 
   // Helper function to get file type from language
   const getFileTypeFromLanguage = (language: string): 'html' | 'css' | 'js' | 'json' | 'md' | 'tsx' | 'ts' | 'py' | 'txt' => {
@@ -1039,16 +1012,13 @@ export default function CodeEditor() {
                 setTimeout(() => updateFileContent(filename, content), 100);
                 setSelectedFile(filename);
                 setViewMode('code');
-                
-                // Show success notification
-                console.log(`AI generated file: ${filename} with ${language} code`);
-                
+
                 // Also offer to insert into current file if one is open
                 if (selectedFile) {
                   const shouldInsertIntoCurrent = window.confirm(
                     `Code generated as new file: ${filename}\n\nWould you like to also insert this code into the currently open file: ${selectedFile}?`
                   );
-                  
+
                   if (shouldInsertIntoCurrent) {
                     // Get current content and append the new code
                     const currentFile = files.find(f => f.name === selectedFile);
@@ -1056,7 +1026,6 @@ export default function CodeEditor() {
                       const separator = '\n\n// === AI Generated Code ===\n';
                       const newContent = currentFile.content + separator + content;
                       updateFileContent(selectedFile, newContent);
-                      console.log(`Code also inserted into current file: ${selectedFile}`);
                     }
                   }
                 }
@@ -1257,9 +1226,8 @@ export default function CodeEditor() {
                     updateFileContent(fileName, newContent);
                   }
                 }}
-                onFormatCode={(fileName) => {
+                onFormatCode={() => {
                   // Implement format functionality
-                  console.log('Format code for:', fileName);
                 }}
               />
 
@@ -1422,12 +1390,10 @@ export default function CodeEditor() {
                       setSelectedFile(fileName);
                       setViewMode('code');
                     }}
-                    onSaveTemplate={(template) => {
-                      console.log('Template saved:', template);
+                    onSaveTemplate={() => {
                       // Implementation for saving templates
                     }}
-                    onLoadTemplate={(template) => {
-                      console.log('Template loaded:', template);
+                    onLoadTemplate={() => {
                       // Implementation for loading templates
                     }}
                     className="h-full"
@@ -1457,7 +1423,7 @@ export default function CodeEditor() {
                     }
                     await terminal.executeCommand(command);
                   } catch (error) {
-                    console.error('Terminal command failed:', error);
+                    // Handle terminal command error
                   }
                 }}
                 onOpenFile={(filePath, lineNumber, columnNumber) => {
@@ -1466,7 +1432,6 @@ export default function CodeEditor() {
                   if (existingFile) {
                     setSelectedFile(existingFile.name);
                     // TODO: Navigate to specific line number in Monaco editor
-                    console.log(`Opening file: ${existingFile.name} at line ${lineNumber}:${columnNumber}`);
                   } else {
                     // Try to create a new file if it doesn't exist
                     const fileName = filePath.split('/').pop() || filePath;

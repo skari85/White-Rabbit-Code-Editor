@@ -14,10 +14,14 @@ interface AutoSaveState {
   saveCount: number;
 }
 
+interface ExtendedAutoSaveState extends AutoSaveState {
+  performSave: () => void;
+}
+
 export function useAutoSave<T>(
   data: T,
   options: AutoSaveOptions = {}
-): AutoSaveState {
+): ExtendedAutoSaveState {
   const {
     delay = 2000, // 2 seconds default
     enabled = true,
@@ -32,8 +36,8 @@ export function useAutoSave<T>(
     saveCount: 0
   });
 
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  const lastDataRef = useRef<T>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastDataRef = useRef<T | null>(null);
 
   // Auto-save to localStorage as fallback
   const saveToLocalStorage = (data: T) => {
@@ -164,8 +168,6 @@ export function useAutoSave<T>(
   return {
     ...state,
     // Expose utility functions
-    saveToLocalStorage,
-    loadFromLocalStorage,
     performSave: () => performSave(data)
   };
 }

@@ -6,7 +6,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 
 export default function CodeConsole() {
   return (
-    <ErrorBoundary level="page" showDetails={true}>
+    <ErrorBoundary>
       <div className="w-full h-screen bg-background">
         <CodeEditor />
       </div>

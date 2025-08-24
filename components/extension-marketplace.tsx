@@ -34,7 +34,7 @@ import {
   Info,
   Play,
   Pause,
-  Stop
+  Square
 } from 'lucide-react';
 
 interface Extension {

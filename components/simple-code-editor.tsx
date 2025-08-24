@@ -146,7 +146,7 @@ export default function SimpleCodeEditor({
     // Selection and cursor
     selectOnLineNumbers: true,
     selectionHighlight: true,
-    occurrencesHighlight: true,
+    occurrencesHighlight: 'singleFile' as const,
     renderLineHighlight: 'all' as const,
     renderLineHighlightOnlyWhenFocus: false,
     cursorBlinking: 'blink' as const,
@@ -207,7 +207,7 @@ export default function SimpleCodeEditor({
     // Code lens and lightbulb
     codeLens: true,
     lightbulb: {
-      enabled: 'on' as const,
+      enabled: true,
     },
 
     // Find and replace

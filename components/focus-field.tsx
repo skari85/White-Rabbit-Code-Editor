@@ -115,7 +115,7 @@ export default function FocusField({
       case 'import':
         return <Import className="w-4 h-4 text-purple-500" />;
       case 'export':
-        return <Export className="w-4 h-4 text-indigo-500" />;
+        return <FileDown className="w-4 h-4 text-indigo-500" />;
       default:
         return <Info className="w-4 h-4 text-gray-500" />;
     }

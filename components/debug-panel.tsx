@@ -68,7 +68,7 @@ interface DebugPanelProps {
   className?: string
 }
 
-export function DebugPanel({ debugger, onFileSelect, className }: DebugPanelProps) {
+export function DebugPanel({ debugger: debugService, onFileSelect, className }: DebugPanelProps) {
   const [activeSession, setActiveSession] = useState<DebugSession | null>(null)
   const [breakpoints, setBreakpoints] = useState<Breakpoint[]>([])
   const [showConfigDialog, setShowConfigDialog] = useState(false)
@@ -95,28 +95,28 @@ export function DebugPanel({ debugger, onFileSelect, className }: DebugPanelProp
     }
 
     // Set up debugger callbacks
-    debugger['onSessionUpdate'] = updateSession
-    debugger['onBreakpointUpdate'] = updateBreakpoints
+    debugService['onSessionUpdate'] = updateSession
+    debugService['onBreakpointUpdate'] = updateBreakpoints
 
     // Initial load
-    setActiveSession(debugger.getActiveSession())
-    setBreakpoints(debugger.getAllBreakpoints())
+    setActiveSession(debugService.getActiveSession())
+    setBreakpoints(debugService.getAllBreakpoints())
 
     return () => {
-      debugger['onSessionUpdate'] = undefined
-      debugger['onBreakpointUpdate'] = undefined
+      debugService['onSessionUpdate'] = undefined
+      debugService['onBreakpointUpdate'] = undefined
     }
-  }, [debugger])
+  }, [debugService])
 
   // Start debug session
   const handleStartDebugging = async () => {
     try {
-      await debugger.createSession(debugConfig)
-      await debugger.start()
+      await debugService.createSession(debugConfig)
+      await debugService.start()
       setShowConfigDialog(false)
       trackFeatureUsed('debug_start')
     } catch (error) {
-      console.error('Failed to start debugging:', error)
+      // Handle debugging start error
     }
   }
 
@@ -128,49 +128,49 @@ export function DebugPanel({ debugger, onFileSelect, className }: DebugPanelProp
     }
 
     if (activeSession.status === 'paused') {
-      await debugger.continue()
+      await debugService.continue()
     } else {
-      await debugger.start()
+      await debugService.start()
     }
     trackFeatureUsed('debug_play')
   }
 
   const handlePause = async () => {
-    await debugger.pause()
+    await debugService.pause()
     trackFeatureUsed('debug_pause')
   }
 
   const handleStop = async () => {
-    await debugger.stop()
+    await debugService.stop()
     trackFeatureUsed('debug_stop')
   }
 
   const handleStepOver = async () => {
-    await debugger.stepOver()
+    await debugService.stepOver()
     trackFeatureUsed('debug_step_over')
   }
 
   const handleStepInto = async () => {
-    await debugger.stepInto()
+    await debugService.stepInto()
     trackFeatureUsed('debug_step_into')
   }
 
   const handleStepOut = async () => {
-    await debugger.stepOut()
+    await debugService.stepOut()
     trackFeatureUsed('debug_step_out')
   }
 
   // Breakpoint management
   const handleToggleBreakpoint = (breakpointId: string) => {
-    debugger.toggleBreakpoint(breakpointId)
+    debugService.toggleBreakpoint(breakpointId)
   }
 
   const handleRemoveBreakpoint = (breakpointId: string) => {
-    debugger.removeBreakpoint(breakpointId)
+    debugService.removeBreakpoint(breakpointId)
   }
 
   const handleClearAllBreakpoints = () => {
-    debugger.clearAllBreakpoints()
+    debugService.clearAllBreakpoints()
   }
 
   // Variable expansion
@@ -189,12 +189,12 @@ export function DebugPanel({ debugger, onFileSelect, className }: DebugPanelProp
     if (!watchExpression.trim()) return
 
     try {
-      const result = await debugger.evaluateExpression(watchExpression)
+      const result = await debugService.evaluateExpression(watchExpression)
       setWatchedVariables(prev => [...prev, result])
       setWatchExpression('')
       trackFeatureUsed('debug_watch_expression')
     } catch (error) {
-      console.error('Failed to evaluate watch expression:', error)
+      // Handle watch expression evaluation error
     }
   }
 

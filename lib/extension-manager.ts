@@ -260,8 +260,8 @@ export class ExtensionManager {
   async searchExtensions(query: string, category?: string): Promise<Extension[]> {
     try {
       // In a real implementation, this would call the OpenVSX API
-      // For now, return mock data
-      return this.getMockExtensions().filter(ext => {
+      const extensions = await this.getExtensionsFromRegistry();
+      return extensions.filter(ext => {
         const matchesQuery = ext.displayName.toLowerCase().includes(query.toLowerCase()) ||
                             ext.description.toLowerCase().includes(query.toLowerCase());
         const matchesCategory = !category || category === 'all' || ext.categories.includes(category);
@@ -332,79 +332,19 @@ export class ExtensionManager {
       .join(' ');
   }
 
-  // Get mock extensions for demo
-  private getMockExtensions(): Extension[] {
-    return [
-      {
-        id: 'ms-vscode.vscode-typescript-next',
-        name: 'vscode-typescript-next',
-        displayName: 'TypeScript Next',
-        description: 'TypeScript language support for VS Code',
-        version: '4.9.0',
-        publisher: {
-          displayName: 'Microsoft',
-          publisherId: 'ms-vscode'
-        },
-        categories: ['Programming Languages'],
-        tags: ['typescript', 'javascript', 'language'],
-        downloadCount: 15000000,
-        rating: 4.8,
-        ratingCount: 1250,
-        lastUpdated: '2024-01-15',
-        publishedDate: '2023-12-01',
-        iconUrl: 'https://open-vsx.org/api/ms-vscode/vscode-typescript-next/4.9.0/file/icon',
-        repository: 'https://github.com/microsoft/vscode',
-        homepage: 'https://code.visualstudio.com/',
-        license: 'MIT',
-        engines: { vscode: '^1.60.0' }
-      },
-      {
-        id: 'esbenp.prettier-vscode',
-        name: 'prettier-vscode',
-        displayName: 'Prettier - Code formatter',
-        description: 'Code formatter using prettier',
-        version: '9.0.0',
-        publisher: {
-          displayName: 'Prettier',
-          publisherId: 'esbenp'
-        },
-        categories: ['Formatters'],
-        tags: ['formatter', 'prettier', 'beautify'],
-        downloadCount: 25000000,
-        rating: 4.9,
-        ratingCount: 2100,
-        lastUpdated: '2024-01-10',
-        publishedDate: '2023-11-15',
-        iconUrl: 'https://open-vsx.org/api/esbenp/prettier-vscode/9.0.0/file/icon',
-        repository: 'https://github.com/prettier/prettier-vscode',
-        homepage: 'https://prettier.io/',
-        license: 'MIT',
-        engines: { vscode: '^1.60.0' }
-      },
-      {
-        id: 'ms-vscode.vscode-eslint',
-        name: 'vscode-eslint',
-        displayName: 'ESLint',
-        description: 'Find and fix problems in your JavaScript code',
-        version: '2.4.0',
-        publisher: {
-          displayName: 'Microsoft',
-          publisherId: 'ms-vscode'
-        },
-        categories: ['Linters'],
-        tags: ['eslint', 'javascript', 'linting'],
-        downloadCount: 18000000,
-        rating: 4.7,
-        ratingCount: 980,
-        lastUpdated: '2024-01-12',
-        publishedDate: '2023-12-10',
-        iconUrl: 'https://open-vsx.org/api/ms-vscode/vscode-eslint/2.4.0/file/icon',
-        repository: 'https://github.com/microsoft/vscode-eslint',
-        homepage: 'https://eslint.org/',
-        license: 'MIT',
-        engines: { vscode: '^1.60.0' }
+  // Get extensions from registry
+  private async getExtensionsFromRegistry(): Promise<Extension[]> {
+    try {
+      // In production, this would fetch from Open VSX Registry or similar
+      // For now, return empty array and load from localStorage if available
+      const savedExtensions = localStorage.getItem('wr-installed-extensions');
+      if (savedExtensions) {
+        return JSON.parse(savedExtensions);
       }
-    ];
+      return [];
+    } catch (error) {
+      return [];
+    }
   }
 
   // Event system for extension lifecycle
