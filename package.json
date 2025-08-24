@@ -27,7 +27,7 @@
     "analyze:dev": "ANALYZE=true npm run dev"
   },
   "dependencies": {
-    "@hookform/resolvers": "^3.9.1",
+    "@hookform/resolvers": "^5.2.1",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
