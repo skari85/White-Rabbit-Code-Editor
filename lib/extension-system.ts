@@ -809,3 +809,6 @@ export class ExtensionSystem {
     }
   }
 }
+
+// Export a singleton instance for app-wide usage
+export const extensionSystem = new ExtensionSystem();

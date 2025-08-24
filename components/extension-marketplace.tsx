@@ -36,6 +36,8 @@ import {
   Pause,
   Square
 } from 'lucide-react';
+import { extensionManager } from '@/lib/extension-manager';
+import { extensionSystem } from '@/lib/extension-system';
 
 interface Extension {
   id: string;
@@ -371,9 +373,30 @@ export default function ExtensionMarketplace({ className = '' }: ExtensionMarket
       // Simulate download and installation delay
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      const installedExtension = { 
-        ...extension, 
-        isInstalled: true, 
+      const installedExt = await extensionManager.installExtension(extension as any);
+      try {
+        await extensionSystem.installExtension({
+          id: installedExt.id,
+          name: installedExt.name,
+          version: installedExt.version,
+          description: installedExt.description,
+          author: installedExt.publisher.displayName,
+          displayName: installedExt.displayName,
+          category: 'Other',
+          keywords: installedExt.tags,
+          engines: { whiterabbit: '^1.0.0' },
+          contributes: {},
+          activationEvents: ['*'],
+          main: './extension.js'
+        }, installedExt.localPath || '/extensions');
+        await extensionSystem.activateExtension(installedExt.id);
+      } catch (e) {
+        console.warn('ExtensionSystem install/activate simulation failed:', e);
+      }
+
+      const installedExtension = {
+        ...extension,
+        isInstalled: true,
         isEnabled: true,
         isInstalling: false,
         localVersion: extension.version
@@ -410,6 +433,13 @@ export default function ExtensionMarketplace({ className = '' }: ExtensionMarket
       setExtensions(prev => prev.map(ext => 
         ext.id === extension.id ? { ...ext, isInstalled: false, isEnabled: false } : ext
       ));
+
+      try {
+        await extensionSystem.deactivateExtension(extension.id);
+        await extensionSystem.uninstallExtension(extension.id);
+      } catch (e) {
+        console.warn('ExtensionSystem uninstall simulation failed:', e);
+      }
 
       console.log(`Extension ${extension.displayName} uninstalled successfully`);
     } catch (error) {
