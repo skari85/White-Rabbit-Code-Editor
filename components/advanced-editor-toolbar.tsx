@@ -165,6 +165,15 @@ export default function AdvancedEditorToolbar({
           <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={() => (window as any).wrOpenStylePanel?.()}>
             <Palette className="w-4 h-4" /> Style
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+            onClick={() => window.open('/visual-tools', '_blank')}
+            title="Open Visual Tools"
+          >
+            <Zap className="w-4 h-4" /> Visual Tools
+          </Button>
         {/* Onboarding/Shortcuts */}
         <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={() => (window as any).wrOpenOnboarding?.()}>
