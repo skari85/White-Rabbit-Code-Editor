@@ -791,6 +791,17 @@ export default function CodeEditor() {
 
   const [showEnhancedOnboarding, setShowEnhancedOnboarding] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('wr-welcome-dismissed') === '1' ? false : true;
+    } catch {
+      return true;
+    }
+  });
+  const dismissWelcome = useCallback(() => {
+    try { localStorage.setItem('wr-welcome-dismissed', '1'); } catch {}
+    setShowWelcome(false);
+  }, []);
 
   useEffect(() => {
     // Check if user has completed onboarding
@@ -1472,6 +1483,68 @@ export default function CodeEditor() {
       </ResizablePanelGroup>
 
       {/* Overlays */}
+      {showWelcome && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-auto"
+          onClick={dismissWelcome}
+          onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter') dismissWelcome(); }}
+          tabIndex={0}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="mx-4 w-full max-w-xl rounded-2xl border border-white/10 bg-neutral-900/90 p-6 shadow-2xl pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-9 w-9 rounded bg-white flex items-center justify-center overflow-hidden">
+                <img src="/whitebunnylogo.png" alt="White Rabbit" className="h-full w-full object-contain" />
+              </div>
+              <h3 className="text-lg font-semibold text-white flex-1">Welcome</h3>
+              <button type="button" onClick={dismissWelcome} className="text-neutral-300 hover:text-white">✕</button>
+            </div>
+            <p className="text-neutral-300 text-sm leading-relaxed mb-5">
+              Welcome, human. How are we doing today? Choose an action to get started.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                onClick={dismissWelcome}
+                className="bg-gradient-to-r from-purple-600 to-cyan-400 text-white"
+              >
+                Enter Editor
+              </Button>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  const name = 'welcome.txt';
+                  if (!files.find(f => f.name === name)) {
+                    addNewFile(name, 'txt');
+                  }
+                  setTimeout(() => {
+                    updateFileContent(name, `# Welcome\n\nTell me what you want to build.`);
+                    setSelectedFile(name);
+                  }, 0);
+                  dismissWelcome();
+                }}
+              >
+                Create Welcome File
+              </Button>
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => {
+                  setViewMode('visual-tools');
+                  dismissWelcome();
+                }}
+              >
+                Explore Visual Tools
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} />
       <CommandPalette keyboardService={ksInstance} open={showCommandPalette} onOpenChange={setShowCommandPalette} />
       <EnhancedOnboarding

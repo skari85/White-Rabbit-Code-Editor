@@ -15,6 +15,10 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev -p 3012",
+    "dev:3020": "next dev -p 3020",
+    "check-deps": "node scripts/check-deps.js",
+    "restore-deps": "node scripts/restore-deps.js",
+    "preinstall": "node scripts/check-deps.js",
     "lint": "next lint",
     "start": "next start",
     "deploy": "node scripts/deploy.js",
@@ -55,7 +59,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
-    "autoprefixer": "^10.4.21",
+    "autoprefixer": "10.4.21",
     "blockly": "^12.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -76,12 +80,12 @@
     "next-themes": "latest",
     "papaparse": "^5.4.1",
     "plotly.js": "^2.29.1",
-    "postcss-import": "^16.1.1",
-    "postcss-nesting": "^13.0.2",
+    "postcss-import": "16.1.1",
+    "postcss-nesting": "13.0.2",
     "prismjs": "^1.30.0",
-    "react": "^19",
+    "react": "19.1.1",
     "react-day-picker": "latest",
-    "react-dom": "^19",
+    "react-dom": "19.1.1",
     "react-hook-form": "latest",
     "react-plotly.js": "^2.6.0",
     "react-resizable-panels": "latest",
@@ -91,7 +95,7 @@
     "sonner": "latest",
     "sql.js": "^1.10.2",
     "tailwind-merge": "^2.5.5",
-    "tailwindcss": "^3.4.0",
+    "tailwindcss": "3.4.0",
     "tailwindcss-animate": "^1.0.7",
     "tesseract.js": "^6.0.1",
     "vaul": "latest",
@@ -116,7 +120,7 @@
     "https-browserify": "^1.0.0",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
-    "postcss": "^8.4.49",
+    "postcss": "8.4.49",
     "process": "^0.11.10",
     "punycode": "^2.3.1",
     "querystring-es3": "^0.2.1",
@@ -132,6 +136,7 @@
     "vm-browserify": "^1.1.2"
   },
   "overrides": {
-    "prismjs": "^1.30.0"
+    "prismjs": "^1.30.0",
+    "tailwindcss": "3.4.0"
   }
 }
