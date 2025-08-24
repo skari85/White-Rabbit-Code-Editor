@@ -34,7 +34,8 @@ import {
   Settings,
   Code,
   Rocket,
-  Keyboard
+  Keyboard,
+  Sparkles
 } from "lucide-react";
 import LazyMonacoEditor from './lazy-monaco-editor';
 import AIEnhancedMonacoEditor from './ai-enhanced-monaco-editor';
@@ -51,6 +52,7 @@ import AdvancedEditorToolbar from './advanced-editor-toolbar';
 import BYOKAISettings from './byok-ai-settings';
 import DocumentationPanel from './documentation-panel';
 import CodeInspectionPanel from './code-inspection-panel';
+import VisualToolsDemo from './visual-tools-demo-simple';
 import NewAppWizard, { NewAppOptions } from './new-app-wizard';
 import PublishModal from './publish-modal';
 import StylePanel from './style-panel';
@@ -165,7 +167,7 @@ export default function CodeEditor() {
   const terminal = useTerminal();
   const { getActiveSession, createSession, executeCommand } = terminal;
 
-  const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace" | "git" | "visual">("code");
+  const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace" | "git" | "visual" | "visual-tools">("code");
   // Live diff tracking (simple per-file snapshot)
   const [diffs, setDiffs] = useState<Record<string, DiffEntry>>({});
   const [openDiff, setOpenDiff] = useState<DiffEntry | null>(null);
@@ -1143,6 +1145,15 @@ export default function CodeEditor() {
                 </Button>
 
                 <Button
+                  variant={viewMode === "visual-tools" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("visual-tools")}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Visual Tools
+                </Button>
+
+                <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowEnhancedOnboarding(true)}
@@ -1461,6 +1472,12 @@ export default function CodeEditor() {
           {(viewMode as string) === "marketplace" && (
             <div className="h-full p-4">
               <ExtensionMarketplace className="h-full" />
+            </div>
+          )}
+
+          {(viewMode as string) === "visual-tools" && (
+            <div className="h-full">
+              <VisualToolsDemo />
             </div>
           )}
         </div>
