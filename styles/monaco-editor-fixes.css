@@ -1,9 +1,10 @@
 /* Monaco Editor Visual Fixes - Enhanced for Smooth Animations */
 
-/* Prevent unwanted blinking cursor animations while preserving smooth transitions */
+/* Breathing caret - gentle fade in/out to reduce visual fatigue */
 .monaco-editor .cursors-layer .cursor {
-  animation: none !important;
-  transition: all 0.1s ease !important;
+  animation: caret-breathe 1.8s ease-in-out infinite !important;
+  transition: opacity 0.25s ease !important;
+  opacity: 1 !important;
 }
 
 /* Enhanced current line highlighting with smooth transitions */
@@ -334,12 +335,18 @@
 }
 
 .monaco-editor .cursor.blinking {
-  animation: cursor-blink 1s infinite !important;
+  animation: caret-breathe 1.8s ease-in-out infinite !important;
 }
 
 @keyframes cursor-blink {
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0; }
+}
+
+/* New breathing caret keyframes */
+@keyframes caret-breathe {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
 }
 
 /* Enhanced suggestion widget */
@@ -424,5 +431,11 @@
   
   .monaco-editor .monaco-scrollable-element {
     scroll-behavior: auto !important;
+  }
+  /* Disable caret animation for users who prefer reduced motion */
+  .monaco-editor .cursors-layer .cursor,
+  .monaco-editor .cursor.blinking {
+    animation: none !important;
+    opacity: 1 !important;
   }
 }
