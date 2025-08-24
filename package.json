@@ -105,7 +105,7 @@
   "devDependencies": {
     "@next/bundle-analyzer": "^15.5.0",
     "@types/jszip": "^3.4.0",
-    "@types/node": "^22",
+    "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "assert": "^2.1.0",
