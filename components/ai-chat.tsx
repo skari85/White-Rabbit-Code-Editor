@@ -235,6 +235,16 @@ export function AIChat({
           <LiveAIResponse
             response={message.content}
             onCodeGenerated={onCodeGenerated}
+            onCodeStreamUpdate={(filename, content, language) => {
+              // Stream into Monaco: create/update a temp file steadily
+              if (onCodeGenerated) {
+                // Use a deterministic filename per message
+                const ext = (language || 'txt').toLowerCase();
+                const safeExt = ext === 'typescript' ? 'ts' : ext === 'javascript' ? 'js' : ext;
+                const streamName = filename || `ai-stream-${(message.id || 'msg')}.${safeExt}`;
+                onCodeGenerated(streamName, content, language);
+              }
+            }}
             className="w-full"
           />
           

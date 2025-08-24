@@ -21,6 +21,7 @@ import { darcula } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 interface LiveAIResponseProps {
   response: string;
   onCodeGenerated?: (filename: string, content: string, language: string) => void;
+  onCodeStreamUpdate?: (filename: string, content: string, language: string, isFinal?: boolean) => void;
   onResponseComplete?: () => void;
   className?: string;
 }
@@ -64,6 +65,7 @@ const getDefaultFilename = (language: string, index: number) => {
 export default function LiveAIResponse({
   response,
   onCodeGenerated,
+  onCodeStreamUpdate,
   onResponseComplete,
   className = ''
 }: LiveAIResponseProps) {
@@ -110,6 +112,23 @@ export default function LiveAIResponse({
       });
     }
   }, [codeBlocks, onCodeGenerated]);
+
+  // Stream code into editor while typing
+  useEffect(() => {
+    if (!onCodeStreamUpdate || !displayedResponse) return;
+    // Parse current visible code blocks (best-effort)
+    const codeBlockRegex = /```(\w+)?\s*(?:\/\/\s*(.+?)\s*)?\n([\s\S]*?)```/g;
+    const blocks: Array<{ language: string; code: string; filename?: string }> = [];
+    let match;
+    while ((match = codeBlockRegex.exec(displayedResponse)) !== null) {
+      const [, language = 'text', filename, code] = match;
+      blocks.push({ language: language.toLowerCase(), code, filename });
+    }
+    blocks.forEach((block, index) => {
+      const filename = block.filename || getDefaultFilename(block.language, index);
+      onCodeStreamUpdate(filename, block.code, block.language, false);
+    });
+  }, [displayedResponse, onCodeStreamUpdate]);
 
   const copyToClipboard = async (text: string) => {
     try {
