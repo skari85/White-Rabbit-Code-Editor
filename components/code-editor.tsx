@@ -1008,29 +1008,15 @@ export default function CodeEditor() {
               streamedMessage={aiStreamedMessage}
               isStreaming={aiIsStreaming}
               onCodeGenerated={(filename, content, language) => {
-                // Create a new file with the AI-generated code
+                // Create or update the target file in Monaco and focus it
                 const fileType = getFileTypeFromLanguage(language);
-                addNewFile(filename, fileType);
-                setTimeout(() => updateFileContent(filename, content), 100);
+                const exists = files.some(f => f.name === filename);
+                if (!exists) {
+                  addNewFile(filename, fileType);
+                }
+                setTimeout(() => updateFileContent(filename, content), 0);
                 setSelectedFile(filename);
                 setViewMode('code');
-
-                // Also offer to insert into current file if one is open
-                if (selectedFile) {
-                  const shouldInsertIntoCurrent = window.confirm(
-                    `Code generated as new file: ${filename}\n\nWould you like to also insert this code into the currently open file: ${selectedFile}?`
-                  );
-
-                  if (shouldInsertIntoCurrent) {
-                    // Get current content and append the new code
-                    const currentFile = files.find(f => f.name === selectedFile);
-                    if (currentFile) {
-                      const separator = '\n\n// === AI Generated Code ===\n';
-                      const newContent = currentFile.content + separator + content;
-                      updateFileContent(selectedFile, newContent);
-                    }
-                  }
-                }
               }}
             />
           </div>
