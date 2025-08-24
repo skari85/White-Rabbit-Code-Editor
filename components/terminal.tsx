@@ -116,6 +116,23 @@ export function TerminalComponent({
     }
   };
 
+  const renderProgressBar = (cmd: TerminalCommand) => {
+    if (!cmd.progress) return null;
+    const pct = Math.min(100, Math.max(0, Math.round((cmd.progress.current / Math.max(1, cmd.progress.total)) * 100)));
+    const label = cmd.progress.label || 'Working...';
+    return (
+      <div className="mt-2 mb-2">
+        <div className="flex items-center justify-between text-[10px] text-gray-400 mb-1">
+          <span>{label}</span>
+          <span>{pct}%</span>
+        </div>
+        <div className="h-2 w-full bg-gray-800 rounded overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-purple-600 to-cyan-400 transition-all duration-300" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+    );
+  };
+
   // Error explanation system
   const getErrorExplanation = (output: string): { title: string; explanation: string; suggestions: string[] } | null => {
     const lowerOutput = output.toLowerCase();
@@ -338,6 +355,9 @@ export function TerminalComponent({
                   </div>
                 </div>
                 
+                {/* Progress (if available) */}
+                {renderProgressBar(command)}
+
                 {/* Command Output */}
                 {command.output && (
                   <div className="pl-4">

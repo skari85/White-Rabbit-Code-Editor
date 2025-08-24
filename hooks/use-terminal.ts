@@ -7,6 +7,11 @@ export interface TerminalCommand {
   status: 'running' | 'completed' | 'error';
   timestamp: Date;
   isBackground?: boolean;
+  progress?: {
+    total: number;
+    current: number;
+    label?: string;
+  };
 }
 
 export interface TerminalSession {
@@ -96,6 +101,78 @@ export function useTerminal() {
         }
       } else if (command.includes('npm install') || command.includes('pnpm install') || command.includes('yarn')) {
         output = `Installing dependencies...\n✓ Dependencies installed successfully`;
+      } else if (command.includes('npm run build') || command.includes('pnpm run build') || command.includes('yarn build')) {
+        // Simulate a multi-step build with progress updates
+        const steps = [
+          { label: 'Fetching dependencies...', delay: 700 },
+          { label: 'Compiling assets...', delay: 1200 },
+          { label: 'Running tests...', delay: 1500 },
+          { label: 'Optimizing bundles...', delay: 900 },
+          { label: 'Finalizing build...', delay: 800 }
+        ];
+
+        // Initialize as running with progress
+        setSessions(prev => prev.map(session =>
+          session.id === targetSessionId
+            ? {
+                ...session,
+                commands: session.commands.map(cmd =>
+                  cmd.id === commandId
+                    ? { ...cmd, output: 'Starting build...\n', status: 'running', progress: { total: steps.length, current: 0, label: 'Starting build...' } }
+                    : cmd
+                )
+              }
+            : session
+        ));
+
+        // Orchestrate steps sequentially
+        await new Promise<void>(resolve => {
+          let idx = 0;
+          const runStep = () => {
+            if (idx >= steps.length) {
+              // Complete
+              setSessions(prev => prev.map(session =>
+                session.id === targetSessionId
+                  ? {
+                      ...session,
+                      commands: session.commands.map(cmd =>
+                        cmd.id === commandId
+                          ? { ...cmd, output: (cmd.output + '✓ Build completed successfully\n'), status: 'completed', progress: { total: steps.length, current: steps.length, label: 'Completed' } }
+                          : cmd
+                      )
+                    }
+                  : session
+              ));
+              resolve();
+              return;
+            }
+            const step = steps[idx];
+            setSessions(prev => prev.map(session =>
+              session.id === targetSessionId
+                ? {
+                    ...session,
+                    commands: session.commands.map(cmd =>
+                      cmd.id === commandId
+                        ? { ...cmd, output: (cmd.output + step.label + '\n'), progress: { total: steps.length, current: idx + 1, label: step.label }, status: 'running' }
+                        : cmd
+                    )
+                  }
+                : session
+            ));
+            setTimeout(() => {
+              idx += 1;
+              runStep();
+            }, step.delay);
+          };
+          runStep();
+        });
+        // Return early since we already updated sessions and completed
+        const finalCommand: TerminalCommand = {
+          ...newCommand,
+          output: 'Build finished',
+          status: 'completed'
+        };
+        return finalCommand;
       } else if (command.startsWith('git ')) {
         // Lightweight simulated git commands
         if (command.startsWith('git init')) {
