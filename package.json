@@ -82,7 +82,7 @@
     "react-hook-form": "latest",
     "react-plotly.js": "^2.6.0",
     "react-resizable-panels": "latest",
-    "react-syntax-highlighter": "^15.6.1",
+    "react-syntax-highlighter": "^15.6.3",
     "recharts": "latest",
     "simple-statistics": "^7.8.3",
     "sonner": "latest",
