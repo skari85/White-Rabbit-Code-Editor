@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,16 +18,14 @@ const FONT_OPTIONS = [
   { id: 'geist', label: 'Geist' },
   { id: 'inter', label: 'Inter' },
 ];
-const DEFAULTS = { brandColor: '#6c2fff', font: 'geist', radius: 8, shadow: 12 } as const;
+const DEFAULTS = { font: 'geist', radius: 8, shadow: 12 } as const;
 
 
 export default function StylePanel({ open, onOpenChange }: StylePanelProps) {
-  const [brandColor, setBrandColor] = useState('#6c2fff');
   const [font, setFont] = useState('geist');
   const [radius, setRadius] = useState(8);
   const [shadow, setShadow] = useState(12);
   const reset = () => {
-    setBrandColor(DEFAULTS.brandColor);
     setFont(DEFAULTS.font);
     setRadius(DEFAULTS.radius);
     setShadow(DEFAULTS.shadow);
@@ -41,7 +38,6 @@ export default function StylePanel({ open, onOpenChange }: StylePanelProps) {
       const raw = localStorage.getItem('wr-style');
       if (raw) {
         const v = JSON.parse(raw);
-        if (v.brandColor) setBrandColor(v.brandColor);
         if (v.font) setFont(v.font);
         if (typeof v.radius === 'number') setRadius(v.radius);
         if (typeof v.shadow === 'number') setShadow(v.shadow);
@@ -53,7 +49,6 @@ export default function StylePanel({ open, onOpenChange }: StylePanelProps) {
   // Apply live CSS variables (instant preview)
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty('--brand', brandColor);
     root.style.setProperty('--radius', `${radius}px`);
     root.style.setProperty('--shadow', `${shadow}px`);
 
@@ -68,14 +63,14 @@ export default function StylePanel({ open, onOpenChange }: StylePanelProps) {
       root.style.setProperty('--font-sans', 'system-ui, -apple-system, Segoe UI, sans-serif');
       root.style.setProperty('--font-mono', 'monospace');
     }
-  }, [brandColor, font, radius, shadow]);
+  }, [font, radius, shadow]);
 
   // Persist to localStorage on changes
   useEffect(() => {
     try {
-      localStorage.setItem('wr-style', JSON.stringify({ brandColor, font, radius, shadow }));
+      localStorage.setItem('wr-style', JSON.stringify({ font, radius, shadow }));
     } catch {}
-  }, [brandColor, font, radius, shadow]);
+  }, [font, radius, shadow]);
 
 
   return (
@@ -89,14 +84,6 @@ export default function StylePanel({ open, onOpenChange }: StylePanelProps) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Brand color */}
-          <div className="space-y-2">
-            <Label>Brand Color <span className="text-xs text-gray-500">(writes var(--brand) in tokens.css)</span></Label>
-            <div className="flex items-center gap-2">
-              <input type="color" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="h-9 w-12 rounded" />
-              <Input value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="font-mono text-xs" />
-            </div>
-          </div>
 
           {/* Font pair */}
           <div className="space-y-2">
