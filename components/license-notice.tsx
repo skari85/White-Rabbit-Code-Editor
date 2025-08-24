@@ -91,21 +91,25 @@ export function LicenseNotice() {
               <div className="space-y-1 text-sm">
                 <p>
                   📧 Email:
-                  <button
+                  <a
+                    href="mailto:licensing@whiterabbit.dev"
                     onClick={handleCommercialClick}
                     className="ml-1 text-blue-600 hover:text-blue-800 underline"
                   >
                     licensing@whiterabbit.dev
-                  </button>
+                  </a>
                 </p>
                 <p>
                   🌐 Website:
-                  <button
+                  <a
+                    href="https://www.whiterabbit.onl/licensing"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={handleCommercialClick}
                     className="ml-1 text-blue-600 hover:text-blue-800 underline"
                   >
-                    https://whiterabbit.dev/licensing
-                  </button>
+                    https://www.whiterabbit.onl/licensing
+                  </a>
                 </p>
               </div>
             </div>
