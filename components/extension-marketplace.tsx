@@ -192,7 +192,7 @@ export default function ExtensionMarketplace({ className = '' }: ExtensionMarket
       }
 
       const data = await response.json();
-      const fetchedExtensions: Extension[] = data.extensions?.map((ext: any) => ({
+      const fetchedExtensions: Extension[] = (Array.isArray(data.extensions) ? data.extensions : []).map((ext: any) => ({
         id: ext.namespace + '.' + ext.name,
         name: ext.name,
         displayName: ext.displayName || ext.name,
@@ -221,7 +221,10 @@ export default function ExtensionMarketplace({ className = '' }: ExtensionMarket
         isEnabled: installedExtensions.some(inst => inst.id === ext.namespace + '.' + ext.name && inst.isEnabled),
         isUpdateAvailable: false,
         localVersion: installedExtensions.find(inst => inst.id === ext.namespace + '.' + ext.name)?.version,
-        size: ext.files?.find((f: any) => f.name === 'extension.vsix')?.size
+        // Some APIs return files as arrays, some as maps, many omit in search
+        size: Array.isArray(ext.files)
+          ? ext.files.find((f: any) => f?.name === 'extension.vsix')?.size
+          : (ext.files && typeof ext.files === 'object' && ext.files['extension.vsix']?.size) || undefined
       })) || [];
 
       setExtensions(fetchedExtensions);
@@ -307,6 +310,47 @@ export default function ExtensionMarketplace({ className = '' }: ExtensionMarket
         iconUrl: 'https://open-vsx.org/api/ms-vscode/vscode-eslint/2.4.0/file/icon',
         repository: 'https://github.com/microsoft/vscode-eslint',
         homepage: 'https://eslint.org/',
+        license: 'MIT',
+        isInstalled: false,
+        isEnabled: false,
+        isUpdateAvailable: false
+      },
+      // Extra mock extensions to enrich the marketplace
+      {
+        id: 'whiterabbit.focus-field-ux',
+        name: 'Focus Field UX',
+        displayName: 'Focus Field Ripple Highlight',
+        description: 'Adds focus ripple and breathing caret polish for Monaco editor.',
+        version: '1.0.0',
+        publisher: { displayName: 'White Rabbit', publisherId: 'whiterabbit' },
+        categories: ['Web Development'],
+        tags: ['ux', 'monaco', 'visual'],
+        downloadCount: 1200,
+        rating: 4.6,
+        ratingCount: 53,
+        lastUpdated: '2025-08-01',
+        publishedDate: '2025-08-01',
+        homepage: 'https://www.whiterabbit.onl',
+        license: 'MIT',
+        isInstalled: false,
+        isEnabled: false,
+        isUpdateAvailable: false
+      },
+      {
+        id: 'whiterabbit.visual-tools-pack',
+        name: 'Visual Tools Pack',
+        displayName: 'Visual Tools (Git, Flow, File Tree)',
+        description: 'A curated set of visualization tools: Git History, Code Flow, Smart File Tree.',
+        version: '1.0.0',
+        publisher: { displayName: 'White Rabbit', publisherId: 'whiterabbit' },
+        categories: ['Web Development'],
+        tags: ['visual', 'git', 'flow', 'files'],
+        downloadCount: 1850,
+        rating: 4.7,
+        ratingCount: 77,
+        lastUpdated: '2025-08-01',
+        publishedDate: '2025-08-01',
+        homepage: 'https://www.whiterabbit.onl',
         license: 'MIT',
         isInstalled: false,
         isEnabled: false,
