@@ -167,6 +167,8 @@ export default function CodeEditor() {
   const terminal = useTerminal();
   const { getActiveSession, createSession, executeCommand } = terminal;
 
+
+
   const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace" | "git" | "visual" | "visual-tools">("code");
   // Live diff tracking (simple per-file snapshot)
   const [diffs, setDiffs] = useState<Record<string, DiffEntry>>({});
@@ -390,6 +392,16 @@ export default function CodeEditor() {
   const [ksInstance] = useState(() => new KeyboardShortcutsService());
   // Register Section Library commands in Command Palette
   useEffect(() => {
+    // Slash-commands basic support
+    ksInstance.addCommandPaletteItem({ id: 'slash.help', title: '/help Show Help', category: 'general', command: 'slash.help' });
+    ksInstance.addCommandPaletteItem({ id: 'slash.dev', title: '/dev Run Dev Server', category: 'run', command: 'run.dev' });
+    ksInstance.addCommandPaletteItem({ id: 'slash.build', title: '/build Build Project', category: 'run', command: 'run.build' });
+    ksInstance.addCommandPaletteItem({ id: 'slash.test', title: '/test Run Tests', category: 'run', command: 'test.run' });
+    ksInstance.addCommandPaletteItem({ id: 'slash.watch', title: '/watch Toggle Test Watch', category: 'run', command: 'test.watch.toggle' });
+    ksInstance.registerHandler?.('slash.help', async () => {
+      alert('Try /dev, /build, /test, /watch');
+    });
+
     ksInstance.addCommandPaletteItem({ id: 'section.hero', title: 'Insert: Hero Section', category: 'edit', command: 'section.insert', args: ['hero'] });
     ksInstance.addCommandPaletteItem({ id: 'section.pricing', title: 'Insert: Pricing Section', category: 'edit', command: 'section.insert', args: ['pricing'] });
     ksInstance.addCommandPaletteItem({ id: 'section.faq', title: 'Insert: FAQ Section', category: 'edit', command: 'section.insert', args: ['faq'] });
@@ -464,6 +476,10 @@ export default function CodeEditor() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
+        setShowCommandPalette(true);
+      }
+      // Quick open slash-commands with '/'
+      if (!e.metaKey && !e.ctrlKey && !e.altKey && e.key === '/') {
         setShowCommandPalette(true);
       }
     };
@@ -553,6 +569,26 @@ export default function CodeEditor() {
       notifications.error('AI Error', `Failed to generate response: ${errorMessage}`);
     }
   }, [sendAIStreamingMessage, files, selectedFile, aiSettings, notifications]);
+
+  // Expose error Explain/Fix for terminal tooltip actions
+  useEffect(() => {
+    (window as any).wrExplainError = (output: string) => {
+      const prompt = `Explain this error and propose safe fixes. Keep it concise and give steps:
+\n\n${output}`;
+      handleSendMessage(prompt);
+      setViewMode('code');
+    };
+    (window as any).wrFixError = (output: string) => {
+      const prompt = `Given this terminal error, suggest minimal code changes or commands to fix:
+\n\n${output}`;
+      handleSendMessage(prompt);
+      setViewMode('code');
+    };
+    return () => {
+      delete (window as any).wrExplainError;
+      delete (window as any).wrFixError;
+    };
+  }, []);
 
   const handleCodeColorToggle = () => {
     setCodeColor(!codeColor);

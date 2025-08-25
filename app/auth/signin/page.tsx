@@ -63,7 +63,7 @@ export default function SignIn() {
             <div className="text-center py-4">
               <p className="text-red-400 mb-4">{error}</p>
               <Button
-                onClick={() => signIn("github", { callbackUrl: "/" })}
+                onClick={() => signIn("github", { callbackUrl: "/enter" })}
                 className="w-full bg-gray-800 hover:bg-gray-700 text-white border border-gray-600"
                 size="lg"
               >
@@ -75,7 +75,7 @@ export default function SignIn() {
             Object.values(providers).map((provider) => (
               <div key={provider.name}>
                 <Button
-                  onClick={() => signIn(provider.id, { callbackUrl: "/" })}
+                  onClick={() => signIn(provider.id, { callbackUrl: "/enter" })}
                   className="w-full bg-gray-800 hover:bg-gray-700 text-white border border-gray-600"
                   size="lg"
                 >
@@ -88,7 +88,7 @@ export default function SignIn() {
             <div className="text-center py-4">
               <p className="text-gray-400 mb-4">GitHub authentication is not configured</p>
               <Button
-                onClick={() => signIn("github", { callbackUrl: "/" })}
+                onClick={() => signIn("github", { callbackUrl: "/enter" })}
                 className="w-full bg-gray-800 hover:bg-gray-700 text-white border border-gray-600"
                 size="lg"
               >

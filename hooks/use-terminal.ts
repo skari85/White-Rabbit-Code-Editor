@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export interface TerminalCommand {
   id: string;
@@ -28,6 +28,33 @@ export function useTerminal() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const commandIdRef = useRef(0);
 
+  // Load persisted sessions
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      const saved = window.localStorage.getItem('wr_terminal_sessions');
+      const savedActive = window.localStorage.getItem('wr_terminal_active');
+      if (saved) {
+        const parsed: TerminalSession[] = JSON.parse(saved);
+        // Revive dates for commands
+        parsed.forEach(s => s.commands.forEach(c => { (c as any).timestamp = new Date(c.timestamp); }));
+        setSessions(parsed);
+      }
+      if (savedActive) setActiveSessionId(savedActive);
+    } catch {}
+  }, []);
+
+  // Persist sessions on change
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      window.localStorage.setItem('wr_terminal_sessions', JSON.stringify(sessions));
+      if (activeSessionId) {
+        window.localStorage.setItem('wr_terminal_active', activeSessionId);
+      }
+    } catch {}
+  }, [sessions, activeSessionId]);
+
   // Create a new terminal session
   const createSession = useCallback((name: string = 'Terminal') => {
     const sessionId = `session-${Date.now()}`;
@@ -43,6 +70,17 @@ export function useTerminal() {
     setSessions(prev => [...prev, newSession]);
     setActiveSessionId(sessionId);
     return sessionId;
+  }, []);
+
+  // Rename a session
+  const renameSession = useCallback((sessionId: string, newName: string) => {
+    setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, name: newName } : s));
+  }, []);
+
+  // Delete a session
+  const deleteSession = useCallback((sessionId: string) => {
+    setSessions(prev => prev.filter(s => s.id !== sessionId));
+    setActiveSessionId(prev => (prev === sessionId ? null : prev));
   }, []);
 
   // Execute command in a session
@@ -356,6 +394,8 @@ export function useTerminal() {
     activeSessionId,
     createSession,
     setActiveSessionId,
+    renameSession,
+    deleteSession,
     executeCommand,
     killProcess,
     clearSession,

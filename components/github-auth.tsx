@@ -72,7 +72,7 @@ export function GitHubAuth() {
 
   return (
     <Button
-      onClick={() => signIn("github")}
+      onClick={() => signIn("github", { callbackUrl: "/enter" })}
       variant="outline"
       size="sm"
       className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white border-gray-600"

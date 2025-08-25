@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Terminal, X, Minimize2, Maximize2, Play, Square, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,8 @@ export function TerminalComponent({
   const [isExecuting, setIsExecuting] = useState(false);
   const [collapsedCommands, setCollapsedCommands] = useState<Set<string>>(new Set());
   const [hoveredError, setHoveredError] = useState<string | null>(null);
+  const [filterLevel, setFilterLevel] = useState<'all' | 'error' | 'warning' | 'info' | 'success'>('all');
+  const [filterText, setFilterText] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -81,6 +83,26 @@ export function TerminalComponent({
     const hiddenCount = lines.length - 3;
     return `${lines.slice(0, 3).join('\n')}\n... ${hiddenCount} lines hidden - click to expand`;
   };
+
+  // Classify output for filtering
+  const classifyOutput = (text: string): 'error' | 'warning' | 'info' | 'success' | 'other' => {
+    const lower = text.toLowerCase();
+    if (/(npm err!|error|failed|exception|syntaxerror|typeerror)/i.test(text)) return 'error';
+    if (/(warn|deprecated)/i.test(text)) return 'warning';
+    if (/(success|completed|✓|✔|ready|built|deployed)/i.test(text)) return 'success';
+    if (/(info|local:|network:|port:|url:)/i.test(text)) return 'info';
+    return 'other';
+  };
+
+  const filteredCommands = useMemo(() => {
+    const q = filterText.trim().toLowerCase();
+    return session.commands.filter(cmd => {
+      const level = classifyOutput(cmd.output);
+      const levelOk = filterLevel === 'all' || level === filterLevel;
+      const textOk = !q || cmd.command.toLowerCase().includes(q) || cmd.output.toLowerCase().includes(q);
+      return levelOk && textOk;
+    });
+  }, [session.commands, filterLevel, filterText]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -298,7 +320,28 @@ export function TerminalComponent({
             {session.workingDirectory}
           </span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          {/* Filters */}
+          <select
+            aria-label="Filter level"
+            value={filterLevel}
+            onChange={e => setFilterLevel(e.target.value as any)}
+            className="bg-gray-900 border border-gray-700 text-xs rounded px-1.5 py-1 focus:outline-none"
+          >
+            <option value="all">All</option>
+            <option value="error">Errors</option>
+            <option value="warning">Warnings</option>
+            <option value="info">Info</option>
+            <option value="success">Success</option>
+          </select>
+          <input
+            aria-label="Filter text"
+            value={filterText}
+            onChange={e => setFilterText(e.target.value)}
+            placeholder="Filter..."
+            className="bg-gray-900 border border-gray-700 text-xs rounded px-2 py-1 focus:outline-none"
+          />
+          {/* Window controls */}
           {onMinimize && (
             <Button
               variant="ghost"
@@ -327,7 +370,7 @@ export function TerminalComponent({
         {/* Command History */}
         <ScrollArea ref={scrollAreaRef} className="flex-1 p-3">
           <div className="space-y-2 font-mono text-sm">
-            {session.commands.map((command) => (
+            {filteredCommands.map((command) => (
               <div key={command.id} className="space-y-1">
                 {/* Command Line */}
                 <div className="flex items-center gap-2">
@@ -409,6 +452,29 @@ export function TerminalComponent({
                                   <span>{suggestion}</span>
                                 </div>
                               ))}
+                            </div>
+                            {/* Explain / Fix actions */}
+                            <div className="flex items-center gap-2 mt-2">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="h-6 px-2 text-xs"
+                                onClick={() => {
+                                  try {
+                                    (window as any).wrExplainError?.(command.output);
+                                  } catch {}
+                                }}
+                              >Explain</Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="h-6 px-2 text-xs"
+                                onClick={() => {
+                                  try {
+                                    (window as any).wrFixError?.(command.output);
+                                  } catch {}
+                                }}
+                              >Fix</Button>
                             </div>
                           </div>
                         ) : null;

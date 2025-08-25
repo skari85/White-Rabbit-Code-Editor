@@ -94,11 +94,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     
     async redirect({ url, baseUrl }) {
-      // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`
-      // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url
-      return baseUrl
+      // Normalize to absolute URL for checks
+      let target = url
+      try {
+        if (url.startsWith('/')) target = new URL(url, baseUrl).toString()
+      } catch {}
+      try {
+        const u = new URL(target)
+        const path = u.pathname
+        const authPaths = ['/auth/signin', '/auth/error', '/api/auth/signin']
+        // After successful sign-in or if redirecting to root/landing, send users to the editor
+        if (path === '/' || path === '/landing' || authPaths.includes(path)) {
+          return `${baseUrl}/enter`
+        }
+        // Same-origin URLs are allowed as-is
+        if (u.origin === baseUrl) return u.toString()
+      } catch {}
+      // Fallback: go to editor
+      return `${baseUrl}/enter`
     },
   },
   
