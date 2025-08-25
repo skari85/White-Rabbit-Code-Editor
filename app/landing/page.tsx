@@ -702,10 +702,7 @@ export default function LandingPage() {
           <h2 className="text-2xl font-semibold mb-4">Rabbits</h2>
           <RabbitsCanvas />
         </div>
-        <div className="mt-14">
-          <h2 className="text-2xl font-semibold mb-4">3D Rabbit Forest in the Rain</h2>
-          <RabbitsForest3D />
-        </div>
+        
       </section>
 
       <footer className="border-t border-neutral-800/60">
