@@ -1,16 +1,28 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Remove dangerous ignore flags for better code quality
   eslint: {
-    ignoreDuringBuilds: true,
+    // Only ignore during builds in CI, not development
+    ignoreDuringBuilds: process.env.CI === 'true',
   },
   typescript: {
-    ignoreBuildErrors: true,
+    // Only ignore during builds in CI, not development
+    ignoreBuildErrors: process.env.CI === 'true',
   },
   images: {
     unoptimized: true,
   },
   experimental: {
     optimizePackageImports: ['@monaco-editor/react', 'lucide-react'],
+    // Add modern Next.js features
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
   webpack: (config, { dev, isServer }) => {
     // Optimize Monaco Editor loading

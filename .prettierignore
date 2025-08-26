@@ -18,8 +18,6 @@ build/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
 # Runtime data
 pids
@@ -30,6 +28,8 @@ pids
 # Coverage directory used by tools like istanbul
 coverage/
 *.lcov
+
+# nyc test coverage
 .nyc_output
 
 # Dependency directories
@@ -77,8 +77,6 @@ temp/
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-!.vscode/settings.json
-!.vscode/tasks.json
 .idea
 .DS_Store
 *.suo
@@ -94,37 +92,3 @@ pnpm-lock.yaml
 
 # Generated files
 *.tsbuildinfo
-
-# Test coverage
-coverage/
-.nyc_output/
-
-# Storybook
-storybook-static/
-
-# Turbo
-.turbo/
-
-# Vercel
-.vercel/
-
-# Local development
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Local env files
-.env*.local
-
-# Vercel
-.vercel
-
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
