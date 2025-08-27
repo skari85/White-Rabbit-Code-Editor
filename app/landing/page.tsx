@@ -15,8 +15,22 @@ export default function LandingPage() {
     const mainScreen = mainScreenRef.current;
     const developerBack = developerBackRef.current;
     
-    let rabbits: any[] = [];
-    let codeSnippets: any[] = [];
+    let rabbits: Array<{
+      element: HTMLElement;
+      x: number;
+      y: number;
+      targetX: number;
+      targetY: number;
+      speed: number;
+      moving: boolean;
+    }> = [];
+    let codeSnippets: Array<{
+      element: HTMLElement;
+      originalText: string;
+      x: number;
+      y: number;
+      speed: number;
+    }> = [];
     let animationFrameId: number;
     
     const numRabbits = 5;
@@ -60,7 +74,7 @@ export default function LandingPage() {
     function createCodeSnippet() {
       const codeEl = document.createElement('div');
       codeEl.className = 'absolute text-lg font-mono opacity-0 outline-none cursor-text';
-      codeEl.contentEditable = true;
+      codeEl.contentEditable = 'true';
       
       const originalText = snippets[Math.floor(Math.random() * snippets.length)];
       codeEl.textContent = originalText;
@@ -106,7 +120,7 @@ export default function LandingPage() {
       codeSnippets.forEach(code => {
         code.y += code.speed;
         code.element.style.top = `${code.y}px`;
-        code.element.style.opacity = Math.max(0.1, 1 - (code.y / mainScreen.clientHeight));
+        code.element.style.opacity = `${Math.max(0.1, 1 - (code.y / mainScreen.clientHeight))}`;
 
         if (code.y > mainScreen.clientHeight) {
           code.y = -Math.random() * 200;
@@ -134,9 +148,9 @@ export default function LandingPage() {
       // Make eyes blink
       const eyes = developerBack.querySelectorAll('div[style*="4a90e2"]');
       eyes.forEach(eye => {
-        eye.style.opacity = '0.3';
+        (eye as HTMLElement).style.opacity = '0.3';
         setTimeout(() => {
-          eye.style.opacity = '1';
+          (eye as HTMLElement).style.opacity = '1';
         }, 150);
       });
       
@@ -177,9 +191,9 @@ export default function LandingPage() {
     function blinkEyes() {
       const eyes = developerBack.querySelectorAll('div[style*="4a90e2"]');
       eyes.forEach(eye => {
-        eye.style.opacity = '0.3';
+        (eye as HTMLElement).style.opacity = '0.3';
         setTimeout(() => {
-          eye.style.opacity = '1';
+          (eye as HTMLElement).style.opacity = '1';
         }, 150);
       });
     }
@@ -244,7 +258,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-black">
       {/* Header */}
       <header className="flex justify-between items-center p-6">
         <div className="flex items-center">
@@ -352,7 +366,7 @@ export default function LandingPage() {
       </div>
 
       {/* Developer Screen Animation Section */}
-      <section className="py-24 bg-[#1a1a2e] relative overflow-hidden">
+      <section className="py-24 bg-black relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white sm:text-4xl mb-4">
@@ -363,7 +377,7 @@ export default function LandingPage() {
             </p>
           </div>
           
-          <div className="relative w-full h-[600px] bg-[#1a1a2e] rounded-2xl overflow-hidden">
+          <div className="relative w-full h-[600px] bg-black rounded-2xl overflow-hidden">
             {/* Developer Character */}
             <div 
               className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[300px] h-[400px] z-10 cursor-pointer transition-transform duration-200 ease-in-out hover:scale-105"
@@ -470,70 +484,6 @@ export default function LandingPage() {
                   className="absolute top-4 left-1/2 transform -translate-x-1/2 w-[200px] h-[100px]"
                   style={{
                     background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(0, 0, 0, 0.1) 100%)',
-                    borderRadius: '50% 50% 0 0'
-                  }}
-                ></div>
-              </div>
-              
-              {/* Realistic Arms reaching to screen */}
-              <div 
-                className="absolute top-48 left-1/2 transform -translate-x-36 w-[22px] h-[130px] z-[9]"
-                style={{
-                  background: 'radial-gradient(ellipse at center, #f0c598 0%, #e6b88a 40%, #d4a574 80%, #c19a6b 100%)',
-                  borderRadius: '20px',
-                  transform: 'rotate(-18deg)',
-                  boxShadow: '0 0 15px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1)',
-                  border: '1px solid #d4a574'
-                }}
-              ></div>
-              <div 
-                className="absolute top-48 left-1/2 transform translate-x-36 w-[22px] h-[130px] z-[9]"
-                style={{
-                  background: 'radial-gradient(ellipse at center, #f0c598 0%, #e6b88a 40%, #d4a574 80%, #c19a6b 100%)',
-                  borderRadius: '20px',
-                  transform: 'rotate(18deg)',
-                  boxShadow: '0 0 15px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1)',
-                  border: '1px solid #d4a574'
-                }}
-              ></div>
-              
-              {/* Realistic Hands */}
-              <div 
-                className="absolute top-48 left-1/2 transform -translate-x-44 w-[32px] h-[32px] z-[9]"
-                style={{
-                  background: 'radial-gradient(ellipse at center, #f0c598 0%, #e6b88a 60%, #d4a574 100%)',
-                  borderRadius: '50%',
-                  transform: 'rotate(-18deg)',
-                  boxShadow: '0 0 15px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.1)',
-                  border: '1px solid #d4a574'
-                }}
-              ></div>
-              <div 
-                className="absolute top-48 left-1/2 transform translate-x-44 w-[32px] h-[32px] z-[9]"
-                style={{
-                  background: 'radial-gradient(ellipse at center, #f0c598 0%, #e6b88a 60%, #d4a574 100%)',
-                  borderRadius: '50%',
-                  transform: 'rotate(18deg)',
-                  boxShadow: '0 0 15px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.1)',
-                  border: '1px solid #d4a574'
-                }}
-              ></div>
-              
-              {/* Realistic Shirt */}
-              <div 
-                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[380px] h-[220px] z-[8]"
-                style={{
-                  background: 'radial-gradient(ellipse at center, #4d4d6e 0%, #2d2d4a 60%, #1a1a2e 100%)',
-                  borderRadius: '50% 50% 0 0',
-                  boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.05)',
-                  border: '2px solid #2d2d4a'
-                }}
-              >
-                {/* Shirt texture */}
-                <div 
-                  className="absolute top-4 left-1/2 transform -translate-x-1/2 w-[300px] h-[150px]"
-                  style={{
-                    background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 50%, rgba(0, 0, 0, 0.1) 100%)',
                     borderRadius: '50% 50% 0 0'
                   }}
                 ></div>
