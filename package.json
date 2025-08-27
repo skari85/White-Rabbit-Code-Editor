@@ -14,6 +14,7 @@
   "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "build": "next build",
+    "build:static": "next build && next export",
     "dev": "next dev -p 3012",
     "dev:3020": "next dev -p 3020",
     "check-deps": "node scripts/check-deps.js",
@@ -34,7 +35,13 @@
     "analyze": "ANALYZE=true npm run build",
     "analyze:dev": "ANALYZE=true npm run dev",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "electron": "electron .",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3012 && electron .\"",
+    "electron:build": "npm run build:static && electron-builder",
+    "electron:build:mac": "npm run build:static && electron-builder --mac",
+    "electron:build:win": "npm run build:static && electron-builder --win",
+    "electron:build:linux": "npm run build:static && electron-builder --linux"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -66,7 +73,7 @@
     "@radix-ui/react-toggle": "latest",
     "@radix-ui/react-toggle-group": "latest",
     "@radix-ui/react-tooltip": "latest",
-    "@types/react-syntax-highlighter": "^15.5.13",
+    "@types/react-syntax-highlighter": "15.5.13",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "autoprefixer": "10.4.21",
@@ -99,7 +106,7 @@
     "react-hook-form": "latest",
     "react-plotly.js": "^2.6.0",
     "react-resizable-panels": "latest",
-    "react-syntax-highlighter": "^15.6.1",
+    "react-syntax-highlighter": "15.6.6",
     "recharts": "latest",
     "simple-statistics": "^7.8.3",
     "sonner": "latest",
@@ -118,6 +125,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-plotly.js": "2.6.3",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "@vitejs/plugin-react": "^5.0.0",
@@ -125,9 +133,12 @@
     "assert": "^2.1.0",
     "browserify-zlib": "^0.2.0",
     "buffer": "^6.0.3",
+    "concurrently": "^8.2.2",
     "constants-browserify": "^1.0.0",
     "crypto-browserify": "^3.12.1",
     "domain-browser": "^5.7.0",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
     "eslint": "^8.57.0",
     "eslint-config-next": "15.2.4",
     "eslint-config-prettier": "^9.0.0",
@@ -156,8 +167,9 @@
     "typescript": "^5",
     "url": "^0.11.4",
     "util": "^0.12.5",
+    "vitest": "^2.0.0",
     "vm-browserify": "^1.1.2",
-    "vitest": "^2.0.0"
+    "wait-on": "^7.2.0"
   },
   "overrides": {
     "prismjs": "^1.30.0",
