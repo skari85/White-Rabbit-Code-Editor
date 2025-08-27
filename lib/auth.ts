@@ -1,6 +1,6 @@
-import NextAuth from "next-auth"
-import GitHub from "next-auth/providers/github"
-import Credentials from "next-auth/providers/credentials"
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import GitHub from "next-auth/providers/github";
 
 // Check if GitHub credentials are available
 const hasGitHubCredentials = process.env.GITHUB_CLIENT_ID &&
@@ -127,11 +127,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user, account, profile, isNewUser }) {
       console.log(`User signed in: ${user.email} via ${account?.provider}`);
     },
-    async signOut({ session, token }) {
+    async signOut() {
       console.log('User signed out');
-    },
-    async error(error) {
-      console.error('NextAuth error:', error);
     },
   },
 })

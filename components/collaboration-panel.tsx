@@ -1,31 +1,29 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Share2, 
-  MessageCircle, 
-  UserPlus, 
-  Settings, 
-  Eye, 
-  Edit3, 
-  Crown,
-  Circle,
-  MessageSquare,
-  CheckCircle,
-  Clock
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  collaborationService, 
-  CollaborationUser, 
-  Comment, 
-  CollaborationEvent 
+import {
+    CollaborationEvent,
+    collaborationService,
+    CollaborationUser,
+    Comment
 } from '@/lib/collaboration-service';
+import {
+    CheckCircle,
+    Circle,
+    Crown,
+    Edit3,
+    Eye,
+    MessageCircle,
+    MessageSquare,
+    Share2,
+    UserPlus,
+    Users
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface CollaborationPanelProps {
   currentFile?: string;
@@ -57,7 +55,7 @@ export default function CollaborationPanel({
           id: `user_${Date.now()}`,
           name: 'Anonymous User',
           email: 'user@example.com',
-          color: collaborationService.constructor.generateUserColor()
+          color: '#' + Math.floor(Math.random()*16777215).toString(16)
         };
         
         await collaborationService.initialize(user);

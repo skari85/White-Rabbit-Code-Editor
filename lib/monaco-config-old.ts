@@ -75,7 +75,9 @@ export const getLanguageFromFileName = (fileName: string): string => {
 
 export const configureMonaco = () => {
   // Configure Monaco Editor themes and languages
-  monaco.editor.defineTheme('hex-dark', {
+  if (typeof window !== 'undefined' && (window as any).monaco) {
+    const monaco = (window as any).monaco;
+    monaco.editor.defineTheme('hex-dark', {
     base: 'vs-dark',
     inherit: true,
     rules: [
@@ -166,9 +168,10 @@ export const configureMonaco = () => {
     reactTypes,
     'file:///node_modules/@types/react/index.d.ts'
   );
+  }
 };
 
-export const getEditorOptions = (config: Partial<MonacoConfig> = {}): monaco.editor.IStandaloneEditorConstructionOptions => {
+export const getEditorOptions = (config: Partial<MonacoConfig> = {}): any => {
   const finalConfig = { ...defaultMonacoConfig, ...config };
   
   return {

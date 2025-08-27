@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sun, Moon, Maximize2, Minimize2 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
+import { Maximize2, Minimize2, Moon, Sun } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import '../styles/monaco-editor-fixes.css';
 
 interface SimpleCodeEditorProps {
@@ -206,9 +206,6 @@ export default function SimpleCodeEditor({
 
     // Code lens and lightbulb
     codeLens: true,
-    lightbulb: {
-      enabled: true,
-    },
 
     // Find and replace
     find: {

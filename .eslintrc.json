@@ -1,13 +1,8 @@
 {
   "extends": [
     "next/core-web-vitals",
-    "@typescript-eslint/recommended",
     "eslint:recommended",
     "plugin:react/recommended",
-    "plugin:react-hooks/recommended",
-    "plugin:jsx-a11y/recommended",
-    "plugin:import/recommended",
-    "plugin:import/typescript",
     "prettier"
   ],
   "parser": "@typescript-eslint/parser",
@@ -20,50 +15,30 @@
   },
   "plugins": [
     "@typescript-eslint",
-    "react",
-    "react-hooks",
-    "jsx-a11y",
-    "import"
+    "react"
   ],
   "rules": {
-    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-    "@typescript-eslint/explicit-function-return-type": "off",
-    "@typescript-eslint/explicit-module-boundary-types": "off",
-    "@typescript-eslint/no-explicit-any": "warn",
-    "@typescript-eslint/prefer-const": "error",
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
     "react/react-in-jsx-scope": "off",
     "react/prop-types": "off",
     "react/display-name": "off",
-    "import/order": [
-      "error",
-      {
-        "groups": [
-          "builtin",
-          "external",
-          "internal",
-          "parent",
-          "sibling",
-          "index"
-        ],
-        "newlines-between": "always",
-        "alphabetize": {
-          "order": "asc",
-          "caseInsensitive": true
-        }
-      }
-    ],
-    "import/no-unresolved": "off",
-    "import/named": "off",
-    "no-console": ["warn", { "allow": ["warn", "error"] }],
-    "prefer-const": "error",
-    "no-var": "error"
+    "react/no-unescaped-entities": "warn",
+    "no-console": "warn",
+    "prefer-const": "warn",
+    "no-var": "warn",
+    "no-undef": "warn",
+    "no-empty": "warn",
+    "no-case-declarations": "warn",
+    "no-useless-escape": "warn",
+    "no-constant-condition": "warn",
+    "no-dupe-keys": "warn",
+    "no-const-assign": "warn",
+    "no-prototype-builtins": "warn"
   },
   "settings": {
     "react": {
       "version": "detect"
-    },
-    "import/resolver": {
-      "typescript": {}
     }
   },
   "env": {

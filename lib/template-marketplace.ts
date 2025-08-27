@@ -216,7 +216,7 @@ export class TemplateMarketplace {
       filtered = filtered.filter(t => t.category === filters.category);
     }
     if (filters.framework) {
-      filtered = filtered.filter(t => t.framework.toLowerCase() === filters.framework.toLowerCase());
+      filtered = filtered.filter(t => t.framework.toLowerCase() === filters.framework!.toLowerCase());
     }
     if (filters.difficulty) {
       filtered = filtered.filter(t => t.difficulty === filters.difficulty);
@@ -281,7 +281,7 @@ export class TemplateMarketplace {
       filtered = filtered.filter(c => c.category === filters.category);
     }
     if (filters.framework) {
-      filtered = filtered.filter(c => c.framework.toLowerCase() === filters.framework.toLowerCase());
+      filtered = filtered.filter(c => c.framework.toLowerCase() === filters.framework!.toLowerCase());
     }
     if (filters.price) {
       if (filters.price === 'free') {
@@ -388,6 +388,8 @@ export class TemplateMarketplace {
     const baseFiles: FileContent[] = [
       {
         name: 'index.html',
+        type: 'html',
+        lastModified: new Date(),
         content: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -402,6 +404,8 @@ export class TemplateMarketplace {
       },
       {
         name: 'package.json',
+        type: 'json',
+        lastModified: new Date(),
         content: JSON.stringify({
           name: `${type}-template`,
           version: '1.0.0',

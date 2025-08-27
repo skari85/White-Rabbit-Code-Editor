@@ -1,5 +1,5 @@
-import { AIService } from './ai-service';
 import { AISettings } from './ai-config';
+import { AIService } from './ai-service';
 
 export interface LiveTemplate {
   id: string;
@@ -143,9 +143,8 @@ export class TemplateService {
       
       // Replace all occurrences and track positions
       let searchIndex = 0;
-      while (true) {
-        const index = expandedText.indexOf(placeholder, searchIndex);
-        if (index === -1) break;
+      let index = expandedText.indexOf(placeholder, searchIndex);
+      while (index !== -1) {
         
         // Calculate line and column
         const beforeText = expandedText.substring(0, index);
@@ -166,8 +165,9 @@ export class TemplateService {
             variable: variable.name
           });
         }
-        
+
         searchIndex = index + value.length;
+        index = expandedText.indexOf(placeholder, searchIndex);
       }
     }
 

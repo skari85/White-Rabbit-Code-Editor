@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import { Check, Copy, Eye, EyeOff } from 'lucide-react';
+import { useState } from "react";
 import SyntaxHighlighter from 'react-syntax-highlighter';
-import { darcula, github } from 'react-syntax-highlighter/dist/styles';
-import { Copy, Check, Eye, EyeOff } from 'lucide-react';
+import { github } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { darcula } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface CodeBlock {
   code: string;

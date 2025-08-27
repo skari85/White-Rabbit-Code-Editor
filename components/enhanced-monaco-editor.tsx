@@ -1,51 +1,25 @@
 'use client';
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { setupSimpleMonacoEnvironment } from '@/lib/monaco-setup';
-import { 
-  Search, 
-  Replace, 
-  ChevronDown, 
-  ChevronRight,
-  AlertTriangle,
-  Info,
-  Lightbulb,
-  Code,
-  FileText,
-  Settings,
-  Play,
-  Square,
-  RefreshCw,
-  Terminal,
-  Zap,
-  Target,
-  Bookmark,
-  GitBranch,
-  History,
-  Eye,
-  EyeOff,
-  Copy,
-  Check,
-  ExternalLink,
-  Download,
-  Upload,
-  Palette,
-  Moon,
-  Sun,
-  Type,
-  Hash,
-  Braces,
-  X
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+    AlertTriangle,
+    Code,
+    Info,
+    Lightbulb,
+    Moon,
+    RefreshCw,
+    Replace,
+    Search,
+    Sun,
+    X
+} from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 // Setup Monaco Environment
 if (typeof window !== 'undefined') {
@@ -394,7 +368,7 @@ const EnhancedMonacoEditor = React.forwardRef<MonacoEditorRef, EnhancedMonacoEdi
       try {
         setIsLoading(true);
         // Dynamic import of Monaco Editor with retry logic
-        let monaco;
+        let monaco: any;
         let retries = 3;
 
         while (retries > 0) {

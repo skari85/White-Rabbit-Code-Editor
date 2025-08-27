@@ -33,12 +33,13 @@ export interface NotificationPayload {
   title: string;
   body: string;
   icon?: string;
-  badge?: string;
   image?: string;
   data?: any;
-  actions?: NotificationAction[];
   tag?: string;
-  requireInteraction?: boolean;
+  // Optional properties with limited browser support
+  badge?: string; // Not widely supported - use updateAppBadge() instead
+  actions?: NotificationAction[]; // Limited browser support - checked at runtime
+  requireInteraction?: boolean; // Limited browser support - checked at runtime
 }
 
 export interface NotificationAction {
@@ -142,7 +143,8 @@ export class AdvancedPWAService {
   private async registerBackgroundSync(task: SyncTask): Promise<void> {
     if (this.serviceWorkerRegistration && 'sync' in this.serviceWorkerRegistration) {
       try {
-        await this.serviceWorkerRegistration.sync.register(`sync-${task.id}`);
+        const syncRegistration = this.serviceWorkerRegistration.sync as any;
+        await syncRegistration.register(`sync-${task.id}`);
         console.log('Background sync registered for task:', task.id);
       } catch (error) {
         console.error('Background sync registration failed:', error);
@@ -219,7 +221,7 @@ export class AdvancedPWAService {
     try {
       const subscription = await this.serviceWorkerRegistration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '')
+        applicationServerKey: this.urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '') as any
       });
 
       this.pushSubscription = {
@@ -240,18 +242,37 @@ export class AdvancedPWAService {
     }
   }
 
+  /**
+   * Send a notification with automatic fallback for unsupported features
+   * @param payload - Notification payload with optional advanced features
+   * @description Automatically detects browser support and falls back gracefully
+   */
   async sendNotification(payload: NotificationPayload): Promise<void> {
     if (Notification.permission === 'granted') {
-      const notification = new Notification(payload.title, {
+      // Only use widely supported Notification properties
+      const notificationOptions: NotificationOptions = {
         body: payload.body,
         icon: payload.icon || '/icon-192x192.png',
-        badge: payload.badge || '/badge-72x72.png',
-        image: payload.image,
         data: payload.data,
-        tag: payload.tag,
-        requireInteraction: payload.requireInteraction,
-        actions: payload.actions
-      });
+        tag: payload.tag
+      };
+
+      // Add image if supported (not in standard NotificationOptions type)
+      if (payload.image) {
+        (notificationOptions as any).image = payload.image;
+      }
+
+      // Add actions only if supported
+      if (payload.actions && this.isActionsSupported()) {
+        (notificationOptions as any).actions = payload.actions;
+      }
+
+      // Add requireInteraction only if supported
+      if (payload.requireInteraction && this.isRequireInteractionSupported()) {
+        notificationOptions.requireInteraction = payload.requireInteraction;
+      }
+
+      const notification = new Notification(payload.title, notificationOptions);
 
       notification.onclick = (event) => {
         event.preventDefault();
@@ -262,6 +283,17 @@ export class AdvancedPWAService {
           window.open(payload.data.url, '_blank');
         }
       };
+
+      // Log unsupported features for debugging
+      if (payload.badge && !this.isBadgeSupported()) {
+        console.warn('Badge property not supported in this browser');
+      }
+      if (payload.actions && !this.isActionsSupported()) {
+        console.warn('Actions property not supported in this browser');
+      }
+      if (payload.requireInteraction && !this.isRequireInteractionSupported()) {
+        console.warn('RequireInteraction property not supported in this browser');
+      }
     }
   }
 
@@ -300,6 +332,89 @@ export class AdvancedPWAService {
 
   isInstallPromptAvailable(): boolean {
     return this.installPromptEvent !== null;
+  }
+
+  /**
+   * Check if notification actions are supported in this browser
+   * @returns true if actions are supported
+   */
+  private isActionsSupported(): boolean {
+    return 'actions' in Notification.prototype;
+  }
+
+  /**
+   * Check if requireInteraction is supported in this browser
+   * @returns true if requireInteraction is supported
+   */
+  private isRequireInteractionSupported(): boolean {
+    return 'requireInteraction' in Notification.prototype;
+  }
+
+  /**
+   * Check if the Badge API is supported in this browser
+   * @returns true if Badge API is supported
+   */
+  private isBadgeSupported(): boolean {
+    return 'setAppBadge' in navigator;
+  }
+
+  /**
+   * Update app badge using modern Badge API when available
+   * @param count - Badge count (0 or undefined to clear)
+   * @description Falls back gracefully if Badge API is not supported
+   */
+  async updateAppBadge(count?: number): Promise<void> {
+    if (this.isBadgeSupported()) {
+      try {
+        if (count === undefined || count === 0) {
+          await (navigator as any).clearAppBadge();
+        } else {
+          await (navigator as any).setAppBadge(count);
+        }
+      } catch (error) {
+        console.warn('Failed to update app badge:', error);
+      }
+    }
+  }
+
+  /**
+   * Get notification capabilities for this browser
+   * @returns Object indicating which features are supported
+   */
+  getNotificationCapabilities(): {
+    basic: boolean;
+    actions: boolean;
+    requireInteraction: boolean;
+    badge: boolean;
+  } {
+    return {
+      basic: 'Notification' in window,
+      actions: this.isActionsSupported(),
+      requireInteraction: this.isRequireInteractionSupported(),
+      badge: this.isBadgeSupported()
+    };
+  }
+
+  /**
+   * Send a basic notification using only widely supported features
+   * @param title - Notification title
+   * @param body - Notification body text
+   * @param icon - Optional icon URL
+   * @description Uses only basic Notification API features for maximum compatibility
+   */
+  async sendBasicNotification(title: string, body: string, icon?: string): Promise<void> {
+    if (Notification.permission === 'granted') {
+      const notification = new Notification(title, {
+        body,
+        icon: icon || '/icon-192x192.png'
+      });
+
+      notification.onclick = (event) => {
+        event.preventDefault();
+        window.focus();
+        notification.close();
+      };
+    }
   }
 
   // Offline Storage

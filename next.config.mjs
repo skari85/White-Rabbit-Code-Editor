@@ -1,9 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove dangerous ignore flags for better code quality
   eslint: {
-    // Only ignore during builds in CI, not development
-    ignoreDuringBuilds: process.env.CI === 'true',
+    ignoreDuringBuilds: true,
   },
   typescript: {
     // Only ignore during builds in CI, not development

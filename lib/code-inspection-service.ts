@@ -1,5 +1,5 @@
-import { AIService } from './ai-service';
 import { AISettings } from './ai-config';
+import { AIService } from './ai-service';
 
 export interface CodeInspection {
   id: string;
@@ -308,7 +308,7 @@ export class CodeInspectionService {
         inspections.push({
           id: `console-log-${lineNumber}`,
           type: 'warning',
-          severity: 'warning',
+          severity: 'minor',
           message: 'Console statement found',
           description: 'Remove console.log statements before production deployment',
           category: 'code-style',
@@ -318,16 +318,11 @@ export class CodeInspectionService {
             endLineNumber: lineNumber,
             endColumn: line.indexOf('console.log') + 'console.log'.length + 1
           },
-          source: 'white-rabbit',
           quickFix: {
             title: 'Remove console.log',
-            range: {
-              startLineNumber: lineNumber,
-              startColumn: 1,
-              endLineNumber: lineNumber,
-              endColumn: line.length + 1
-            },
-            newText: ''
+            description: 'Remove console.log statement',
+            kind: 'quickfix',
+            edits: []
           }
         });
       }
@@ -339,7 +334,7 @@ export class CodeInspectionService {
           inspections.push({
             id: `todo-${lineNumber}`,
             type: 'info',
-            severity: 'info',
+            severity: 'minor',
             message: `${match[1]} comment found`,
             description: 'Consider addressing this TODO item',
             category: 'code-style',
@@ -348,8 +343,7 @@ export class CodeInspectionService {
               startColumn: match.index! + 1,
               endLineNumber: lineNumber,
               endColumn: match.index! + match[1].length + 1
-            },
-            source: 'white-rabbit'
+            }
           });
         }
       }
@@ -359,7 +353,7 @@ export class CodeInspectionService {
         inspections.push({
           id: `long-line-${lineNumber}`,
           type: 'warning',
-          severity: 'warning',
+          severity: 'minor',
           message: 'Line too long',
           description: `Line has ${line.length} characters. Consider breaking it into multiple lines for better readability.`,
           category: 'code-style',
@@ -368,8 +362,7 @@ export class CodeInspectionService {
             startColumn: 121,
             endLineNumber: lineNumber,
             endColumn: line.length + 1
-          },
-          source: 'white-rabbit'
+          }
         });
       }
 
@@ -391,7 +384,7 @@ export class CodeInspectionService {
         inspections.push({
           id: `missing-semicolon-${lineNumber}`,
           type: 'warning',
-          severity: 'warning',
+          severity: 'minor',
           message: 'Missing semicolon',
           description: 'Add semicolon at the end of the statement',
           category: 'syntax',
@@ -401,16 +394,11 @@ export class CodeInspectionService {
             endLineNumber: lineNumber,
             endColumn: line.length + 1
           },
-          source: 'white-rabbit',
           quickFix: {
             title: 'Add semicolon',
-            range: {
-              startLineNumber: lineNumber,
-              startColumn: line.length + 1,
-              endLineNumber: lineNumber,
-              endColumn: line.length + 1
-            },
-            newText: ';'
+            description: 'Add semicolon at the end of the statement',
+            kind: 'quickfix',
+            edits: []
           }
         });
       }

@@ -794,13 +794,13 @@ export class ExtensionSystem {
             category: 'Sample'
           }
         ],
-        menus: {
+        menus: [{
           commandPalette: [
             {
               command: 'sample.helloWorld'
             }
           ]
-        }
+        }]
       },
       activationEvents: [
         'onCommand:sample.helloWorld'

@@ -314,7 +314,7 @@ export class MarketplaceService {
         icon: '✨',
         downloads: 30000000,
         rating: 4.6,
-        reviews: 8000,
+        reviewCount: 8000,
         lastUpdated: '2024-01-12',
         compatibility: ['1.0.0+'],
         permissions: ['file-access'],
@@ -423,7 +423,7 @@ export class MarketplaceService {
         icon: '🎨',
         downloads: 15000000,
         rating: 4.8,
-        reviews: 3500,
+        reviewCount: 3500,
         lastUpdated: '2024-01-10',
         compatibility: ['1.0.0+'],
         permissions: ['file-access'],
@@ -479,25 +479,22 @@ export class MarketplaceService {
       {
         id: 'github.copilot',
         name: 'copilot',
+        version: '1.0.0',
         displayName: 'GitHub Copilot',
         description: 'Your AI pair programmer',
-        author: 'GitHub',
+        icon: '/icons/copilot.png',
+        publisher: 'GitHub',
         category: 'AI Tools',
-        keywords: ['ai', 'copilot', 'assistant'],
-        engines: { whiterabbit: '^1.0.0' },
-        contributes: {},
-        activationEvents: ['*'],
+        tags: ['ai', 'copilot', 'assistant'],
         downloads: 25000000,
         rating: 4.3,
-        reviews: 15000,
+        reviewCount: 15000,
         featured: true,
         verified: true,
         lastUpdated: '2024-01-14',
         compatibility: ['1.0.0+'],
         permissions: ['network-access'],
         installSize: '45 MB',
-        featured: true,
-        verified: true,
         pricing: 'paid',
         price: 10.00
       },
@@ -868,8 +865,8 @@ export class MarketplaceService {
 
   static installExtension(extension: MarketplaceExtension): void {
     try {
-      const installed = this.getInstalledExtensions();
-      
+      let installed = this.getInstalledExtensions();
+
       // Ensure we have a valid array
       if (!Array.isArray(installed)) {
         console.warn('Installed extensions is not an array, resetting');

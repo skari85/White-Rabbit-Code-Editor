@@ -702,7 +702,7 @@ export class LanguageServerClient {
     }
 
     // Notify language server about document change
-    await this.sendNotification(document.languageId, 'textDocument/didChange', {
+    await this.sendNotification(document.languageId as SupportedLanguage, 'textDocument/didChange', {
       textDocument: { uri, version },
       contentChanges: changes
     })
@@ -714,7 +714,7 @@ export class LanguageServerClient {
     if (!document) return
 
     // Notify language server about closed document
-    await this.sendNotification(document.languageId, 'textDocument/didClose', {
+    await this.sendNotification(document.languageId as SupportedLanguage, 'textDocument/didClose', {
       textDocument: { uri }
     })
 
@@ -727,7 +727,7 @@ export class LanguageServerClient {
     if (!document) return []
 
     try {
-      const result = await this.sendRequest(document.languageId, 'textDocument/completion', {
+      const result = await this.sendRequest(document.languageId as SupportedLanguage, 'textDocument/completion', {
         textDocument: { uri },
         position
       })
@@ -745,7 +745,7 @@ export class LanguageServerClient {
     if (!document) return null
 
     try {
-      const result = await this.sendRequest(document.languageId, 'textDocument/hover', {
+      const result = await this.sendRequest(document.languageId as SupportedLanguage, 'textDocument/hover', {
         textDocument: { uri },
         position
       })
@@ -763,7 +763,7 @@ export class LanguageServerClient {
     if (!document) return null
 
     try {
-      const result = await this.sendRequest(document.languageId, 'textDocument/signatureHelp', {
+      const result = await this.sendRequest(document.languageId as SupportedLanguage, 'textDocument/signatureHelp', {
         textDocument: { uri },
         position
       })
@@ -781,7 +781,7 @@ export class LanguageServerClient {
     if (!document) return []
 
     try {
-      const result = await this.sendRequest(document.languageId, 'textDocument/definition', {
+      const result = await this.sendRequest(document.languageId as SupportedLanguage, 'textDocument/definition', {
         textDocument: { uri },
         position
       })
@@ -799,7 +799,7 @@ export class LanguageServerClient {
     if (!document) return []
 
     try {
-      const result = await this.sendRequest(document.languageId, 'textDocument/references', {
+      const result = await this.sendRequest(document.languageId as SupportedLanguage, 'textDocument/references', {
         textDocument: { uri },
         position,
         context: { includeDeclaration }
@@ -818,7 +818,7 @@ export class LanguageServerClient {
     if (!document) return []
 
     try {
-      const result = await this.sendRequest(document.languageId, 'textDocument/documentSymbol', {
+      const result = await this.sendRequest(document.languageId as SupportedLanguage, 'textDocument/documentSymbol', {
         textDocument: { uri }
       })
 
@@ -835,7 +835,7 @@ export class LanguageServerClient {
     if (!document) return []
 
     try {
-      const result = await this.sendRequest(document.languageId, 'textDocument/formatting', {
+      const result = await this.sendRequest(document.languageId as SupportedLanguage, 'textDocument/formatting', {
         textDocument: { uri },
         options
       })

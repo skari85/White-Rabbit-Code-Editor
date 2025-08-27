@@ -11,58 +11,57 @@
 
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Switch } from '@/components/ui/switch'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle
 } from '@/components/ui/dialog'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-  Puzzle,
-  Download,
-  Trash2,
-  Settings,
-  Search,
-  Star,
-  CheckCircle,
-  XCircle,
-  RefreshCw,
-  ExternalLink,
-  ChevronDown,
-  Plus,
-  Code,
-  Palette,
-  Bug,
-  Zap,
-  Package,
-  TrendingUp,
-  Crown
-} from 'lucide-react'
-import { 
-  MarketplaceService, 
-  MarketplaceExtension,
-  InstalledExtension,
-  ExtensionCategory,
-  EXTENSION_CATEGORIES
-} from '@/lib/marketplace'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAnalytics } from '@/hooks/use-analytics'
+import {
+    EXTENSION_CATEGORIES,
+    ExtensionCategory,
+    InstalledExtension,
+    MarketplaceExtension,
+    MarketplaceService
+} from '@/lib/marketplace'
+import {
+    Bug,
+    CheckCircle,
+    ChevronDown,
+    Code,
+    Crown,
+    Database,
+    Download,
+    ExternalLink,
+    Globe,
+    Palette,
+    Plus,
+    Puzzle,
+    RefreshCw,
+    Search,
+    Settings,
+    Star,
+    Trash2,
+    TrendingUp,
+    XCircle,
+    Zap
+} from 'lucide-react'
+import React, { useEffect, useState } from 'react'
 
 interface ExtensionManagerProps {
   className?: string
@@ -154,16 +153,14 @@ export function ExtensionManager({ className }: ExtensionManagerProps) {
       return <span className="text-lg">{categoryInfo.icon}</span>
     }
     
-    const icons = {
-      'Programming Languages': <Code className="w-4 h-4" />,
-      'Snippets': <Zap className="w-4 h-4" />,
-      'Linters': <CheckCircle className="w-4 h-4" />,
-      'Themes': <Palette className="w-4 h-4" />,
-      'Debuggers': <Bug className="w-4 h-4" />,
-      'Formatters': <Settings className="w-4 h-4" />,
-      'Keymaps': <Settings className="w-4 h-4" />,
-      'SCM Providers': <Package className="w-4 h-4" />,
-      'Other': <Puzzle className="w-4 h-4" />
+    const icons: Record<string, React.ReactElement> = {
+      'programming-languages': <Code className="w-4 h-4" />,
+      'snippets': <Zap className="w-4 h-4" />,
+      'themes': <Palette className="w-4 h-4" />,
+      'debuggers': <Bug className="w-4 h-4" />,
+      'formatters': <Zap className="w-4 h-4" />,
+      'git': <Database className="w-4 h-4" />,
+      'web-development': <Globe className="w-4 h-4" />
     }
     return icons[category] || <Puzzle className="w-4 h-4" />
   }

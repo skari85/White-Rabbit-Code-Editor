@@ -11,51 +11,38 @@
 
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Progress } from '@/components/ui/progress'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+    Collapsible,
+    CollapsibleContent
 } from '@/components/ui/collapsible'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-  Search,
-  Replace,
-  History,
-  Settings,
-  ChevronDown,
-  ChevronRight,
-  FileText,
-  Clock,
-  RefreshCw,
-  Filter,
-  MoreHorizontal,
-  Copy,
-  ExternalLink
-} from 'lucide-react'
-import { 
-  SearchReplaceService, 
-  SearchOptions, 
-  ReplaceOptions,
-  SearchSummary,
-  ReplaceSummary,
-  SearchResult
-} from '@/lib/search-replace-service'
+import { Input } from '@/components/ui/input'
+import { Progress } from '@/components/ui/progress'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAnalytics } from '@/hooks/use-analytics'
+import {
+    ReplaceOptions,
+    ReplaceSummary,
+    SearchOptions,
+    SearchReplaceService,
+    SearchResult,
+    SearchSummary
+} from '@/lib/search-replace-service'
+import {
+    ChevronDown,
+    ChevronRight,
+    FileText,
+    Filter,
+    History,
+    RefreshCw,
+    Replace,
+    Search
+} from 'lucide-react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 interface SearchPanelProps {
   searchService: SearchReplaceService
@@ -391,7 +378,7 @@ export function SearchPanel({ searchService, onFileSelect, className }: SearchPa
                         <Collapsible open={expandedFiles.has(file)}>
                           <CollapsibleContent>
                             <div className="border-t">
-                              {results.map((result, index) => (
+                              {results.map((result: any, index: number) => (
                                 <div
                                   key={index}
                                   className="flex items-start gap-2 p-2 pl-8 hover:bg-muted cursor-pointer text-sm"

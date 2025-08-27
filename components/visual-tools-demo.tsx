@@ -1,24 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  GitBranch, 
-  FolderTree, 
-  GitCommit, 
-  Sparkles,
-  Zap,
-  Eye,
-  Settings,
-  Maximize2,
-  Minimize2
+import {
+    Eye,
+    FolderTree,
+    GitBranch,
+    GitCommit,
+    Maximize2,
+    Minimize2,
+    Settings,
+    Sparkles,
+    Zap
 } from 'lucide-react';
+import { useState } from 'react';
+import CodeFlowVisualizer from './code-flow-visualizer';
 import GitHistoryVisualizer from './git-history-visualizer';
 import SmartFileTree from './smart-file-tree';
-import CodeFlowVisualizer from './code-flow-visualizer';
 
 export default function VisualToolsDemo() {
   const [activeTab, setActiveTab] = useState('git-history');
@@ -120,6 +120,29 @@ export default function VisualToolsDemo() {
                 <CardContent>
                   <SmartFileTree 
                     className="w-full"
+                    files={[
+                      {
+                        name: 'src',
+                        path: '/src',
+                        type: 'folder',
+                        lastModified: new Date(),
+                        dependencies: ['components', 'hooks', 'lib'],
+                        complexity: 8,
+                        status: 'clean'
+                      },
+                      {
+                        name: 'App.tsx',
+                        path: '/src/App.tsx',
+                        type: 'file',
+                        size: 2048,
+                        lastModified: new Date(),
+                        language: 'typescript',
+                        dependencies: ['react', 'components'],
+                        complexity: 4,
+                        status: 'modified',
+                        lastActivity: new Date()
+                      }
+                    ]}
                     onFileSelect={(file) => {
                       console.log('Selected file:', file);
                     }}

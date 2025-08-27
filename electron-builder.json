@@ -1,0 +1,114 @@
+{
+  "appId": "com.whiterabbit.codeeditor",
+  "productName": "White Rabbit Code Editor",
+  "directories": {
+    "output": "dist",
+    "buildResources": "build"
+  },
+  "files": [
+    "out/**/*",
+    "electron/**/*",
+    "public/**/*",
+    "node_modules/**/*",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": "public",
+      "to": "public"
+    }
+  ],
+  "mac": {
+    "category": "public.app-category.developer-tools",
+    "icon": "build/icon.icns",
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      },
+      {
+        "target": "zip",
+        "arch": ["x64", "arm64"]
+      }
+    ],
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
+    "entitlements": "build/entitlements.mac.plist",
+    "entitlementsInherit": "build/entitlements.mac.plist"
+  },
+  "win": {
+    "icon": "build/icon.ico",
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "requestedExecutionLevel": "asInvoker"
+  },
+  "linux": {
+    "icon": "build/icon.png",
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": ["x64"]
+      },
+      {
+        "target": "deb",
+        "arch": ["x64"]
+      },
+      {
+        "target": "rpm",
+        "arch": ["x64"]
+      }
+    ],
+    "category": "Development"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "White Rabbit Code Editor"
+  },
+  "dmg": {
+    "title": "White Rabbit Code Editor",
+    "icon": "build/icon.icns",
+    "background": "build/background.png",
+    "window": {
+      "width": 540,
+      "height": 380
+    },
+    "contents": [
+      {
+        "x": 130,
+        "y": 220
+      },
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ]
+  },
+  "appImage": {
+    "artifactName": "WhiteRabbit-${version}-${arch}.${ext}"
+  },
+  "deb": {
+    "artifactName": "whiterabbit_${version}_${arch}.deb"
+  },
+  "rpm": {
+    "artifactName": "whiterabbit-${version}-${arch}.rpm"
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "skari85",
+    "repo": "pwa-code",
+    "releaseType": "release"
+  }
+}

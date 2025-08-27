@@ -24,7 +24,7 @@ export interface Extension {
   dependencies?: string[];
   engines?: {
     vscode?: string;
-    [key: string]: string;
+    [key: string]: string | undefined;
   };
   isInstalled?: boolean;
   isEnabled?: boolean;

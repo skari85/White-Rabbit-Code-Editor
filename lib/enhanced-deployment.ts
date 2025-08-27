@@ -480,7 +480,9 @@ export class EnhancedDeploymentService {
       ...files,
       {
         name: 'vercel.json',
-        content: JSON.stringify(vercelConfig, null, 2)
+        content: JSON.stringify(vercelConfig, null, 2),
+        type: 'json',
+        lastModified: new Date()
       }
     ];
   }
@@ -501,7 +503,9 @@ export class EnhancedDeploymentService {
       ...files,
       {
         name: 'netlify.toml',
-        content: netlifyConfig
+        content: netlifyConfig,
+        type: 'txt',
+        lastModified: new Date()
       }
     ];
   }
@@ -524,7 +528,9 @@ export class EnhancedDeploymentService {
       ...files,
       {
         name: 'firebase.json',
-        content: JSON.stringify(firebaseConfig, null, 2)
+        content: JSON.stringify(firebaseConfig, null, 2),
+        type: 'json',
+        lastModified: new Date()
       }
     ];
   }

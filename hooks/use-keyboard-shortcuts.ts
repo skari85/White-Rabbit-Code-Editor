@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 export interface KeyboardShortcut {
   key: string;
@@ -28,23 +28,25 @@ export function useKeyboardShortcuts({
   const shortcutsRef = useRef(shortcuts);
   shortcutsRef.current = shortcuts;
 
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+  const handleKeyDown = useCallback((event: Event) => {
     if (!enabled) return;
+    
+    const keyboardEvent = event as KeyboardEvent;
 
     const activeShortcuts = shortcutsRef.current.filter(shortcut => 
       shortcut.enabled !== false
     );
 
     for (const shortcut of activeShortcuts) {
-      const keyMatches = event.key.toLowerCase() === shortcut.key.toLowerCase();
-      const ctrlMatches = !!event.ctrlKey === !!shortcut.ctrlKey;
-      const shiftMatches = !!event.shiftKey === !!shortcut.shiftKey;
-      const altMatches = !!event.altKey === !!shortcut.altKey;
-      const metaMatches = !!event.metaKey === !!shortcut.metaKey;
+      const keyMatches = keyboardEvent.key.toLowerCase() === shortcut.key.toLowerCase();
+      const ctrlMatches = !!keyboardEvent.ctrlKey === !!shortcut.ctrlKey;
+      const shiftMatches = !!keyboardEvent.shiftKey === !!shortcut.shiftKey;
+      const altMatches = !!keyboardEvent.altKey === !!shortcut.altKey;
+      const metaMatches = !!keyboardEvent.metaKey === !!shortcut.metaKey;
 
       if (keyMatches && ctrlMatches && shiftMatches && altMatches && metaMatches) {
         if (shortcut.preventDefault !== false) {
-          event.preventDefault();
+          keyboardEvent.preventDefault();
         }
         shortcut.action();
         break;

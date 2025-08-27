@@ -40,7 +40,7 @@ export const SECURITY_CONFIG = {
       groq: /^gsk_[a-zA-Z0-9]{52}$/,
       google: /^[a-zA-Z0-9\-_]{39}$/
     },
-    FILENAME_PATTERN: /^[a-zA-Z0-9\-_\.\/]+$/,
+    FILENAME_PATTERN: /^[a-zA-Z0-9\-_./]+$/,
     PROJECT_NAME_PATTERN: /^[a-zA-Z0-9\-_]{1,50}$/
   }
 };

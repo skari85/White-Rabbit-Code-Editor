@@ -323,7 +323,7 @@ export class DebuggerService {
       
       variables.push({
         name,
-        value: expandable ? `{${Object.keys(value).length} properties}` : value,
+        value: expandable ? `{${Object.keys(value || {}).length} properties}` : value,
         type,
         scope: 'local',
         expandable,

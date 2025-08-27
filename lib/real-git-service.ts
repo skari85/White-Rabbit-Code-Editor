@@ -474,7 +474,6 @@ export class RealGitService {
       })
 
       console.log(`✅ Pushed ${currentBranch} to ${remoteName}`)
-      return pushResult
     } catch (error) {
       console.error(`Failed to push to ${remoteName}:`, error)
       throw error
@@ -555,7 +554,7 @@ export class RealGitService {
 
       // Simple line-by-line diff
       const oldLines = lastCommitContent.split('\n')
-      const newLines = currentContent.split('\n')
+      const newLines = (typeof currentContent === 'string' ? currentContent : new TextDecoder().decode(currentContent)).split('\n')
 
       const hunks = []
       let oldStart = 1

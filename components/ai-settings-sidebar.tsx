@@ -1,23 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { AISettings, AI_PROVIDERS } from '@/lib/ai-config';
-import { 
-  Settings, 
-  Key, 
-  Check, 
-  AlertCircle, 
-  Eye, 
-  EyeOff,
-  Zap,
-  Globe,
-  Lock
+import {
+    AlertCircle,
+    Check,
+    Eye,
+    EyeOff,
+    Globe,
+    Key,
+    Lock,
+    Settings,
+    Zap
 } from 'lucide-react';
+import { useState } from 'react';
 
 interface AISettingsSidebarProps {
   settings: AISettings;
@@ -185,19 +185,19 @@ export default function AISettingsSidebar({
             {/* API Key Help */}
             <div className="text-xs text-muted-foreground">
               {currentProvider.id === 'openai' && (
-                <span>Get your key from <a href="https://platform.openai.com/api-keys" target="_blank" className="text-blue-500 hover:underline">OpenAI Platform</a></span>
+                <span>Get your key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">OpenAI Platform</a></span>
               )}
               {currentProvider.id === 'anthropic' && (
-                <span>Get your key from <a href="https://console.anthropic.com/" target="_blank" className="text-blue-500 hover:underline">Anthropic Console</a></span>
+                <span>Get your key from <a href="https://console.anthropic.com/" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">Anthropic Console</a></span>
               )}
               {currentProvider.id === 'google' && (
-                <span>Get your key from <a href="https://makersuite.google.com/app/apikey" target="_blank" className="text-blue-500 hover:underline">Google AI Studio</a></span>
+                <span>Get your key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">Google AI Studio</a></span>
               )}
               {currentProvider.id === 'groq' && (
-                <span>Get your key from <a href="https://console.groq.com/keys" target="_blank" className="text-blue-500 hover:underline">Groq Console</a></span>
+                <span>Get your key from <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">Groq Console</a></span>
               )}
               {currentProvider.id === 'mistral' && (
-                <span>Get your key from <a href="https://console.mistral.ai/" target="_blank" className="text-blue-500 hover:underline">Mistral Console</a></span>
+                <span>Get your key from <a href="https://console.mistral.ai/" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">Mistral Console</a></span>
               )}
               {currentProvider.id === 'ollama' && (
                 <span>Make sure Ollama is running locally on port 11434</span>

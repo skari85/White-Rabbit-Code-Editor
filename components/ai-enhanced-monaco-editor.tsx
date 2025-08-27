@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sun, Moon, Maximize2, Minimize2, Zap } from 'lucide-react';
-import Editor from '@monaco-editor/react';
-import { AICompletionService, CompletionContext } from '@/lib/ai-completion-service';
 import { useAIAssistantEnhanced } from '@/hooks/use-ai-assistant-enhanced';
 import { useCodeBuilder } from '@/hooks/use-code-builder';
+import { AICompletionService, CompletionContext } from '@/lib/ai-completion-service';
+import Editor from '@monaco-editor/react';
+import { Maximize2, Minimize2, Moon, Sun, Zap } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import '../styles/monaco-editor-fixes.css';
 
 interface AIEnhancedMonacoEditorProps {
@@ -96,7 +96,9 @@ export default function AIEnhancedMonacoEditor({
             const span = Math.max(1, (end.left - start.left));
             origin = ((hit.left - start.left) / span) * 100;
           }
-        } catch {}
+        } catch (error) {
+          // Ignore positioning errors
+        }
         injectOriginStyle(className, origin);
 
         focusDecorationIds = editor.deltaDecorations(
@@ -112,7 +114,9 @@ export default function AIEnhancedMonacoEditor({
             }
           ]
         );
-      } catch {}
+      } catch (error) {
+        // Ignore decoration errors
+      }
     };
 
     const mouseDownDispose = editor.onMouseDown((e: any) => {

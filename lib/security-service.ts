@@ -100,7 +100,7 @@ class SecurityService {
     const realIp = request.headers.get('x-real-ip');
     const cfConnectingIp = request.headers.get('cf-connecting-ip');
     
-    let clientIp = request.ip || 'unknown';
+    let clientIp = 'unknown';
     
     if (forwarded) {
       clientIp = forwarded.split(',')[0].trim();

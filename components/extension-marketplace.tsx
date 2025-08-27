@@ -1,43 +1,32 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Search, 
-  Download, 
-  Star, 
-  Download as DownloadIcon,
-  Trash2,
-  Settings,
-  Package,
-  Code,
-  Palette,
-  Database,
-  Globe,
-  Zap,
-  Heart,
-  TrendingUp,
-  Filter,
-  SortAsc,
-  SortDesc,
-  Grid,
-  List,
-  RefreshCw,
-  ExternalLink,
-  CheckCircle,
-  AlertCircle,
-  Info,
-  Play,
-  Pause,
-  Square
-} from 'lucide-react';
 import { extensionManager } from '@/lib/extension-manager';
 import { extensionSystem } from '@/lib/extension-system';
+import {
+    Code,
+    Database,
+    Download as DownloadIcon,
+    ExternalLink,
+    Globe,
+    Grid,
+    List,
+    Package,
+    Palette,
+    Play,
+    RefreshCw,
+    Search,
+    SortAsc,
+    SortDesc,
+    Star,
+    Trash2,
+    Zap
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 interface Extension {
   id: string;
@@ -65,11 +54,12 @@ interface Extension {
   dependencies?: string[];
   engines?: {
     vscode?: string;
-    [key: string]: string;
+    [key: string]: string | undefined;
   };
   isInstalled?: boolean;
   isEnabled?: boolean;
   isUpdateAvailable?: boolean;
+  isInstalling?: boolean;
   localVersion?: string;
   size?: number;
 }

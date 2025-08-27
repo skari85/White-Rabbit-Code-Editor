@@ -425,7 +425,12 @@ Please provide suggestions that are contextually relevant to this ${this.context
     line: number;
     suggestion: string;
   }> {
-    const suggestions = [];
+    const suggestions: Array<{
+      type: 'extract-function' | 'extract-component' | 'simplify' | 'optimize';
+      description: string;
+      line: number;
+      suggestion: string;
+    }> = [];
     const lines = file.content.split('\n');
 
     // Look for long functions that could be extracted
