@@ -37,10 +37,14 @@ export default function LandingPage() {
     const numCodeSnippets = 50;
     
     const snippets = [
-      'const rabbit = new Rabbit();', 'if (isHappy) { return "🥕"; }',
-      'let syntaxError = true;', '=> console.log("Hoppy!");',
-      '// TODO: fix this bug', '{ "bunny": "fluffy" }',
-      'console.error("Syntax Error: missing carrot");'
+      'const rabbit = new LeatherRabbit();', 'if (hasRabbitEars) { return "🐇"; }',
+      'let latexStyle = true;', '=> console.log("Stylish coding!");',
+      '// TODO: add more leather shine', '{ "ears": "fluffy", "style": "latex" }',
+      'console.error("Syntax Error: missing rabbit ears");',
+      'const developer = { ears: true, latex: true };',
+      'function hop() { return "🐰"; }',
+      '// Rabbit-powered development',
+      'if (developer.wearingLatex) { coolness++; }'
     ];
 
     // Core Animation Loop
@@ -164,24 +168,31 @@ export default function LandingPage() {
 
     // Add typing effect
     function addTypingEffect() {
-      const typingText = 'console.log("🐰 White Rabbit is coding...");';
+      const typingTexts = [
+        'console.log("🐰 Leather Rabbit Dev Mode Activated...");',
+        'const style = { latex: true, ears: "fluffy" };',
+        '// Coding in style with rabbit ears 🐇',
+        'if (developer.hasRabbitEars) { productivity++; }'
+      ];
+      const typingText = typingTexts[Math.floor(Math.random() * typingTexts.length)];
       const typingEl = document.createElement('div');
-      typingEl.className = 'absolute text-green-400 font-mono text-lg z-20';
+      typingEl.className = 'absolute text-purple-400 font-mono text-lg z-20';
       typingEl.style.left = '50px';
       typingEl.style.top = '100px';
+      typingEl.style.textShadow = '0 0 10px rgba(168, 85, 247, 0.5)';
       mainScreen.appendChild(typingEl);
-      
+
       let i = 0;
       const typeWriter = () => {
         if (i < typingText.length) {
           typingEl.textContent = typingText.substring(0, i + 1);
           i++;
-          setTimeout(typeWriter, 100);
+          setTimeout(typeWriter, 80);
         } else {
-          // Remove after 3 seconds
+          // Remove after 4 seconds
           setTimeout(() => {
             typingEl.remove();
-          }, 3000);
+          }, 4000);
         }
       };
       typeWriter();
@@ -370,29 +381,120 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white sm:text-4xl mb-4">
-              Interactive Developer Experience
+              Leather Latex Rabbit Developer Experience
             </h2>
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Click on the rabbits and code snippets to see the magic happen!
+              Meet our stylish developer in leather latex with fluffy rabbit ears! Click on the rabbits and code snippets to see the magic happen!
             </p>
           </div>
           
           <div className="relative w-full h-[600px] bg-black rounded-2xl overflow-hidden">
-            {/* Developer Character */}
-            <div 
+            {/* Developer Character in Leather Latex */}
+            <div
               className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[300px] h-[400px] z-10 cursor-pointer transition-transform duration-200 ease-in-out hover:scale-105"
               style={{
-                background: 'radial-gradient(ellipse at center, #f0c598 0%, #e6b88a 30%, #d4a574 60%, #c19a6b 100%)',
+                background: 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 20%, #1a1a1a 40%, #0d0d0d 60%, #1a1a1a 80%, #000000 100%)',
                 borderRadius: '50% 50% 0 0',
-                boxShadow: '0 -20px 40px rgba(0, 0, 0, 0.4), inset 0 0 30px rgba(255, 255, 255, 0.1)',
-                border: '2px solid #d4a574'
+                boxShadow: '0 -20px 40px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(255, 255, 255, 0.05), 0 0 20px rgba(255, 255, 255, 0.1)',
+                border: '3px solid #333333'
               }}
               id="developerBack"
               ref={developerBackRef}
             >
-              {/* White Rabbit Ears - Larger and More Realistic */}
-              <div 
-                className="absolute -top-28 left-1/2 transform -translate-x-1/2 w-[120px] h-[200px] z-[11]"
+              {/* Leather Latex Body Details */}
+              <div
+                className="absolute top-10 left-1/2 transform -translate-x-1/2 w-[280px] h-[350px] z-[9]"
+                style={{
+                  background: 'linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 30%, #1a1a1a 60%, #000000 100%)',
+                  borderRadius: '20px',
+                  boxShadow: 'inset 0 0 40px rgba(255, 255, 255, 0.1), 0 0 30px rgba(0, 0, 0, 0.5)',
+                  border: '2px solid #333333'
+                }}
+              >
+                {/* Latex shine effects */}
+                <div
+                  className="absolute top-5 left-5 w-[60px] h-[200px]"
+                  style={{
+                    background: 'linear-gradient(45deg, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(255, 255, 255, 0.1) 100%)',
+                    borderRadius: '10px',
+                    opacity: '0.7'
+                  }}
+                ></div>
+                <div
+                  className="absolute top-20 right-8 w-[40px] h-[150px]"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%, rgba(255, 255, 255, 0.05) 100%)',
+                    borderRadius: '8px',
+                    opacity: '0.6'
+                  }}
+                ></div>
+                {/* Zipper detail */}
+                <div
+                  className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[4px] h-[300px]"
+                  style={{
+                    background: 'linear-gradient(180deg, #666666 0%, #333333 50%, #666666 100%)',
+                    borderRadius: '2px'
+                  }}
+                ></div>
+                {/* Zipper teeth */}
+                {Array.from({ length: 15 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute left-1/2 transform -translate-x-1/2"
+                    style={{
+                      top: `${10 + i * 18}px`,
+                      width: '8px',
+                      height: '3px',
+                      background: '#888888',
+                      borderRadius: '1px'
+                    }}
+                  ></div>
+                ))}
+              </div>
+
+              {/* Face with skin tone */}
+              <div
+                className="absolute top-5 left-1/2 transform -translate-x-1/2 w-[200px] h-[250px] z-[12]"
+                style={{
+                  background: 'radial-gradient(ellipse at center, #f0c598 0%, #e6b88a 30%, #d4a574 60%, #c19a6b 100%)',
+                  borderRadius: '50%',
+                  boxShadow: '0 0 20px rgba(0, 0, 0, 0.3), inset 0 0 30px rgba(255, 255, 255, 0.1)',
+                  border: '2px solid #d4a574'
+                }}
+              >
+                {/* Eyes */}
+                <div
+                  className="absolute top-[80px] left-[50px] w-[25px] h-[25px] rounded-full"
+                  style={{ backgroundColor: '#4a90e2', boxShadow: '0 0 10px rgba(74, 144, 226, 0.5)' }}
+                ></div>
+                <div
+                  className="absolute top-[80px] right-[50px] w-[25px] h-[25px] rounded-full"
+                  style={{ backgroundColor: '#4a90e2', boxShadow: '0 0 10px rgba(74, 144, 226, 0.5)' }}
+                ></div>
+
+                {/* Nose */}
+                <div
+                  className="absolute top-[120px] left-1/2 transform -translate-x-1/2 w-[15px] h-[20px]"
+                  style={{
+                    background: 'linear-gradient(180deg, #d4a574 0%, #c19a6b 100%)',
+                    borderRadius: '50% 50% 50% 50%'
+                  }}
+                ></div>
+
+                {/* Mouth */}
+                <div
+                  className="absolute top-[160px] left-1/2 transform -translate-x-1/2 w-[40px] h-[20px]"
+                  style={{
+                    background: 'linear-gradient(180deg, #8b4513 0%, #654321 100%)',
+                    borderRadius: '0 0 20px 20px',
+                    border: '1px solid #654321'
+                  }}
+                ></div>
+              </div>
+
+              {/* Enhanced White Rabbit Ears - Larger and More Realistic */}
+              <div
+                className="absolute -top-28 left-1/2 transform -translate-x-1/2 w-[120px] h-[200px] z-[13]"
                 style={{
                   background: 'radial-gradient(ellipse at center, #ffffff 0%, #f8f8f8 20%, #f0f0f0 40%, #e8e8e8 60%, #e0e0e0 80%, #d8d8d8 100%)',
                   borderRadius: '50% 50% 0 0',
@@ -426,8 +528,8 @@ export default function LandingPage() {
                   }}
                 ></div>
               </div>
-              <div 
-                className="absolute -top-28 left-1/2 transform translate-x-12 w-[120px] h-[200px] z-[11]"
+              <div
+                className="absolute -top-28 left-1/2 transform translate-x-12 w-[120px] h-[200px] z-[13]"
                 style={{
                   background: 'radial-gradient(ellipse at center, #ffffff 0%, #f8f8f8 20%, #f0f0f0 40%, #e8e8e8 60%, #e0e0e0 80%, #d8d8d8 100%)',
                   borderRadius: '50% 50% 0 0',
@@ -461,30 +563,115 @@ export default function LandingPage() {
                   }}
                 ></div>
               </div>
-              
-              {/* Realistic Hair */}
-              <div 
+
+              {/* Leather Latex Collar */}
+              <div
+                className="absolute top-[240px] left-1/2 transform -translate-x-1/2 w-[220px] h-[30px] z-[12]"
+                style={{
+                  background: 'linear-gradient(180deg, #1a1a1a 0%, #000000 50%, #1a1a1a 100%)',
+                  borderRadius: '15px',
+                  boxShadow: 'inset 0 0 10px rgba(255, 255, 255, 0.1), 0 0 15px rgba(0, 0, 0, 0.5)',
+                  border: '2px solid #333333'
+                }}
+              >
+                {/* Collar studs */}
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute top-1/2 transform -translate-y-1/2"
+                    style={{
+                      left: `${15 + i * 30}px`,
+                      width: '8px',
+                      height: '8px',
+                      background: 'radial-gradient(circle, #888888 0%, #333333 100%)',
+                      borderRadius: '50%',
+                      boxShadow: '0 0 5px rgba(255, 255, 255, 0.3)'
+                    }}
+                  ></div>
+                ))}
+              </div>
+
+              {/* Leather Latex Gloves/Arms */}
+              <div
+                className="absolute top-[280px] left-[20px] w-[80px] h-[120px] z-[10]"
+                style={{
+                  background: 'linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 50%, #1a1a1a 100%)',
+                  borderRadius: '40px 40px 20px 20px',
+                  boxShadow: 'inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px rgba(0, 0, 0, 0.3)',
+                  border: '2px solid #333333',
+                  transform: 'rotate(-20deg)'
+                }}
+              >
+                {/* Glove shine */}
+                <div
+                  className="absolute top-2 left-2 w-[20px] h-[80px]"
+                  style={{
+                    background: 'linear-gradient(45deg, rgba(255, 255, 255, 0.3) 0%, transparent 100%)',
+                    borderRadius: '10px'
+                  }}
+                ></div>
+              </div>
+
+              <div
+                className="absolute top-[280px] right-[20px] w-[80px] h-[120px] z-[10]"
+                style={{
+                  background: 'linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 50%, #1a1a1a 100%)',
+                  borderRadius: '40px 40px 20px 20px',
+                  boxShadow: 'inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px rgba(0, 0, 0, 0.3)',
+                  border: '2px solid #333333',
+                  transform: 'rotate(20deg)'
+                }}
+              >
+                {/* Glove shine */}
+                <div
+                  className="absolute top-2 right-2 w-[20px] h-[80px]"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, transparent 100%)',
+                    borderRadius: '10px'
+                  }}
+                ></div>
+              </div>
+
+              {/* Sleek Hair with Latex Shine */}
+              <div
                 className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-[320px] h-[200px] z-[11]"
                 style={{
-                  background: 'radial-gradient(ellipse at center, #4b382d 0%, #3c2a1f 40%, #2d1f15 80%, #1a120a 100%)',
+                  background: 'radial-gradient(ellipse at center, #1a1a1a 0%, #0d0d0d 40%, #000000 80%, #000000 100%)',
                   borderRadius: '50% 50% 0 0',
-                  boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.3)'
+                  boxShadow: 'inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 30px rgba(0, 0, 0, 0.5)'
                 }}
               >
-                {/* Hair texture and highlights */}
-                <div 
+                {/* Sleek latex-like hair texture */}
+                <div
                   className="absolute top-2 left-1/2 transform -translate-x-1/2 w-[280px] h-[160px]"
                   style={{
-                    background: 'radial-gradient(ellipse at center, #5a4535 0%, #4b382d 50%, #3c2a1f 100%)',
+                    background: 'radial-gradient(ellipse at center, #2d2d2d 0%, #1a1a1a 50%, #0d0d0d 100%)',
                     borderRadius: '50% 50% 0 0'
                   }}
                 ></div>
-                {/* Hair shine */}
-                <div 
+                {/* Latex hair shine - more pronounced */}
+                <div
                   className="absolute top-4 left-1/2 transform -translate-x-1/2 w-[200px] h-[100px]"
                   style={{
-                    background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(0, 0, 0, 0.1) 100%)',
+                    background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 30%, transparent 60%, rgba(0, 0, 0, 0.2) 100%)',
                     borderRadius: '50% 50% 0 0'
+                  }}
+                ></div>
+                {/* Additional latex shine streaks */}
+                <div
+                  className="absolute top-6 left-[30%] w-[40px] h-[120px]"
+                  style={{
+                    background: 'linear-gradient(45deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%, rgba(255, 255, 255, 0.1) 100%)',
+                    borderRadius: '20px',
+                    transform: 'rotate(-15deg)'
+                  }}
+                ></div>
+                <div
+                  className="absolute top-8 right-[25%] w-[30px] h-[100px]"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(255, 255, 255, 0.05) 100%)',
+                    borderRadius: '15px',
+                    transform: 'rotate(20deg)'
                   }}
                 ></div>
               </div>
