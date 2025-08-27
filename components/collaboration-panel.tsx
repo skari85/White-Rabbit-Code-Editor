@@ -24,7 +24,8 @@ import {
   collaborationService, 
   CollaborationUser, 
   Comment, 
-  CollaborationEvent 
+  CollaborationEvent,
+  CollaborationService
 } from '@/lib/collaboration-service';
 
 interface CollaborationPanelProps {
@@ -57,7 +58,7 @@ export default function CollaborationPanel({
           id: `user_${Date.now()}`,
           name: 'Anonymous User',
           email: 'user@example.com',
-          color: collaborationService.constructor.generateUserColor()
+          color: CollaborationService.generateUserColor()
         };
         
         await collaborationService.initialize(user);

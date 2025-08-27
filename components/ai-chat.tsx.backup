@@ -8,7 +8,7 @@ import { AIMessage, AI_PROVIDERS, AISettings } from '@/lib/ai-config';
 import { PERSONALITIES } from '@/lib/personality-system';
 import { Send, Trash2, Copy, Check, Bot, User, Loader2, ChevronDown, Settings2, Zap, Target } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { darcula } from 'react-syntax-highlighter/dist/styles';
+import { darcula } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 // Import OCR utility (Node.js require for demo; use dynamic import or API in production)
 // @ts-ignore
