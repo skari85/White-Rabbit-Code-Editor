@@ -354,7 +354,7 @@ export default function SimpleCodeEditor({
           }
         />
         {/* Prevent any blinking elements */}
-        <style jsx>{`
+        <style>{`
           .monaco-editor .cursors-layer .cursor {
             animation: none !important;
           }
