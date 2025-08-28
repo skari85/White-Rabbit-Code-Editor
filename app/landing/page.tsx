@@ -7,13 +7,11 @@ import { useEffect, useRef } from 'react';
 
 export default function LandingPage() {
   const mainScreenRef = useRef<HTMLDivElement>(null);
-  const developerBackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!mainScreenRef.current || !developerBackRef.current) return;
+    if (!mainScreenRef.current) return;
 
     const mainScreen = mainScreenRef.current;
-    const developerBack = developerBackRef.current;
     
     let rabbits: Array<{
       element: HTMLElement;
@@ -146,25 +144,7 @@ export default function LandingPage() {
       }, 200);
     }
     
-    function handleDeveloperClick() {
-      developerBack.classList.add('animate-pulse');
-      
-      // Make eyes blink
-      const eyes = developerBack.querySelectorAll('div[style*="4a90e2"]');
-      eyes.forEach(eye => {
-        (eye as HTMLElement).style.opacity = '0.3';
-        setTimeout(() => {
-          (eye as HTMLElement).style.opacity = '1';
-        }, 150);
-      });
-      
-      // Add typing effect to screen
-      addTypingEffect();
-      
-      setTimeout(() => {
-        developerBack.classList.remove('animate-pulse');
-      }, 200);
-    }
+
 
     // Add typing effect
     function addTypingEffect() {
@@ -199,19 +179,9 @@ export default function LandingPage() {
       typeWriter();
     }
 
-    // Make eyes blink randomly
-    function blinkEyes() {
-      const eyes = developerBack.querySelectorAll('div[style*="4a90e2"]');
-      eyes.forEach(eye => {
-        (eye as HTMLElement).style.opacity = '0.3';
-        setTimeout(() => {
-          (eye as HTMLElement).style.opacity = '1';
-        }, 150);
-      });
-    }
 
-    // Random blinking
-    setInterval(blinkEyes, 3000 + Math.random() * 2000);
+
+
 
     // Environmental Dynamics
     const screenColors = [
@@ -248,7 +218,7 @@ export default function LandingPage() {
         codeSnippets.push(createCodeSnippet());
       }
       
-      developerBack.addEventListener('click', handleDeveloperClick);
+
       
       setInterval(changeScreenTheme, 5000);
 
@@ -265,7 +235,7 @@ export default function LandingPage() {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
-      developerBack.removeEventListener('click', handleDeveloperClick);
+
     };
   }, []);
 
@@ -382,145 +352,15 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white sm:text-4xl mb-4">
-              Interactive Rabbit Developer Experience
+              Interactive Code Experience
             </h2>
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Meet our cute rabbit developer coding away! Click on the rabbit and code snippets to see the magic happen!
+              Experience the magic of coding! Click on the code snippets and floating elements to see the interactive animations.
             </p>
           </div>
           
           <div className="relative w-full h-[600px] bg-black rounded-2xl overflow-hidden">
-            {/* Rabbit Developer Character - Back View */}
-            <div
-              className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[280px] h-[350px] z-10 cursor-pointer transition-transform duration-200 ease-in-out hover:scale-105"
-              id="developerBack"
-              ref={developerBackRef}
-            >
-              {/* Rabbit Body - Back View */}
-              <div
-                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[200px] h-[280px] z-[9]"
-                style={{
-                  background: 'radial-gradient(ellipse at center, #f5f5f5 0%, #e8e8e8 30%, #dcdcdc 60%, #d0d0d0 100%)',
-                  borderRadius: '50% 50% 30% 30%',
-                  boxShadow: '0 0 20px rgba(0, 0, 0, 0.2), inset 0 0 30px rgba(255, 255, 255, 0.3)',
-                  border: '2px solid #e0e0e0'
-                }}
-              >
-                {/* Fur texture */}
-                <div
-                  className="absolute top-5 left-1/2 transform -translate-x-1/2 w-[180px] h-[250px]"
-                  style={{
-                    background: 'repeating-linear-gradient(45deg, transparent 0px, rgba(255, 255, 255, 0.1) 1px, transparent 2px)',
-                    borderRadius: '50% 50% 30% 30%'
-                  }}
-                ></div>
-              </div>
 
-              {/* Rabbit Head - Back View */}
-              <div
-                className="absolute top-[50px] left-1/2 transform -translate-x-1/2 w-[160px] h-[180px] z-[10]"
-                style={{
-                  background: 'radial-gradient(ellipse at center, #f8f8f8 0%, #f0f0f0 30%, #e8e8e8 60%, #e0e0e0 100%)',
-                  borderRadius: '50%',
-                  boxShadow: '0 0 15px rgba(0, 0, 0, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.3)',
-                  border: '2px solid #e8e8e8'
-                }}
-              >
-                {/* Head fur texture */}
-                <div
-                  className="absolute top-2 left-1/2 transform -translate-x-1/2 w-[140px] h-[160px]"
-                  style={{
-                    background: 'repeating-linear-gradient(30deg, transparent 0px, rgba(255, 255, 255, 0.1) 1px, transparent 2px)',
-                    borderRadius: '50%'
-                  }}
-                ></div>
-              </div>
-
-              {/* Rabbit Ears - Back View */}
-              <div
-                className="absolute top-[10px] left-1/2 transform -translate-x-1/2 translate-x-[-30px] w-[60px] h-[120px] z-[11]"
-                style={{
-                  background: 'radial-gradient(ellipse at center, #ffffff 0%, #f8f8f8 30%, #f0f0f0 60%, #e8e8e8 100%)',
-                  borderRadius: '50% 50% 0 0',
-                  boxShadow: '0 0 15px rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.6)',
-                  border: '2px solid #f0f0f0',
-                  transform: 'rotate(-10deg)'
-                }}
-              >
-                {/* Inner ear */}
-                <div
-                  className="absolute top-4 left-1/2 transform -translate-x-1/2 w-[30px] h-[60px]"
-                  style={{
-                    background: 'radial-gradient(ellipse at center, #ffb3ba 0%, #ff9aa2 50%, #ff8a95 100%)',
-                    borderRadius: '50% 50% 0 0'
-                  }}
-                ></div>
-              </div>
-              <div
-                className="absolute top-[10px] left-1/2 transform -translate-x-1/2 translate-x-[30px] w-[60px] h-[120px] z-[11]"
-                style={{
-                  background: 'radial-gradient(ellipse at center, #ffffff 0%, #f8f8f8 30%, #f0f0f0 60%, #e8e8e8 100%)',
-                  borderRadius: '50% 50% 0 0',
-                  boxShadow: '0 0 15px rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.6)',
-                  border: '2px solid #f0f0f0',
-                  transform: 'rotate(10deg)'
-                }}
-              >
-                {/* Inner ear */}
-                <div
-                  className="absolute top-4 left-1/2 transform -translate-x-1/2 w-[30px] h-[60px]"
-                  style={{
-                    background: 'radial-gradient(ellipse at center, #ffb3ba 0%, #ff9aa2 50%, #ff8a95 100%)',
-                    borderRadius: '50% 50% 0 0'
-                  }}
-                ></div>
-              </div>
-
-
-
-              {/* Rabbit Arms - Simple */}
-              <div
-                className="absolute top-[180px] left-[30px] w-[50px] h-[80px] z-[8]"
-                style={{
-                  background: 'radial-gradient(ellipse at center, #f5f5f5 0%, #e8e8e8 50%, #dcdcdc 100%)',
-                  borderRadius: '25px',
-                  boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-                  border: '1px solid #e0e0e0',
-                  transform: 'rotate(-15deg)'
-                }}
-              ></div>
-
-              <div
-                className="absolute top-[180px] right-[30px] w-[50px] h-[80px] z-[8]"
-                style={{
-                  background: 'radial-gradient(ellipse at center, #f5f5f5 0%, #e8e8e8 50%, #dcdcdc 100%)',
-                  borderRadius: '25px',
-                  boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-                  border: '1px solid #e0e0e0',
-                  transform: 'rotate(15deg)'
-                }}
-              ></div>
-
-              {/* Rabbit Tail */}
-              <div
-                className="absolute bottom-[50px] left-1/2 transform -translate-x-1/2 w-[40px] h-[40px] z-[12]"
-                style={{
-                  background: 'radial-gradient(circle, #ffffff 0%, #f8f8f8 30%, #f0f0f0 60%, #e8e8e8 100%)',
-                  borderRadius: '50%',
-                  boxShadow: '0 0 15px rgba(255, 255, 255, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.6)',
-                  border: '2px solid #f0f0f0'
-                }}
-              >
-                {/* Tail fur texture */}
-                <div
-                  className="absolute top-1 left-1 w-[30px] h-[30px]"
-                  style={{
-                    background: 'repeating-radial-gradient(circle, transparent 0px, rgba(255, 255, 255, 0.2) 2px, transparent 4px)',
-                    borderRadius: '50%'
-                  }}
-                ></div>
-              </div>
-            </div>
 
             {/* Main Screen */}
             <div 
