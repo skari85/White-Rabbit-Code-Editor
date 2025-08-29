@@ -68,7 +68,6 @@ export default function FastLiveCoding({
     { command: 'Add tests', icon: '🧪', shortcut: 'Ctrl+6' }
   ]);
 
-  const monacoRef = useRef<any>(null);
   const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -188,7 +187,7 @@ export default function FastLiveCoding({
 
     await startFastStreaming(enhancedPrompt);
     setNaturalLanguageInput('');
-  }, [command, language, value, startFastStreaming]);
+  }, [language, value, startFastStreaming]);
 
   // Keyboard shortcuts for quick commands
   useEffect(() => {
@@ -296,66 +295,11 @@ export default function FastLiveCoding({
       {/* Monaco Editor */}
       <div className="flex-1 relative">
         <LazyMonacoEditor
-          ref={monacoRef}
           value={streamingState.isStreaming ? streamingState.currentText : value}
           onChange={onChange}
           language={language}
           theme={theme}
           height={height}
-          options={{
-            fontSize: 14,
-            lineNumbers: 'on',
-            minimap: { enabled: true },
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            wordWrap: 'on',
-            // Live coding optimizations
-            suggest: {
-              showKeywords: true,
-              showSnippets: true,
-              showFunctions: true,
-              showConstructors: true,
-              showFields: true,
-              showVariables: true,
-              showClasses: true,
-              showStructs: true,
-              showInterfaces: true,
-              showModules: true,
-              showProperties: true,
-              showEvents: true,
-              showOperators: true,
-              showUnits: true,
-              showValues: true,
-              showConstants: true,
-              showEnums: true,
-              showEnumMembers: true,
-              showColors: true,
-              showFiles: true,
-              showReferences: true,
-              showFolders: true,
-              showTypeParameters: true,
-              showIssues: true,
-              showUsers: true,
-              showWords: true,
-            },
-            // Fast typing optimizations
-            cursorBlinking: 'smooth',
-            cursorSmoothCaretAnimation: true,
-            smoothScrolling: true,
-            // Live coding features
-            inlineSuggest: {
-              enabled: true,
-            },
-            quickSuggestions: {
-              other: true,
-              comments: true,
-              strings: true,
-            },
-            suggestOnTriggerCharacters: true,
-            acceptSuggestionOnEnter: 'on',
-            tabCompletion: 'on',
-            wordBasedSuggestions: 'matchingDocuments',
-          }}
         />
         
         {/* Streaming Indicator */}
