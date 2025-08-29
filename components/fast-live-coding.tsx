@@ -157,9 +157,11 @@ export default function FastLiveCoding({
       });
 
     } catch (error) {
-      if (error.name !== 'AbortError') {
+      const isAbort = (error instanceof DOMException && error.name === 'AbortError') || (typeof error === 'object' && error !== null && 'name' in (error as any) && (error as any).name === 'AbortError');
+      if (!isAbort) {
+        const errorMessage = error instanceof Error ? error.message : typeof error === 'string' ? error : 'Unknown error';
         console.error('Streaming error:', error);
-        trackLiveCoding('streaming_error', { error: error.message });
+        trackLiveCoding('streaming_error', { error: errorMessage });
       }
     } finally {
       setStreamingState(prev => ({
