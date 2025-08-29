@@ -46,7 +46,8 @@ export const AI_PROVIDERS: AIProvider[] = [
       "llama-3.2-90b-text-preview", // Llama 3.2 90B - Latest preview
       "mixtral-8x7b-32768",        // Mixtral 8x7B - Good performance
       "gemma2-9b-it",              // Gemma 2 9B - Google's model
-      "mistral-7b-instruct"        // Mistral 7B - Good for instruction
+      "mistral-7b-instruct",       // Mistral 7B - Good for instruction
+      "whisper-large-v3"           // Groq Whisper - Voice transcription
     ],
     endpoint: "https://api.groq.com/openai/v1/chat/completions"
   },
