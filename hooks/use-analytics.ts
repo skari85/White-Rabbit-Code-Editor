@@ -11,6 +11,7 @@
 
 'use client'
 
+import { useCallback } from 'react'
 import { track } from '@vercel/analytics'
 
 export interface AnalyticsEvent {
@@ -19,16 +20,16 @@ export interface AnalyticsEvent {
 }
 
 export function useAnalytics() {
-  const trackEvent = (event: AnalyticsEvent) => {
+  const trackEvent = useCallback((event: AnalyticsEvent) => {
     try {
       track(event.name, event.properties)
     } catch (error) {
       console.warn('Analytics tracking failed:', error)
     }
-  }
+  }, [])
 
   // Code Editor Events
-  const trackCodeExecution = (language: string, success: boolean) => {
+  const trackCodeExecution = useCallback((language: string, success: boolean) => {
     trackEvent({
       name: 'code_execution',
       properties: {
@@ -37,9 +38,9 @@ export function useAnalytics() {
         timestamp: Date.now()
       }
     })
-  }
+  }, [trackEvent])
 
-  const trackFileCreated = (fileType: string, fileName: string) => {
+  const trackFileCreated = useCallback((fileType: string, fileName: string) => {
     trackEvent({
       name: 'file_created',
       properties: {
@@ -48,9 +49,9 @@ export function useAnalytics() {
         timestamp: Date.now()
       }
     })
-  }
+  }, [trackEvent])
 
-  const trackFileDeleted = (fileType: string) => {
+  const trackFileDeleted = useCallback((fileType: string) => {
     trackEvent({
       name: 'file_deleted',
       properties: {
@@ -58,9 +59,9 @@ export function useAnalytics() {
         timestamp: Date.now()
       }
     })
-  }
+  }, [trackEvent])
 
-  const trackPreviewOpened = (previewType: 'live' | 'new_tab') => {
+  const trackPreviewOpened = useCallback((previewType: 'live' | 'new_tab') => {
     trackEvent({
       name: 'preview_opened',
       properties: {
@@ -68,9 +69,9 @@ export function useAnalytics() {
         timestamp: Date.now()
       }
     })
-  }
+  }, [trackEvent])
 
-  const trackAIInteraction = (action: 'message_sent' | 'response_received' | 'code_applied') => {
+  const trackAIInteraction = useCallback((action: 'message_sent' | 'response_received' | 'code_applied') => {
     trackEvent({
       name: 'ai_interaction',
       properties: {
@@ -78,9 +79,9 @@ export function useAnalytics() {
         timestamp: Date.now()
       }
     })
-  }
+  }, [trackEvent])
 
-  const trackThemeToggle = (theme: string) => {
+  const trackThemeToggle = useCallback((theme: string) => {
     trackEvent({
       name: 'theme_toggle',
       properties: {
@@ -88,27 +89,27 @@ export function useAnalytics() {
         timestamp: Date.now()
       }
     })
-  }
+  }, [trackEvent])
 
-  const trackLicenseViewed = () => {
+  const trackLicenseViewed = useCallback(() => {
     trackEvent({
       name: 'license_viewed',
       properties: {
         timestamp: Date.now()
       }
     })
-  }
+  }, [trackEvent])
 
-  const trackCommercialInquiry = () => {
+  const trackCommercialInquiry = useCallback(() => {
     trackEvent({
       name: 'commercial_inquiry',
       properties: {
         timestamp: Date.now()
       }
     })
-  }
+  }, [trackEvent])
 
-  const trackFeatureUsed = (feature: string, details?: Record<string, any>) => {
+  const trackFeatureUsed = useCallback((feature: string, details?: Record<string, any>) => {
     trackEvent({
       name: 'feature_used',
       properties: {
@@ -117,9 +118,9 @@ export function useAnalytics() {
         timestamp: Date.now()
       }
     })
-  }
+  }, [trackEvent])
 
-  const trackError = (errorType: string, errorMessage: string) => {
+  const trackError = useCallback((errorType: string, errorMessage: string) => {
     trackEvent({
       name: 'error_occurred',
       properties: {
@@ -128,9 +129,9 @@ export function useAnalytics() {
         timestamp: Date.now()
       }
     })
-  }
+  }, [trackEvent])
 
-  const trackUserSession = (action: 'session_start' | 'session_end', duration?: number) => {
+  const trackUserSession = useCallback((action: 'session_start' | 'session_end', duration?: number) => {
     trackEvent({
       name: 'user_session',
       properties: {
@@ -139,7 +140,7 @@ export function useAnalytics() {
         timestamp: Date.now()
       }
     })
-  }
+  }, [trackEvent])
 
   return {
     trackEvent,

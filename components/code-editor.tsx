@@ -220,7 +220,7 @@ export default function CodeEditor() {
       const sessionDuration = Date.now() - sessionStart;
       trackUserSession('session_end', sessionDuration);
     };
-  }, [trackUserSession]);
+  }, []); // Remove trackUserSession dependency to prevent infinite loop
 
   // Set up file generation callbacks for AI
   useEffect(() => {

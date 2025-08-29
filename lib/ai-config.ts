@@ -92,7 +92,7 @@ export interface AISettings {
   personality: PersonalityMode;
 }
 
-import { PersonalityMode, personalitySystem } from './personality-system';
+import { PersonalityMode } from './personality-system';
 
 export const DEFAULT_SYSTEM_PROMPT = `You are an expert AI coding assistant for White Rabbit, a visual PWA builder. You help users create complete, functional web applications.
 
