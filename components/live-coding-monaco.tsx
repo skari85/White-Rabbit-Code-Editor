@@ -5,25 +5,22 @@
 
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useAIAssistantEnhanced } from '@/hooks/use-ai-assistant-enhanced';
-import { useCodeBuilder } from '@/hooks/use-code-builder';
-import { useAnalytics } from '@/hooks/use-analytics';
-import LazyMonacoEditor from './lazy-monaco-editor';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Mic, 
-  MicOff, 
-  Send, 
-  Sparkles, 
-  Code, 
-  Zap,
-  MessageSquare,
-  X
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { useAIAssistantEnhanced } from '@/hooks/use-ai-assistant-enhanced';
+import { useAnalytics } from '@/hooks/use-analytics';
+import { useCodeBuilder } from '@/hooks/use-code-builder';
+import {
+    MessageSquare,
+    Send,
+    Sparkles,
+    X,
+    Zap
 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import LazyMonacoEditor from './lazy-monaco-editor';
 
 interface LiveCodingMonacoProps {
   value: string;

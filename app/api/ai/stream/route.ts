@@ -160,8 +160,9 @@ Current context: ${context || 'No context provided'}`;
 
   } catch (error) {
     console.error('Stream API error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new NextResponse(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: 'Internal server error', details: errorMessage }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

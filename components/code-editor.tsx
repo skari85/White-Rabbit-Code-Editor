@@ -39,11 +39,9 @@ import {
     X
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import AIEnhancedMonacoEditor from './ai-enhanced-monaco-editor';
 import { ErrorBoundary } from './error-boundary';
-import FileTabs from './file-tabs';
-import LazyMonacoEditor from './lazy-monaco-editor';
 import FastLiveCoding from './fast-live-coding';
+import FileTabs from './file-tabs';
 import SplitControls, { useSplitKeyboardShortcuts } from './split-controls';
 import SplitEditorLayout from './split-editor-layout';
 

@@ -6,27 +6,20 @@
 
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { useAIAssistantEnhanced } from '@/hooks/use-ai-assistant-enhanced';
-import { useAnalytics } from '@/hooks/use-analytics';
-import LazyMonacoEditor from './lazy-monaco-editor';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Mic, 
-  MicOff, 
-  Send, 
-  Sparkles, 
-  Code, 
-  Zap,
-  MessageSquare,
-  X,
-  Play,
-  Pause,
-  Square
+import { useAIAssistantEnhanced } from '@/hooks/use-ai-assistant-enhanced';
+import { useAnalytics } from '@/hooks/use-analytics';
+import {
+    Pause,
+    Play,
+    Send,
+    Square,
+    Zap
 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import LazyMonacoEditor from './lazy-monaco-editor';
 
 interface FastLiveCodingProps {
   value: string;
