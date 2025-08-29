@@ -142,6 +142,17 @@ export function useAnalytics() {
     })
   }, [trackEvent])
 
+  const trackLiveCoding = useCallback((action: string, properties?: Record<string, any>) => {
+    trackEvent({
+      name: 'live_coding',
+      properties: {
+        action,
+        ...properties,
+        timestamp: Date.now()
+      }
+    })
+  }, [trackEvent])
+
   return {
     trackEvent,
     trackCodeExecution,
@@ -154,6 +165,7 @@ export function useAnalytics() {
     trackCommercialInquiry,
     trackFeatureUsed,
     trackError,
-    trackUserSession
+    trackUserSession,
+    trackLiveCoding
   }
 }
