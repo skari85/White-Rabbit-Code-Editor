@@ -19,7 +19,7 @@ import {
     X,
     Zap
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import LazyMonacoEditor from './lazy-monaco-editor';
 
 interface LiveCodingMonacoProps {
@@ -47,7 +47,7 @@ export default function LiveCodingMonaco({
   height = '100%',
   className = ''
 }: LiveCodingMonacoProps) {
-  const editorRef = useRef<any>(null);
+
   const [state, setState] = useState<LiveCodingState>({
     isGenerating: false,
     currentSuggestion: '',
@@ -104,26 +104,13 @@ IMPORTANT:
 
 Generate the code now:`;
 
-      let generatedCode = '';
-      let isFirstChunk = true;
+      // Send the streaming message and get the response
+      const response = await sendStreamingMessage(enhancedPrompt);
 
-      // Stream the response directly into Monaco
-      for await (const chunk of sendStreamingMessage(enhancedPrompt)) {
-        if (chunk.content) {
-          generatedCode += chunk.content;
-          
-          // Update Monaco editor in real-time
-          if (editorRef.current) {
-            const currentValue = editorRef.current.getValue();
-            const newValue = isFirstChunk 
-              ? currentValue + '\n' + generatedCode
-              : currentValue.replace(/\n[^\n]*$/, '\n' + generatedCode);
-            
-            editorRef.current.setValue(newValue);
-            onChange(newValue);
-            isFirstChunk = false;
-          }
-        }
+      if (response.content) {
+        // Update Monaco editor with the generated code
+        const newValue = value + '\n' + response.content;
+        onChange(newValue);
       }
 
       trackAIInteraction('response_received');
@@ -172,9 +159,6 @@ Generate the code now:`;
           language={language}
           theme={theme}
           height="100%"
-          onEditorDidMount={(editor) => {
-            editorRef.current = editor;
-          }}
         />
         
         {/* Live Coding Overlay */}
