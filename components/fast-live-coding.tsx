@@ -46,7 +46,7 @@ export default function FastLiveCoding({
   onLanguageChange
 }: FastLiveCodingProps) {
   const { sendStreamingMessage, isStreaming } = useAIAssistantEnhanced();
-  const { trackCodeGeneration, trackLiveCoding } = useAnalytics();
+  const { trackLiveCoding } = useAnalytics();
   
   // Streaming state for real-time code generation
   const [streamingState, setStreamingState] = useState<StreamingState>({
