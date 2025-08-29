@@ -10,10 +10,9 @@ interface Props {
 export function AuthSessionProvider({ children }: Props) {
   return (
     <SessionProvider
-      session={null}
-      // Disable automatic session fetching to prevent 500 errors
-      refetchInterval={0}
-      refetchOnWindowFocus={false}
+      // Enable automatic session fetching for proper auth state
+      refetchInterval={5 * 60} // Refetch every 5 minutes
+      refetchOnWindowFocus={true}
     >
       {children}
     </SessionProvider>
