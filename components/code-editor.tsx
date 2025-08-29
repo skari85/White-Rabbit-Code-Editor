@@ -9,67 +9,65 @@
  * For commercial licensing, contact: licensing@whiterabbit.dev
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useCodeBuilder, FileContent } from "@/hooks/use-code-builder";
-import { useAIAssistantEnhanced } from "@/hooks/use-ai-assistant-enhanced";
-import { TerminalComponent } from "@/components/terminal";
-import { useAnalytics } from "@/hooks/use-analytics";
 import { AIChat } from "@/components/ai-chat";
-import { useTerminal } from "@/hooks/use-terminal";
 import LiveCodingEngine from "@/components/live-coding-engine";
-import { useSession } from "next-auth/react";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { TerminalComponent } from "@/components/terminal";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { useAIAssistantEnhanced } from "@/hooks/use-ai-assistant-enhanced";
+import { useAnalytics } from "@/hooks/use-analytics";
+import { FileContent, useCodeBuilder } from "@/hooks/use-code-builder";
+import { useAutoSave } from '@/hooks/use-debounced-auto-save';
+import { useResponsiveLayout } from '@/hooks/use-responsive-layout';
+import { useTerminal } from "@/hooks/use-terminal";
 import {
-  Download,
-  ExternalLink,
-  Plus,
-  FileText,
-  Terminal,
-  X,
-  Server,
-  RefreshCw,
-  Package,
-  Settings,
-  Code,
-  Rocket,
-  Keyboard,
-  Sparkles
+    Code,
+    Download,
+    ExternalLink,
+    FileText,
+    Keyboard,
+    Package,
+    Plus,
+    RefreshCw,
+    Rocket,
+    Server,
+    Settings,
+    Sparkles,
+    Terminal,
+    X
 } from "lucide-react";
-import LazyMonacoEditor from './lazy-monaco-editor';
+import { useSession } from "next-auth/react";
 import AIEnhancedMonacoEditor from './ai-enhanced-monaco-editor';
 import { ErrorBoundary } from './error-boundary';
-import { useAutoSave } from '@/hooks/use-debounced-auto-save';
 import FileTabs from './file-tabs';
-import SplitEditorLayout from './split-editor-layout';
+import LazyMonacoEditor from './lazy-monaco-editor';
+import FastLiveCoding from './fast-live-coding';
 import SplitControls, { useSplitKeyboardShortcuts } from './split-controls';
-import { useResponsiveLayout } from '@/hooks/use-responsive-layout';
+import SplitEditorLayout from './split-editor-layout';
 
-import LivePreview from './live-preview';
-import ExtensionMarketplace from './extension-marketplace';
+import { notificationUtils, useNotifications } from '@/components/ui/notification-system';
+import { useAIShortcuts, useIDEShortcuts } from '@/hooks/use-keyboard-shortcuts';
+import { KeyboardShortcutsService } from '@/lib/keyboard-shortcuts-service';
+import dynamic from 'next/dynamic';
 import AdvancedEditorToolbar from './advanced-editor-toolbar';
 import BYOKAISettings from './byok-ai-settings';
-import DocumentationPanel from './documentation-panel';
 import CodeInspectionPanel from './code-inspection-panel';
-import VisualToolsDemo from './visual-tools-demo-simple';
+import { CommandPalette } from './command-palette';
+import CompactKeyboardShortcuts from './compact-keyboard-shortcuts';
+import DarkModeToggleButton from './DarkModeToggleButton';
+import DocumentationPanel from './documentation-panel';
+import EnhancedOnboarding from './enhanced-onboarding';
+import ExtensionMarketplace from './extension-marketplace';
+import LiveDiffDock, { type DiffEntry } from './live-diff-dock';
+import LivePreview from './live-preview';
+import MonacoDiffOverlay from './monaco-diff-overlay';
 import NewAppWizard, { NewAppOptions } from './new-app-wizard';
+import OnboardingModal from './onboarding-modal';
 import PublishModal from './publish-modal';
 import StylePanel from './style-panel';
-import LiveDiffDock, { type DiffEntry } from './live-diff-dock';
-import MonacoDiffOverlay from './monaco-diff-overlay';
-import OnboardingModal from './onboarding-modal';
-import { CommandPalette } from './command-palette';
-import { KeyboardShortcutsService } from '@/lib/keyboard-shortcuts-service';
-import DarkModeToggleButton from './DarkModeToggleButton';
-import dynamic from 'next/dynamic';
-import EnhancedOnboarding from './enhanced-onboarding';
-import CompactKeyboardShortcuts from './compact-keyboard-shortcuts';
-import { LoadingSpinner, LoadingOverlay, AILoadingSpinner, FileLoadingSpinner } from '@/components/ui/loading-spinner';
-import { ErrorDisplay, AIError, FileError, NetworkError } from '@/components/ui/error-display';
-import { useNotifications, notificationUtils } from '@/components/ui/notification-system';
-import { useIDEShortcuts, useAIShortcuts } from '@/hooks/use-keyboard-shortcuts';
-import { useFormValidation, fileValidation, aiSettingsValidation } from '@/hooks/use-form-validation';
+import VisualToolsDemo from './visual-tools-demo-simple';
 
 // Code splitting for heavy components
 
@@ -1332,40 +1330,25 @@ export default function CodeEditor() {
                       />
                     ) : (
                       <ErrorBoundary>
-                        {useAIEnhancedEditor && aiConfigured ? (
-                          <AIEnhancedMonacoEditor
-                            value={getSelectedFileContent() || ''}
-                            onChange={(content) => {
-                              if (selectedFile && content !== undefined) {
-                                updateFileContent(selectedFile, content);
-                                autoSave.save({
-                                  file: selectedFile,
-                                  content
-                                });
-                              }
-                            }}
-                            language={getLanguageFromFileName(selectedFile)}
-                            theme={codeColor ? "hex-light" : "kex-dark"}
-                            height="100%"
-                            enableAICompletions={true}
-                          />
-                        ) : (
-                          <LazyMonacoEditor
-                            value={getSelectedFileContent() || ''}
-                            onChange={(content) => {
-                              if (selectedFile && content !== undefined) {
-                                updateFileContent(selectedFile, content);
-                                autoSave.save({
-                                  file: selectedFile,
-                                  content
-                                });
-                              }
-                            }}
-                            language={getLanguageFromFileName(selectedFile)}
-                            theme={codeColor ? "hex-light" : "kex-dark"}
-                            height="100%"
-                          />
-                        )}
+                        <FastLiveCoding
+                          value={getSelectedFileContent() || ''}
+                          onChange={(content) => {
+                            if (selectedFile && content !== undefined) {
+                              updateFileContent(selectedFile, content);
+                              autoSave.save({
+                                file: selectedFile,
+                                content
+                              });
+                            }
+                          }}
+                          language={getLanguageFromFileName(selectedFile)}
+                          theme={codeColor ? "hex-light" : "kex-dark"}
+                          height="100%"
+                          onLanguageChange={(newLanguage) => {
+                            // Handle language change if needed
+                            console.log('Language changed to:', newLanguage);
+                          }}
+                        />
                       </ErrorBoundary>
                     )}
                   </div>

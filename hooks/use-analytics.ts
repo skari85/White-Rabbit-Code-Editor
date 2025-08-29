@@ -11,8 +11,8 @@
 
 'use client'
 
-import { useCallback } from 'react'
 import { track } from '@vercel/analytics'
+import { useCallback } from 'react'
 
 export interface AnalyticsEvent {
   name: string
