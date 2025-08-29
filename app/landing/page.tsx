@@ -1,5 +1,6 @@
 'use client';
 
+import MiniCodeEditor from '@/components/mini-code-editor';
 import { Button } from '@/components/ui/button';
 import { Code2 } from 'lucide-react';
 import Link from 'next/link';
@@ -268,8 +269,8 @@ export default function LandingPage() {
           </h1>
           
           <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-            A minimal, fast web code editor with AI, visual tools, and a polished UX. 
-            Click below to explore the full editor, or try the mini coding space.
+            A minimal, fast web code editor with AI, visual tools, and a polished UX.
+            Click below to explore the full editor, or try the interactive code editor on the right.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -310,40 +311,15 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Right Side - Mini Coding Space */}
+        {/* Right Side - Interactive Code Editor */}
         <div className="lg:w-1/2 max-w-2xl">
-          <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-            <div className="bg-gray-700 px-4 py-2 flex justify-between items-center">
-              <span className="text-white font-medium">JAVASCRIPT</span>
-              <span className="text-gray-400 text-sm">Lines: 6</span>
-            </div>
-            <div className="p-4">
-              <div className="text-sm text-gray-300 font-mono">
-                <div className="text-gray-500">1 // Mini coding space (demo)</div>
-                <div className="text-blue-400">2 function</div>
-                <div className="text-yellow-400">greet</div>
-                <div className="text-gray-300">(name) {'{'}</div>
-                <div className="text-blue-400">3   return</div>
-                <div className="text-green-400">`Welcome to White Rabbit, Developer!`</div>
-                <div className="text-gray-300">;</div>
-                <div className="text-gray-300">4 {'}'}</div>
-                <div className="text-gray-300">5</div>
-                <div className="text-blue-400">6 console</div>
-                <div className="text-gray-300">.</div>
-                <div className="text-yellow-400">log</div>
-                <div className="text-gray-300">(greet(</div>
-                <div className="text-green-400">&apos;Developer&apos;</div>
-                <div className="text-gray-300">));</div>
-              </div>
-            </div>
+          <div className="mb-4">
+            <h3 className="text-xl font-semibold text-white mb-2">Try it now</h3>
+            <p className="text-gray-400 text-sm">
+              Interactive code editor with syntax highlighting, multiple languages, and execution.
+            </p>
           </div>
-          
-          <div className="flex justify-between items-center mt-4">
-            <span className="text-gray-400 text-sm">Mini coding space (demo)</span>
-            <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:bg-gray-800">
-              Reset
-            </Button>
-          </div>
+          <MiniCodeEditor />
         </div>
       </div>
 
