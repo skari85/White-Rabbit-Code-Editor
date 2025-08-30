@@ -130,7 +130,7 @@
     "@typescript-eslint/eslint-plugin": "8.41.0",
     "@typescript-eslint/parser": "8.41.0",
     "@vitejs/plugin-react": "^5.0.0",
-    "@vitest/ui": "^2.0.0",
+    "@vitest/ui": "^3.2.4",
     "assert": "^2.1.0",
     "browserify-zlib": "^0.2.0",
     "buffer": "^6.0.3",
@@ -168,7 +168,7 @@
     "typescript": "^5",
     "url": "^0.11.4",
     "util": "^0.12.5",
-    "vitest": "^2.0.0",
+    "vitest": "^3.2.4",
     "vm-browserify": "^1.1.2",
     "wait-on": "^7.2.0"
   },
