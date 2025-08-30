@@ -89,7 +89,7 @@
     "input-otp": "latest",
     "isomorphic-git": "^1.25.6",
     "jszip": "^3.10.1",
-    "lucide-react": "^0.454.0",
+    "lucide-react": "^0.542.0",
     "ml-matrix": "^6.10.7",
     "monaco-editor": "^0.52.2",
     "next": "15.2.4",
