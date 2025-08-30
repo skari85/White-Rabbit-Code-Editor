@@ -15,8 +15,13 @@ const envSchema = z.object({
   GOOGLE_AI_API_KEY: z.string().min(1).optional(),
   
   // GitHub OAuth
-  GITHUB_ID: z.string().min(1).optional(),
-  GITHUB_SECRET: z.string().min(1).optional(),
+  GITHUB_CLIENT_ID: z.string().min(1).optional(),
+  GITHUB_CLIENT_SECRET: z.string().min(1).optional(),
+  
+  // GitHub Integration
+  GITHUB_REPO: z.string().min(1).optional(),
+  GITHUB_TOKEN: z.string().min(1).optional(),
+  GITHUB_DEFAULT_BRANCH: z.string().min(1).optional(),
   
   // Vercel
   VERCEL_URL: z.string().url().optional(),

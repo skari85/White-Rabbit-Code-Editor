@@ -93,6 +93,18 @@ const GitPanel = dynamic(() => import('./git-panel'), {
   ssr: false
 });
 
+const ExtensionConsole = dynamic(() => import('./extension-console'), {
+  loading: () => (
+    <div className="h-full flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p className="text-sm text-gray-600">Loading Extension Console...</p>
+      </div>
+    </div>
+  ),
+  ssr: false
+});
+
 export default function CodeEditor() {
   // Analytics
   const {
@@ -165,7 +177,7 @@ export default function CodeEditor() {
 
 
 
-  const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace" | "git" | "visual" | "visual-tools">("code");
+  const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace" | "git" | "extensions" | "visual" | "visual-tools">("code");
   // Live diff tracking (simple per-file snapshot)
   const [diffs, setDiffs] = useState<Record<string, DiffEntry>>({});
   const [openDiff, setOpenDiff] = useState<DiffEntry | null>(null);
@@ -310,12 +322,14 @@ export default function CodeEditor() {
     ;(window as any).wrOpenPublishModal = () => setShowPublish(true)
     ;(window as any).wrOpenStylePanel = () => setShowStyle(true)
     ;(window as any).wrOpenGit = () => setViewMode('git')
+    ;(window as any).wrOpenExtensions = () => setViewMode('extensions')
     // Cleanup
     return () => {
       delete (window as any).wrOpenNewAppWizard
       delete (window as any).wrOpenPublishModal
       delete (window as any).wrOpenStylePanel
       delete (window as any).wrOpenGit
+      delete (window as any).wrOpenExtensions
     }
   }, [])
 
@@ -1401,6 +1415,12 @@ export default function CodeEditor() {
               {(viewMode as string) === "git" && (
                 <div className="h-full">
                   <GitPanel className="h-full" />
+                </div>
+              )}
+
+              {(viewMode as string) === "extensions" && (
+                <div className="h-full">
+                  <ExtensionConsole className="h-full" />
                 </div>
               )}
 

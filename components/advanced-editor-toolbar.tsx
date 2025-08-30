@@ -1,34 +1,35 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  Search,
-  Code,
-  Bug,
-  GitBranch,
-  Play,
-  Pause,
-  Square,
-  ArrowDown,
-  ArrowRight,
-  ArrowUp,
-  Zap,
-  BarChart3,
-  Rocket,
-  Palette,
-  Hammer,
-  Wrench,
-  Keyboard,
-  FileText
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import FindReplacePanel from './find-replace-panel';
 import { FileContent } from '@/hooks/use-code-builder';
+import { CodeFormatter } from '@/lib/code-formatter';
 import { debuggerService } from '@/lib/debugger-service';
 import { gitService } from '@/lib/git-service';
-import { CodeFormatter } from '@/lib/code-formatter';
+import {
+    ArrowDown,
+    ArrowRight,
+    ArrowUp,
+    BarChart3,
+    Bug,
+    Code,
+    FileText,
+    GitBranch,
+    Hammer,
+    Keyboard,
+    Package,
+    Palette,
+    Pause,
+    Play,
+    Rocket,
+    Search,
+    Square,
+    Wrench,
+    Zap
+} from 'lucide-react';
+import { useState } from 'react';
+import FindReplacePanel from './find-replace-panel';
 
 interface AdvancedEditorToolbarProps {
   files: FileContent[];
@@ -199,6 +200,9 @@ export default function AdvancedEditorToolbar({
           </Button>
           <Button variant="ghost" size="sm" onClick={() => (window as any).wrOpenGit?.()} title="Open Git Panel">
             <GitBranch className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => (window as any).wrOpenExtensions?.()} title="Open Extensions Console">
+            <Package className="w-4 h-4" />
           </Button>
         </div>
 
