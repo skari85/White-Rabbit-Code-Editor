@@ -4,6 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { globalRateLimiter, SECURITY_CONFIG } from '@/lib/security-config';
 
 export const runtime = 'edge';
 
@@ -16,14 +18,65 @@ interface StreamRequest {
   temperature?: number;
 }
 
+const StreamSchema = z.object({
+  prompt: z.string().min(1).max(8000),
+  language: z.string().min(1).max(50),
+  context: z.string().max(10000).optional(),
+  stream: z.boolean().optional(),
+  maxTokens: z.number().int().min(1).max(4000).optional(),
+  temperature: z.number().min(0).max(2).optional(),
+});
+
+function redactKey(value?: string | null): string {
+  if (!value) return '';
+  return value.length > 8 ? `${value.slice(0, 4)}***${value.slice(-4)}` : '***';
+}
+
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+  retries = 2
+): Promise<Response> {
+  let attempt = 0;
+  let backoff = 300;
+  while (true) {
+    const res = await fetch(url, init);
+    if (res.ok) return res;
+    const retryable =
+      res.status === 429 || (res.status >= 500 && res.status < 600);
+    if (!retryable || attempt >= retries) return res;
+    await new Promise(r => setTimeout(r, backoff));
+    backoff *= 2;
+    attempt++;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body: StreamRequest = await request.json();
-    const { prompt, language, context, maxTokens = 1000, temperature = 0.7 } = body;
-
-    if (!prompt) {
-      return new NextResponse('Prompt is required', { status: 400 });
+    const ip = request.headers.get('x-forwarded-for') || 'anonymous';
+    const allowed = globalRateLimiter.check(
+      `ai_stream_${ip}`,
+      SECURITY_CONFIG.RATE_LIMITS.AI_REQUESTS_PER_MINUTE
+    );
+    if (!allowed) {
+      return new NextResponse('Rate limit exceeded', { status: 429 });
     }
+
+    const json = await request.json();
+    const parse = StreamSchema.safeParse(json);
+    if (!parse.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', issues: parse.error.issues },
+        { status: 400 }
+      );
+    }
+    const {
+      prompt,
+      language,
+      context,
+      maxTokens = 1000,
+      temperature = 0.7,
+    } = parse.data;
 
     // Determine which AI provider to use (prioritize speed)
     const groqApiKey = process.env.GROQ_API_KEY;
@@ -61,14 +114,14 @@ Current context: ${context || 'No context provided'}`;
 
     const messages = [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: prompt }
+      { role: 'user', content: prompt },
     ];
 
     // Make streaming request
-    const response = await fetch(endpoint, {
+    const response = await fetchWithRetry(endpoint, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -85,7 +138,9 @@ Current context: ${context || 'No context provided'}`;
     });
 
     if (!response.ok) {
-      throw new Error(`AI API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `AI API error: ${response.status} ${response.statusText}`
+      );
     }
 
     // Create streaming response
@@ -120,17 +175,19 @@ Current context: ${context || 'No context provided'}`;
                 try {
                   const parsed = JSON.parse(data);
                   const content = parsed.choices?.[0]?.delta?.content;
-                  
+
                   if (content) {
                     // Send content as Server-Sent Events
                     const sseData = JSON.stringify({
                       content,
                       provider,
                       model,
-                      timestamp: Date.now()
+                      timestamp: Date.now(),
                     });
-                    
-                    controller.enqueue(new TextEncoder().encode(`data: ${sseData}\n\n`));
+
+                    controller.enqueue(
+                      new TextEncoder().encode(`data: ${sseData}\n\n`)
+                    );
                   }
                 } catch (e) {
                   // Skip invalid JSON
@@ -151,16 +208,18 @@ Current context: ${context || 'No context provided'}`;
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
     });
-
   } catch (error) {
-    console.error('Stream API error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Stream API error', {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
     return new NextResponse(
       JSON.stringify({ error: 'Internal server error', details: errorMessage }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

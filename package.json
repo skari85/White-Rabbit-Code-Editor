@@ -41,7 +41,8 @@
     "electron:build": "npm run build:static && electron-builder",
     "electron:build:mac": "npm run build:static && electron-builder --mac",
     "electron:build:win": "npm run build:static && electron-builder --win",
-    "electron:build:linux": "npm run build:static && electron-builder --linux"
+    "electron:build:linux": "npm run build:static && electron-builder --linux",
+    "test:unit": "vitest -c vitest.unit.config.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -121,6 +122,8 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^15.5.0",
+    "@testing-library/jest-dom": "6.8.0",
+    "@testing-library/react": "16.3.0",
     "@types/jszip": "^3.4.0",
     "@types/node": "^22",
     "@types/papaparse": "5.3.16",
