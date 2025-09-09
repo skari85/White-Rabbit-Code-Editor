@@ -5,7 +5,7 @@ const { execSync } = require('child_process');
 
 const PIN = {
   tailwindcss: '3.4.0',
-  next: '15.2.4',
+  next: '15.5.0',
   react: '19.1.1',
   'react-dom': '19.1.1',
   autoprefixer: '10.4.21',
