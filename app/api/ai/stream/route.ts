@@ -4,6 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { SECURITY_CONFIG, globalRateLimiter } from '@/lib/security-config';
 
 export const runtime = 'edge';
 
@@ -16,13 +18,55 @@ interface StreamRequest {
   temperature?: number;
 }
 
+const bodySchema = z.object({
+  prompt: z.string().min(1).max(8000),
+  language: z.string().min(1).max(50),
+  context: z.string().max(8000).optional(),
+  stream: z.boolean().optional(),
+  maxTokens: z.number().int().min(1).max(4096).optional(),
+  temperature: z.number().min(0).max(2).optional(),
+});
+
+function buildCorsHeaders(request: NextRequest): Record<string, string> {
+  const origin = request.headers.get('origin') || '';
+  const allowedOrigin = origin && origin === request.nextUrl.origin ? origin : '';
+  const headers: Record<string, string> = {
+    'Vary': 'Origin',
+    'Cache-Control': 'no-store',
+  };
+  if (allowedOrigin) {
+    headers['Access-Control-Allow-Origin'] = allowedOrigin;
+    headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS';
+    headers['Access-Control-Allow-Headers'] = 'Content-Type';
+  }
+  return headers;
+}
+
+export async function OPTIONS(request: NextRequest) {
+  const headers = buildCorsHeaders(request);
+  return new NextResponse(null, { status: 204, headers });
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body: StreamRequest = await request.json();
-    const { prompt, language, context, maxTokens = 1000, temperature = 0.7 } = body;
+    // Same-origin check for CORS
+    const origin = request.headers.get('origin');
+    if (origin && origin !== request.nextUrl.origin) {
+      return new NextResponse('Forbidden', { status: 403 });
+    }
 
-    if (!prompt) {
-      return new NextResponse('Prompt is required', { status: 400 });
+    const json = await request.json().catch(() => null);
+    const parsed = bodySchema.safeParse(json);
+    if (!parsed.success) {
+      return new NextResponse(JSON.stringify({ error: 'Invalid request', details: parsed.error.flatten() }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+    const { prompt, language, context, maxTokens = 1000, temperature = 0.7 } = parsed.data;
+
+    // Basic rate limiting by client IP
+    const ip = (request.headers.get('x-forwarded-for') || '').split(',')[0]?.trim() || 'unknown';
+    const allowed = globalRateLimiter.check(`ai-stream:${ip}`, SECURITY_CONFIG.RATE_LIMITS.AI_REQUESTS_PER_MINUTE, 60_000);
+    if (!allowed) {
+      return new NextResponse(JSON.stringify({ error: 'Too Many Requests' }), { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '60' } });
     }
 
     // Determine which AI provider to use (prioritize speed)
@@ -65,6 +109,10 @@ Current context: ${context || 'No context provided'}`;
     ];
 
     // Make streaming request
+    const abortController = new AbortController();
+    // If client disconnects, abort upstream
+    request.signal.addEventListener('abort', () => abortController.abort());
+
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -82,6 +130,7 @@ Current context: ${context || 'No context provided'}`;
         frequency_penalty: 0,
         presence_penalty: 0,
       }),
+      signal: abortController.signal,
     });
 
     if (!response.ok) {
@@ -147,14 +196,13 @@ Current context: ${context || 'No context provided'}`;
       },
     });
 
+    const cors = buildCorsHeaders(request);
     return new NextResponse(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-cache, no-store',
         'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        ...cors,
       },
     });
 
