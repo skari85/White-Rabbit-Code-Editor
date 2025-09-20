@@ -28,6 +28,8 @@ interface FastLiveCodingProps {
   theme?: string;
   height?: string;
   onLanguageChange?: (language: string) => void;
+  onFileCreate?: (filename: string, content: string, language: string) => void;
+  onMultipleFilesCreate?: (files: Array<{filename: string, content: string, language: string}>) => void;
 }
 
 interface StreamingState {
@@ -43,7 +45,9 @@ export default function FastLiveCoding({
   language,
   theme = 'vs-dark',
   height = '500px',
-  onLanguageChange
+  onLanguageChange,
+  onFileCreate,
+  onMultipleFilesCreate
 }: FastLiveCodingProps) {
   const { sendStreamingMessage, isStreaming } = useAIAssistantEnhanced();
   const { trackLiveCoding } = useAnalytics();
@@ -70,6 +74,70 @@ export default function FastLiveCoding({
 
   const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const [generatedContent, setGeneratedContent] = useState('');
+
+  // Parse AI response for multiple files and create them
+  const parseAndCreateFiles = useCallback((content: string) => {
+    const codeBlockRegex = /```(\w+)?\s*(?:\/\/\s*(.+\.\w+))?\n([\s\S]*?)```/g;
+    const files: Array<{filename: string, content: string, language: string}> = [];
+    let match;
+    let fileIndex = 0;
+
+    while ((match = codeBlockRegex.exec(content)) !== null) {
+      const detectedLanguage = match[1]?.toLowerCase() || language;
+      const filename = match[2] || generateFilename(detectedLanguage, fileIndex++);
+      const fileContent = match[3].trim();
+
+      files.push({
+        filename,
+        content: fileContent,
+        language: detectedLanguage
+      });
+    }
+
+    // If multiple files detected, create them all
+    if (files.length > 1 && onMultipleFilesCreate) {
+      onMultipleFilesCreate(files);
+    } else if (files.length === 1 && onFileCreate) {
+      const file = files[0];
+      onFileCreate(file.filename, file.content, file.language);
+    }
+
+    return files;
+  }, [language, onFileCreate, onMultipleFilesCreate]);
+
+  // Generate appropriate filename based on language
+  const generateFilename = useCallback((lang: string, index: number = 0): string => {
+    const timestamp = Date.now();
+    const suffix = index > 0 ? `-${index}` : '';
+
+    switch (lang) {
+      case 'typescript':
+      case 'ts':
+        return `component${suffix}-${timestamp}.ts`;
+      case 'tsx':
+        return `Component${suffix}-${timestamp}.tsx`;
+      case 'javascript':
+      case 'js':
+        return `script${suffix}-${timestamp}.js`;
+      case 'jsx':
+        return `Component${suffix}-${timestamp}.jsx`;
+      case 'css':
+        return `styles${suffix}-${timestamp}.css`;
+      case 'html':
+        return `page${suffix}-${timestamp}.html`;
+      case 'json':
+        return `data${suffix}-${timestamp}.json`;
+      case 'python':
+      case 'py':
+        return `script${suffix}-${timestamp}.py`;
+      case 'markdown':
+      case 'md':
+        return `README${suffix}-${timestamp}.md`;
+      default:
+        return `file${suffix}-${timestamp}.txt`;
+    }
+  }, []);
 
   // Fast streaming implementation
   const startFastStreaming = useCallback(async (prompt: string) => {
@@ -118,10 +186,10 @@ export default function FastLiveCoding({
 
       // Fast streaming loop
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value: chunk } = await reader.read();
         if (done) break;
 
-        buffer += new TextDecoder().decode(value);
+        buffer += new TextDecoder().decode(chunk);
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
 
@@ -131,7 +199,7 @@ export default function FastLiveCoding({
               const data = JSON.parse(line.slice(6));
               if (data.content) {
                 generatedCode += data.content;
-                
+
                 // Update Monaco editor in real-time
                 setStreamingState(prev => ({
                   ...prev,
@@ -141,6 +209,9 @@ export default function FastLiveCoding({
 
                 // Update the actual editor value
                 onChange(value + generatedCode);
+
+                // Store generated content for file parsing
+                setGeneratedContent(value + generatedCode);
               }
             } catch (e) {
               // Skip invalid JSON
@@ -148,6 +219,10 @@ export default function FastLiveCoding({
           }
         }
       }
+
+      // After streaming is complete, parse and create files
+      const fullContent = value + generatedCode;
+      parseAndCreateFiles(fullContent);
 
       trackLiveCoding('streaming_completed', { 
         language, 
@@ -307,13 +382,21 @@ export default function FastLiveCoding({
           <div className="absolute top-4 right-4 flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium">AI Coding...</span>
+              <span className="text-sm font-medium">AI Live Coding...</span>
             </div>
             {streamingState.isPaused && (
               <Badge variant="secondary" className="text-xs">
                 Paused
               </Badge>
             )}
+          </div>
+        )}
+
+        {/* File Creation Indicator */}
+        {generatedContent && generatedContent.includes('```') && (
+          <div className="absolute top-16 right-4 flex items-center gap-2 bg-green-500/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-green-500/20">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span className="text-sm font-medium text-green-600">Files Ready</span>
           </div>
         )}
       </div>

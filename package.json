@@ -116,6 +116,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tesseract.js": "^6.0.1",
     "vaul": "latest",
+    "vm2": "3.9.19",
     "ws": "^8.16.0",
     "zod": "^3.24.1"
   },

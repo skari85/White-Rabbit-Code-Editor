@@ -1,10 +1,10 @@
 'use client';
 
-import { signIn, getProviders } from "next-auth/react";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Github } from "lucide-react";
+import { getProviders, signIn } from "next-auth/react";
+import { useEffect, useState } from "react";
 
 interface Provider {
   id: string;
@@ -86,18 +86,25 @@ export default function SignIn() {
             ))
           ) : (
             <div className="text-center py-4">
-              <p className="text-gray-400 mb-4">GitHub authentication is not configured</p>
+              <p className="text-gray-400 mb-4">GitHub OAuth Setup Required</p>
               <Button
                 onClick={() => signIn("github", { callbackUrl: "/enter" })}
                 className="w-full bg-gray-800 hover:bg-gray-700 text-white border border-gray-600"
                 size="lg"
               >
                 <Github className="w-5 h-5 mr-2" />
-                Try GitHub Sign In
+                Sign in with GitHub
               </Button>
-              <p className="text-xs text-gray-500 mt-2">
-                If this doesn't work, check your GitHub OAuth configuration
-              </p>
+              <div className="mt-4 p-3 bg-gray-800 rounded-lg text-left">
+                <p className="text-xs text-gray-400 mb-2 font-semibold">Quick Setup:</p>
+                <ol className="text-xs text-gray-500 space-y-1">
+                  <li>1. Go to <span className="text-blue-400">github.com/settings/developers</span></li>
+                  <li>2. Create "New OAuth App"</li>
+                  <li>3. Callback URL: <span className="text-green-400">http://localhost:3012/api/auth/callback/github</span></li>
+                  <li>4. Add credentials to <span className="text-yellow-400">.env.local</span></li>
+                  <li>5. Restart server</li>
+                </ol>
+              </div>
             </div>
           )}
 

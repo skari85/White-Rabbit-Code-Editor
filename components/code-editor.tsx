@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * White Rabbit Code Editor
  * Copyright (c) 2025 White Rabbit Team. All rights reserved.
@@ -10,10 +12,21 @@
  */
 
 import { Button } from "@/components/ui/button";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { AIChat } from "@/components/ai-chat";
+import BYOKAISettings from "@/components/byok-ai-settings";
+import DarkModeToggleButton from "@/components/DarkModeToggleButton";
+import { ErrorBoundary } from "@/components/error-boundary";
+import ExtensionMarketplace from "@/components/extension-marketplace";
+import GitPanel from "@/components/git-panel";
 import LiveCodingEngine from "@/components/live-coding-engine";
+import LivePreview from "@/components/live-preview";
+import NewAppWizard from "@/components/new-app-wizard";
+import PublishModal from "@/components/publish-modal";
+import SplitControls from "@/components/split-controls";
+import SplitEditorLayout from "@/components/split-editor-layout";
+import StylePanel from "@/components/style-panel";
 import { TerminalComponent } from "@/components/terminal";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { useAIAssistantEnhanced } from "@/hooks/use-ai-assistant-enhanced";
@@ -23,10 +36,10 @@ import { useAutoSave } from '@/hooks/use-debounced-auto-save';
 import { useResponsiveLayout } from '@/hooks/use-responsive-layout';
 import { useTerminal } from "@/hooks/use-terminal";
 import {
-    Code,
     Download,
     ExternalLink,
     FileText,
+    GitBranch,
     Keyboard,
     Package,
     Plus,
@@ -34,76 +47,60 @@ import {
     Rocket,
     Server,
     Settings,
-    Sparkles,
     Terminal,
     X
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { ErrorBoundary } from './error-boundary';
-import FastLiveCoding from './fast-live-coding';
-import FileTabs from './file-tabs';
-import SplitControls, { useSplitKeyboardShortcuts } from './split-controls';
-import SplitEditorLayout from './split-editor-layout';
+import dynamic from "next/dynamic";
 
-import { notificationUtils, useNotifications } from '@/components/ui/notification-system';
-import { useAIShortcuts, useIDEShortcuts } from '@/hooks/use-keyboard-shortcuts';
-import { KeyboardShortcutsService } from '@/lib/keyboard-shortcuts-service';
-import dynamic from 'next/dynamic';
-import AdvancedEditorToolbar from './advanced-editor-toolbar';
-import BYOKAISettings from './byok-ai-settings';
-import CodeInspectionPanel from './code-inspection-panel';
-import { CommandPalette } from './command-palette';
-import CompactKeyboardShortcuts from './compact-keyboard-shortcuts';
-import DarkModeToggleButton from './DarkModeToggleButton';
-import DocumentationPanel from './documentation-panel';
-import EnhancedOnboarding from './enhanced-onboarding';
-import ExtensionMarketplace from './extension-marketplace';
-import LiveDiffDock, { type DiffEntry } from './live-diff-dock';
-import LivePreview from './live-preview';
-import MonacoDiffOverlay from './monaco-diff-overlay';
-import NewAppWizard, { NewAppOptions } from './new-app-wizard';
-import OnboardingModal from './onboarding-modal';
-import PublishModal from './publish-modal';
-import StylePanel from './style-panel';
-import VisualToolsDemo from './visual-tools-demo-simple';
-
-// Code splitting for heavy components
-
-const VisualProgrammingInterface = dynamic(() => import('./visual-programming-interface'), {
+// Lazy load heavy components
+const LazyMonacoEditor = dynamic(() => import('./lazy-monaco-editor'), {
   loading: () => (
-    <div className="h-full flex items-center justify-center bg-gray-50">
+    <div className="flex items-center justify-center h-full">
       <div className="text-center">
-        <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-        <p className="text-sm text-gray-600">Loading Visual Programming...</p>
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p className="text-sm text-gray-600">Loading Monaco Editor...</p>
       </div>
     </div>
   ),
   ssr: false
 });
 
-const GitPanel = dynamic(() => import('./git-panel'), {
+const FastLiveCoding = dynamic(() => import('./fast-live-coding'), {
   loading: () => (
-    <div className="h-full flex items-center justify-center bg-gray-50">
+    <div className="flex items-center justify-center h-full">
       <div className="text-center">
-        <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-        <p className="text-sm text-gray-600">Loading Git Panel...</p>
+        <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p className="text-sm text-gray-600">Loading Live Coding...</p>
       </div>
     </div>
   ),
   ssr: false
 });
 
-const ExtensionConsole = dynamic(() => import('./extension-console'), {
-  loading: () => (
-    <div className="h-full flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-        <p className="text-sm text-gray-600">Loading Extension Console...</p>
-      </div>
-    </div>
-  ),
-  ssr: false
-});
+// Interface for New App Wizard
+interface NewAppOptions {
+  name: string;
+  brandColor: string;
+  logoUrl?: string;
+  authEnabled: boolean;
+}
+
+// Helper function to get file type icon
+const getFileTypeIcon = (filename: string): string => {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'js': case 'jsx': return '📄';
+    case 'ts': case 'tsx': return '🔷';
+    case 'html': return '🌐';
+    case 'css': return '🎨';
+    case 'json': return '📋';
+    case 'md': return '📝';
+    case 'py': return '🐍';
+    case 'txt': return '📄';
+    default: return '📄';
+  }
+};
 
 export default function CodeEditor() {
   // Analytics
@@ -112,91 +109,149 @@ export default function CodeEditor() {
     trackUserSession
   } = useAnalytics();
 
-  // Notifications
-  const notifications = useNotifications();
+  // Session
+  const { data: session } = useSession();
 
-  // Keyboard shortcuts
-  useIDEShortcuts({
-    onSave: () => {
-      if (selectedFile) {
-        const notif = notificationUtils.fileSaved(selectedFile);
-        notifications.success(notif.title, notif.description);
-      }
-    },
-    onNew: () => {
-      const fileName = prompt('Enter file name:');
-      if (fileName) {
-        addNewFile(fileName, 'txt');
-        setSelectedFile(fileName);
-        notifications.success('File Created', `${fileName} has been created`);
-      }
-    },
-    onToggleTerminal: () => setViewMode(prev => prev === 'terminal' ? 'code' : 'terminal'),
-    onToggleSidebar: () => {
-      // Toggle sidebar logic would go here
-    }
-  });
-
-  useAIShortcuts({
-    onAIChat: () => setViewMode('code'), // Focus on AI chat
-    onGenerateCode: () => {
-      // Trigger AI code generation
-    }
-  });
-
-  // Code Builder hooks
+  // Core state
   const {
     files,
     selectedFile,
     setSelectedFile,
-    updateFileContent,
     addNewFile,
     deleteFile,
-    getSelectedFileContent,
-    initializeDefaultProject
+    renameFile,
+    updateFileContent,
+    initializeDefaultProject,
+    setFileGenerationCallbacks
   } = useCodeBuilder();
 
   // AI Assistant
   const {
-    sendStreamingMessage: sendAIStreamingMessage,
-    isLoading: aiLoading,
-    settings: aiSettings,
     messages: aiMessages,
+    sendMessage: handleSendMessage,
     clearMessages: clearAIMessages,
+    isLoading: aiLoading,
     isConfigured: aiConfigured,
-    saveSettings: updateAISettings,
-    generateDocumentation,
-    getCachedDocumentation,
-    setFileGenerationCallbacks,
+    settings: aiSettings,
+    updateSettings: updateAISettings,
     streamedMessage: aiStreamedMessage,
     isStreaming: aiIsStreaming
   } = useAIAssistantEnhanced();
 
+  // Terminal
   const terminal = useTerminal();
-  const { getActiveSession, createSession, executeCommand } = terminal;
 
+  // Auto-save
+  const autoSave = useAutoSave({
+    delay: 2000,
+    onSave: useCallback(async (data: { file: string; content: string }) => {
+      // Auto-save is handled by the updateFileContent function
+      // This is just for tracking unsaved changes state
+      try {
+        // The actual saving is done by updateFileContent
+        // This callback is mainly for state management
+        console.log('Auto-save triggered for:', data.file);
+      } catch (error) {
+        console.error('Auto-save error:', error);
+      }
+    }, []),
+    enabled: true
+  });
 
+  // Responsive layout
+  const responsiveConfig = useResponsiveLayout();
 
-  const [viewMode, setViewMode] = useState<"code" | "terminal" | "preview" | "marketplace" | "git" | "extensions" | "visual" | "visual-tools">("code");
-  // Live diff tracking (simple per-file snapshot)
-  const [diffs, setDiffs] = useState<Record<string, DiffEntry>>({});
-  const [openDiff, setOpenDiff] = useState<DiffEntry | null>(null);
-
-  // Loading states
-  const [loadingMessage, setLoadingMessage] = useState('');
+  // UI state
+  const [viewMode, setViewMode] = useState<'code' | 'preview' | 'terminal' | 'git' | 'extensions'>('code');
+  const [codeColor, setCodeColor] = useState(false);
+  const [useSplitLayout, setUseSplitLayout] = useState(false);
+  const [useAIEnhancedEditor, setUseAIEnhancedEditor] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState('Initializing workspace...');
+
+  // Modal states
+  const [showNewApp, setShowNewApp] = useState(false);
+  const [showPublish, setShowPublish] = useState(false);
+  const [showStyle, setShowStyle] = useState(false);
+  const [showAISettings, setShowAISettings] = useState(false);
+  const [showEnhancedOnboarding, setShowEnhancedOnboarding] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('wr-welcome-dismissed') === '1' ? false : true;
+    } catch {
+      return true;
+    }
+  });
+
+  // Helper functions
+  const getSelectedFileContent = useCallback(() => {
+    if (!selectedFile) return '';
+    const file = files.find(f => f.name === selectedFile);
+    return file?.content || '';
+  }, [selectedFile, files]);
+
+  const getLanguageFromFileName = useCallback((fileName: string | null): string => {
+    if (!fileName) return 'javascript';
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'js': case 'jsx': return 'javascript';
+      case 'ts': case 'tsx': return 'typescript';
+      case 'html': return 'html';
+      case 'css': return 'css';
+      case 'json': return 'json';
+      case 'md': return 'markdown';
+      case 'py': return 'python';
+      default: return 'javascript';
+    }
+  }, []);
+
+  const handleCodeColorToggle = useCallback(() => {
+    setCodeColor(prev => !prev);
+  }, []);
+
+  const dismissWelcome = useCallback(() => {
+    try { localStorage.setItem('wr-welcome-dismissed', '1'); } catch {}
+    setShowWelcome(false);
+  }, []);
+
+  // Helper function to get file type from language
+  const getFileTypeFromLanguage = (language: string): FileContent['type'] => {
+    switch (language.toLowerCase()) {
+      case 'javascript':
+      case 'js':
+        return 'js';
+      case 'typescript':
+      case 'ts':
+        return 'ts';
+      case 'tsx':
+      case 'jsx':
+        return 'tsx';
+      case 'css':
+        return 'css';
+      case 'html':
+        return 'html';
+      case 'json':
+        return 'json';
+      case 'python':
+      case 'py':
+        return 'py';
+      case 'markdown':
+      case 'md':
+        return 'md';
+      default:
+        return 'txt';
+    }
+  };
 
   // Initialize app
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        setIsInitializing(true);
-        setLoadingMessage('Initializing application...');
-        
-        // Initialize default project
+        setLoadingMessage('Setting up workspace...');
         await initializeDefaultProject();
         
-        // Initialize layout system
+        setLoadingMessage('Loading components...');
         await new Promise(resolve => setTimeout(resolve, 500)); // Simulate async init
         
         setIsInitializing(false);
@@ -209,646 +264,6 @@ export default function CodeEditor() {
     initializeApp();
   }, [initializeDefaultProject]);
 
-  // Track user session
-  // Expose project files for GitHub commit API (client-only)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).wrGetProjectFiles = () => files.map(f => ({ name: f.name, content: f.content }));
-    }
-    return () => {
-      if (typeof window !== 'undefined') delete (window as any).wrGetProjectFiles;
-    };
-  }, [files]);
-
-  useEffect(() => {
-    const sessionStart = Date.now();
-    trackUserSession('session_start');
-
-    return () => {
-      const sessionDuration = Date.now() - sessionStart;
-      trackUserSession('session_end', sessionDuration);
-    };
-  }, []); // Remove trackUserSession dependency to prevent infinite loop
-
-  // Set up file generation callbacks for AI
-  useEffect(() => {
-    setFileGenerationCallbacks({
-      onCreate: (name: string, content: string) => {
-        // Determine file type from extension
-        const getFileType = (filename: string): FileContent['type'] => {
-          const ext = filename.split('.').pop()?.toLowerCase();
-          switch (ext) {
-            case 'js': case 'jsx': return 'js';
-            case 'ts': case 'tsx': return 'tsx';
-            case 'html': return 'html';
-            case 'css': return 'css';
-            case 'json': return 'json';
-            case 'md': return 'md';
-            case 'py': return 'py';
-            default: return 'txt';
-          }
-        };
-
-        // Idempotent create: only add file once, then keep updating content
-        const exists = files.some(f => f.name === name);
-        const prev = files.find(f => f.name === name)?.content || '';
-        if (!exists) {
-          addNewFile(name, getFileType(name));
-          trackFileCreated(getFileType(name), name);
-        }
-        setDiffs(d => ({ ...d, [name]: { filename: name, before: d[name]?.before ?? prev, after: content } }));
-        updateFileContent(name, content);
-      },
-      onUpdate: (name: string, content: string) => {
-        const prev = files.find(f => f.name === name)?.content || '';
-        setDiffs(d => ({ ...d, [name]: { filename: name, before: d[name]?.before ?? prev, after: content } }));
-        updateFileContent(name, content);
-      },
-      onSelect: (name: string) => {
-        setSelectedFile(name);
-      }
-    });
-  }, [setFileGenerationCallbacks, addNewFile, updateFileContent, setSelectedFile]);
-  const [codeColor, setCodeColor] = useState(false);
-  const [showAISettings, setShowAISettings] = useState(false);
-
-  // Responsive layout
-  const responsiveConfig = useResponsiveLayout();
-
-  // Split-screen state - disable on mobile/tablet
-  const [useSplitLayout, setUseSplitLayout] = useState(false);
-
-  // Automatically disable split layout on mobile/tablet
-  useEffect(() => {
-    if (responsiveConfig.shouldDisableSplits && useSplitLayout) {
-      setUseSplitLayout(false);
-    }
-  }, [responsiveConfig.shouldDisableSplits, useSplitLayout]);
-
-  // Split-screen keyboard shortcuts
-  useSplitKeyboardShortcuts(
-    () => !responsiveConfig.shouldDisableSplits && setUseSplitLayout(true), // Split horizontal
-    () => !responsiveConfig.shouldDisableSplits && setUseSplitLayout(true), // Split vertical
-    () => setUseSplitLayout(false) // Reset layout
-  );
-
-  // Documentation state
-  const [showDocumentation, setShowDocumentation] = useState(false);
-  const [documentationData, setDocumentationData] = useState<any>(null);
-  const [documentationLoading, setDocumentationLoading] = useState(false);
-
-  // AI-enhanced editor state
-  const [useAIEnhancedEditor, setUseAIEnhancedEditor] = useState(true);
-
-  // New App, Publish, Style modals
-  const [showNewApp, setShowNewApp] = useState(false)
-  const [showPublish, setShowPublish] = useState(false)
-  const [showStyle, setShowStyle] = useState(false)
-  // Onboarding modal state
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  useEffect(() => {
-    try {
-      const seen = localStorage.getItem('wr-onboarded');
-      if (!seen) setShowOnboarding(true);
-    } catch {}
-    (window as any).wrOpenOnboarding = () => setShowOnboarding(true);
-    return () => { delete (window as any).wrOpenOnboarding };
-  }, []);
-
-
-  useEffect(() => {
-    // Expose open functions globally for minimal invasive wiring
-    (window as any).wrOpenNewAppWizard = () => setShowNewApp(true)
-    ;(window as any).wrOpenPublishModal = () => setShowPublish(true)
-    ;(window as any).wrOpenStylePanel = () => setShowStyle(true)
-    ;(window as any).wrOpenGit = () => setViewMode('git')
-    ;(window as any).wrOpenExtensions = () => setViewMode('extensions')
-    // Cleanup
-    return () => {
-      delete (window as any).wrOpenNewAppWizard
-      delete (window as any).wrOpenPublishModal
-      delete (window as any).wrOpenStylePanel
-      delete (window as any).wrOpenGit
-      delete (window as any).wrOpenExtensions
-    }
-  }, [])
-
-  // Register run/build/lint/type-check handlers
-  useEffect(() => {
-    const ks = new KeyboardShortcutsService();
-    ks.addShortcut({ id: 'run.dev', name: 'Run Dev Server', description: 'Start dev server', category: 'run', keys: ['Ctrl+R','Cmd+R'], command: 'run.dev', enabled: true, customizable: true });
-    ks.addShortcut({ id: 'run.build', name: 'Build', description: 'Build project', category: 'run', keys: ['Ctrl+B','Cmd+B'], command: 'run.build', enabled: true, customizable: true });
-    ks.addShortcut({ id: 'run.typecheck', name: 'Type Check', description: 'TypeScript check', category: 'run', keys: ['Ctrl+Shift+T','Cmd+Shift+T'], command: 'run.typecheck', enabled: true, customizable: true });
-    ks.addShortcut({ id: 'run.lint', name: 'Lint', description: 'Run linter', category: 'run', keys: ['Ctrl+Shift+L','Cmd+Shift+L'], command: 'run.lint', enabled: true, customizable: true });
-
-    ks.registerHandler('run.dev', async () => {
-      // Implement type narrowing for terminal session
-      const sid = terminal.getActiveSession();
-      if (typeof sid !== 'string' && sid) {
-        await terminal.executeCommand('npm run dev', sid.id, true);
-      }
-      setViewMode('terminal');
-    });
-    ks.registerHandler('run.build', async () => {
-      // Implement type narrowing for terminal session
-      const sid = terminal.getActiveSession();
-      if (typeof sid !== 'string' && sid) {
-        await terminal.executeCommand('npm run build', sid.id);
-      }
-      setViewMode('terminal');
-    });
-    ks.registerHandler('run.typecheck', async () => {
-      // Implement type narrowing for terminal session
-      const sid = terminal.getActiveSession();
-      if (typeof sid !== 'string' && sid) {
-        await terminal.executeCommand('npx tsc -p .', sid.id);
-      }
-      setViewMode('terminal');
-    });
-    ks.registerHandler('run.lint', async () => {
-      // Implement type narrowing for terminal session
-      const sid = terminal.getActiveSession();
-      if (typeof sid !== 'string' && sid) {
-        await terminal.executeCommand('npm run lint', sid.id);
-      }
-      setViewMode('terminal');
-    });
-
-    ks.startListening();
-
-    // expose for toolbar buttons
-    (window as any).wrRunDev = () => ks.executeCommand('run.dev');
-    (window as any).wrRunBuild = () => ks.executeCommand('run.build');
-    (window as any).wrRunTypecheck = () => ks.executeCommand('run.typecheck');
-    (window as any).wrRunLint = () => ks.executeCommand('run.lint');
-    // add to command palette
-    ks.addCommandPaletteItem({ id: 'cmd.run.dev', title: 'Run Dev Server', category: 'run', command: 'run.dev', keybinding: 'Cmd+R' });
-    ks.addCommandPaletteItem({ id: 'cmd.run.build', title: 'Build', category: 'run', command: 'run.build', keybinding: 'Cmd+B' });
-    ks.addCommandPaletteItem({ id: 'cmd.run.typecheck', title: 'Type Check', category: 'run', command: 'run.typecheck', keybinding: 'Cmd+Shift+T' });
-    ks.addCommandPaletteItem({ id: 'cmd.run.lint', title: 'Lint', category: 'run', command: 'run.lint', keybinding: 'Cmd+Shift+L' });
-
-
-    return () => {
-      ks.stopListening();
-      delete (window as any).wrRunDev;
-      delete (window as any).wrRunBuild;
-      delete (window as any).wrRunTypecheck;
-      delete (window as any).wrRunLint;
-    };
-  }, [getActiveSession, createSession, executeCommand]);
-
-  // Command Palette integration (Cmd/Ctrl+K)
-  const [showCommandPalette, setShowCommandPalette] = useState(false);
-  const [ksInstance] = useState(() => new KeyboardShortcutsService());
-  // Register Section Library commands in Command Palette
-  useEffect(() => {
-    // Slash-commands basic support
-    ksInstance.addCommandPaletteItem({ id: 'slash.help', title: '/help Show Help', category: 'general', command: 'slash.help' });
-    ksInstance.addCommandPaletteItem({ id: 'slash.dev', title: '/dev Run Dev Server', category: 'run', command: 'run.dev' });
-    ksInstance.addCommandPaletteItem({ id: 'slash.build', title: '/build Build Project', category: 'run', command: 'run.build' });
-    ksInstance.addCommandPaletteItem({ id: 'slash.test', title: '/test Run Tests', category: 'run', command: 'test.run' });
-    ksInstance.addCommandPaletteItem({ id: 'slash.watch', title: '/watch Toggle Test Watch', category: 'run', command: 'test.watch.toggle' });
-    ksInstance.registerHandler?.('slash.help', async () => {
-      alert('Try /dev, /build, /test, /watch');
-    });
-
-    ksInstance.addCommandPaletteItem({ id: 'section.hero', title: 'Insert: Hero Section', category: 'edit', command: 'section.insert', args: ['hero'] });
-    ksInstance.addCommandPaletteItem({ id: 'section.pricing', title: 'Insert: Pricing Section', category: 'edit', command: 'section.insert', args: ['pricing'] });
-    ksInstance.addCommandPaletteItem({ id: 'section.faq', title: 'Insert: FAQ Section', category: 'edit', command: 'section.insert', args: ['faq'] });
-    ksInstance.addCommandPaletteItem({ id: 'section.testimonials', title: 'Insert: Testimonials Section', category: 'edit', command: 'section.insert', args: ['testimonials'] });
-    ksInstance.addCommandPaletteItem({ id: 'section.features', title: 'Insert: Features Section', category: 'edit', command: 'section.insert', args: ['features'] });
-    ksInstance.addCommandPaletteItem({ id: 'section.footer', title: 'Insert: Footer', category: 'edit', command: 'section.insert', args: ['footer'] });
-    ksInstance.addCommandPaletteItem({ id: 'section.contact', title: 'Insert: Contact Section', category: 'edit', command: 'section.insert', args: ['contact'] });
-    ksInstance.addCommandPaletteItem({ id: 'section.bloglist', title: 'Insert: Blog List', category: 'edit', command: 'section.insert', args: ['bloglist'] });
-
-    ksInstance.registerHandler?.('section.insert', async (args?: any[]) => {
-      const kind = args?.[0] as string;
-      const snippet = getSectionSnippet(kind);
-      // Prefer index.html or create sections.html
-      const target = files.find(f => f.name === 'index.html') ? 'index.html' : 'sections.html';
-      if (!files.find(f => f.name === target)) {
-        addNewFile(target, 'html');
-      }
-      const existing = files.find(f => f.name === target)?.content || '';
-      const newContent = injectSection(existing, snippet);
-      updateFileContent(target, newContent);
-      setSelectedFile(target);
-    });
-  }, [ksInstance, files, addNewFile, updateFileContent, setSelectedFile]);
-
-  const getSectionSnippet = (kind: string): string => {
-    const brand = 'var(--brand)';
-    switch (kind) {
-      case 'hero':
-        return `<section class="hero" style="padding:48px 0">
-  <h1 style="font-size:40px;margin:0 0 12px">Build faster with White Rabbit</h1>
-  <p style="max-width:640px;color:#666">A modern, tokenized starter you can style in seconds. Ship pages with zero boilerplate.</p>
-  <div style="margin-top:16px"><a class="btn" style="background:${brand};color:white;padding:10px 16px;border-radius:8px;text-decoration:none" href="#">Get Started</a></div>
-</section>`;
-      case 'pricing':
-        return `<section class="pricing" style="padding:48px 0">
-  <h2 style="font-size:28px;margin-bottom:16px">Pricing</h2>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
-    <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px"><h3>Starter</h3><p>$0/mo</p><ul><li>Basic features</li></ul></div>
-    <div style="border:2px solid ${brand};border-radius:12px;padding:16px"><h3>Pro</h3><p>$12/mo</p><ul><li>All features</li></ul></div>
-  </div>
-</section>`;
-      case 'faq':
-        return `<section class="faq" style="padding:48px 0">
-  <h2 style="font-size:28px;margin-bottom:16px">FAQ</h2>
-  <details><summary>How do I deploy?</summary><p>Click Publish to deploy to Vercel in one step.</p></details>
-  <details><summary>Can I customize styles?</summary><p>Yes—change tokens in the Style panel.</p></details>
-</section>`;
-      case 'testimonials':
-        return `<section class="testimonials" style="padding:48px 0">
-  <h2 style="font-size:28px;margin-bottom:16px">Loved by makers</h2>
-  <blockquote style="border-left:4px solid ${brand};padding-left:12px">“I shipped my MVP in a weekend.” — Indie dev</blockquote>
-</section>`;
-      default:
-        return `<section style="padding:32px 0"><h2>New Section</h2><p>Content here</p></section>`;
-    }
-  };
-
-  const injectSection = (html: string, section: string): string => {
-    if (!html.trim()) {
-      return `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8"/>\n<meta name="viewport" content="width=device-width, initial-scale=1.0"/>\n<link rel="stylesheet" href="style.css"/>\n<title>New Page</title>\n</head>\n<body>\n${section}\n</body>\n</html>`;
-    }
-    if (html.includes('</main>')) {
-      return html.replace('</main>', `${section}\n</main>`);
-    }
-    if (html.includes('</body>')) {
-      return html.replace('</body>', `${section}\n</body>`);
-    }
-    return `${html}\n${section}`;
-  };
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setShowCommandPalette(true);
-      }
-      // Quick open slash-commands with '/'
-      if (!e.metaKey && !e.ctrlKey && !e.altKey && e.key === '/') {
-        setShowCommandPalette(true);
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, []);
-
-
-  // Code inspection state
-  const [showInspections, setShowInspections] = useState(false);
-  const [inspections, setInspections] = useState<any[]>([]);
-  const [inspectionLoading, setInspectionLoading] = useState(false);
-
-  // GitHub integration
-  const { data: session } = useSession();
-
-  // Auto-save functionality
-  const autoSave = useAutoSave({
-    delay: 2000,
-    onSave: async () => {
-      // Auto-save completed
-    }
-  });
-
-  // Handle file closing
-  const handleCloseFile = useCallback((filename: string) => {
-    // If closing the selected file, select another file first
-    if (filename === selectedFile && files.length > 1) {
-      const remainingFiles = files.filter(f => f.name !== filename);
-      setSelectedFile(remainingFiles[0].name);
-    }
-    // Delete the file
-    deleteFile(filename);
-  }, [selectedFile, files, setSelectedFile, deleteFile]);
-
-  // Helper functions
-  const getFileTypeIcon = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    switch (ext) {
-      case 'html': return '🌐';
-      case 'css': return '🎨';
-      case 'js': return '⚡';
-      case 'tsx':
-      case 'ts': return '🔷';
-      case 'jsx': return '⚛️';
-      case 'py': return '🐍';
-      case 'json': return '📋';
-      case 'md': return '📝';
-      default: return '📄';
-    }
-  };
-
-  const getLanguageFromFileName = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    switch (ext) {
-      case 'html': return 'html';
-      case 'css': return 'css';
-      case 'js': return 'javascript';
-      case 'jsx': return 'javascript';
-      case 'ts': return 'typescript';
-      case 'tsx': return 'typescript';
-      case 'json': return 'json';
-      case 'py': return 'python';
-      case 'md': return 'markdown';
-      default: return 'text';
-    }
-  };
-
-  // Enhanced AI integration with context awareness
-  const handleSendMessage = useCallback(async (message: string) => {
-    const loadingId = notifications.loading('AI Processing', 'Generating response...');
-
-    try {
-      const context = {
-        files: files,
-        selectedFile: selectedFile,
-        appSettings: aiSettings
-      };
-
-      // Stream the response and let the assistant apply file commands directly
-      await sendAIStreamingMessage(message, context);
-      notifications.removeNotification(loadingId);
-      notifications.success('AI Response', 'Response generated successfully');
-    } catch (error) {
-      notifications.removeNotification(loadingId);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      notifications.error('AI Error', `Failed to generate response: ${errorMessage}`);
-    }
-  }, [sendAIStreamingMessage, files, selectedFile, aiSettings, notifications]);
-
-  // Expose error Explain/Fix for terminal tooltip actions
-  useEffect(() => {
-    (window as any).wrExplainError = (output: string) => {
-      const prompt = `Explain this error and propose safe fixes. Keep it concise and give steps:
-\n\n${output}`;
-      handleSendMessage(prompt);
-      setViewMode('code');
-    };
-    (window as any).wrFixError = (output: string) => {
-      const prompt = `Given this terminal error, suggest minimal code changes or commands to fix:
-\n\n${output}`;
-      handleSendMessage(prompt);
-      setViewMode('code');
-    };
-    return () => {
-      delete (window as any).wrExplainError;
-      delete (window as any).wrFixError;
-    };
-  }, []);
-
-  const handleCodeColorToggle = () => {
-    setCodeColor(!codeColor);
-  };
-
-  // Documentation handlers
-  const handleToggleDocumentation = useCallback(() => {
-    setShowDocumentation(!showDocumentation);
-
-    // Load cached documentation if available
-    if (!showDocumentation && selectedFile && !documentationData) {
-      const cached = getCachedDocumentation(selectedFile);
-      if (cached) {
-        setDocumentationData(cached);
-      }
-    }
-  }, [showDocumentation, selectedFile, documentationData, getCachedDocumentation]);
-
-  const handleGenerateDocumentation = useCallback(async (fileName: string, code: string) => {
-    if (!fileName || !code.trim()) return;
-
-    const loadingId = notifications.loading('Generating Documentation', `Creating documentation for ${fileName}...`);
-    setDocumentationLoading(true);
-
-    try {
-      const fileType = fileName.split('.').pop()?.toLowerCase() || 'txt';
-      const documentation = await generateDocumentation(code, fileName, fileType);
-      setDocumentationData(documentation);
-      notifications.removeNotification(loadingId);
-      notifications.success('Documentation Generated', `Documentation for ${fileName} is ready`);
-    } catch (error) {
-      notifications.removeNotification(loadingId);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      notifications.error('Documentation Error', `Failed to generate documentation: ${errorMessage}`);
-    } finally {
-      setDocumentationLoading(false);
-    }
-  }, [generateDocumentation, notifications]);
-
-  const handleCloseDocumentation = useCallback(() => {
-    setShowDocumentation(false);
-  }, []);
-
-  const handleToggleAIEditor = useCallback(() => {
-    setUseAIEnhancedEditor(!useAIEnhancedEditor);
-  }, [useAIEnhancedEditor]);
-
-  // Code inspection handlers
-  const handleToggleInspections = useCallback(() => {
-    setShowInspections(!showInspections);
-  }, [showInspections]);
-
-  const handleRunInspections = useCallback(async () => {
-    if (!selectedFile || !getSelectedFileContent()) {
-      notifications.warning('No File Selected', 'Please select a file to run inspections');
-      return;
-    }
-
-    const loadingId = notifications.loading('Running Code Inspection', `Analyzing ${selectedFile}...`);
-    setInspectionLoading(true);
-
-    try {
-      // Import the service dynamically to avoid SSR issues
-      const { CodeInspectionService } = await import('@/lib/code-inspection-service');
-
-      const config = {
-        enabledCategories: ['syntax', 'code-style', 'performance', 'security', 'unused-code', 'complexity'] as any[],
-        severity: {},
-        customRules: [],
-        aiEnhanced: aiConfigured
-      };
-
-      const service = new CodeInspectionService(config, aiSettings);
-      const fileType = selectedFile.split('.').pop()?.toLowerCase() || 'javascript';
-      const language = fileType === 'js' ? 'javascript' :
-                      fileType === 'ts' ? 'typescript' :
-                      fileType === 'tsx' ? 'typescript' :
-                      fileType === 'jsx' ? 'javascript' :
-                      fileType === 'py' ? 'python' :
-                      fileType === 'css' ? 'css' :
-                      fileType === 'html' ? 'html' :
-                      'javascript';
-
-      const results = await service.inspectCode(
-        getSelectedFileContent(),
-        selectedFile,
-        language,
-        { files: files.slice(0, 5).map(f => ({ name: f.name, content: f.content })) }
-      );
-
-      setInspections(results);
-      notifications.removeNotification(loadingId);
-
-      if (results.length === 0) {
-        notifications.success('Code Inspection Complete', 'No issues found in your code!');
-      } else {
-        notifications.info('Code Inspection Complete', `Found ${results.length} issue${results.length > 1 ? 's' : ''} to review`);
-      }
-
-    } catch (error) {
-      notifications.removeNotification(loadingId);
-      notifications.error('Inspection Error', 'Failed to run code inspection. Using fallback analysis.');
-
-      setInspections([]);
-
-      // Add some basic fallback inspections for demonstration
-      const fallbackInspections = [
-        {
-          id: 'demo-1',
-          type: 'warning' as const,
-          severity: 'warning' as const,
-          message: 'Code inspection service is initializing',
-          description: 'The inspection service is still loading. Try again in a moment.',
-          category: 'syntax' as const,
-          range: {
-            startLineNumber: 1,
-            startColumn: 1,
-            endLineNumber: 1,
-            endColumn: 10
-          },
-          source: 'white-rabbit'
-        }
-      ];
-      setInspections(fallbackInspections);
-    } finally {
-      setInspectionLoading(false);
-    }
-  }, [selectedFile, getSelectedFileContent, aiConfigured, aiSettings, files, notifications]);
-
-  const handleInspectionClick = useCallback((inspection: any) => {
-    // If the inspection is for a different file, switch to that file first
-    if (inspection.fileName && inspection.fileName !== selectedFile) {
-      setSelectedFile(inspection.fileName);
-    }
-
-    // Try to navigate to the line in Monaco editor
-    // This will work if Monaco is loaded and available
-    setTimeout(() => {
-      try {
-        // Try to find Monaco editor instance
-        const monacoContainer = document.querySelector('.monaco-editor');
-        if (monacoContainer) {
-          // Dispatch a custom event that Monaco can listen to
-          const event = new CustomEvent('navigateToLine', {
-            detail: {
-              lineNumber: inspection.range.startLineNumber,
-              column: inspection.range.startColumn || 1
-            }
-          });
-          monacoContainer.dispatchEvent(event);
-        }
-      } catch (error) {
-        // Handle navigation error silently
-      }
-    }, 100);
-  }, [selectedFile, setSelectedFile]);
-
-  const handleQuickFix = useCallback(async (inspection: any) => {
-    if (!inspection.quickFix || !selectedFile) {
-      return;
-    }
-
-    try {
-      const { QuickFixService } = await import('@/lib/code-inspection-service');
-      const currentCode = getSelectedFileContent();
-
-      if (!currentCode) {
-        return;
-      }
-
-      const fixedCode = QuickFixService.applyQuickFix(currentCode, inspection.quickFix);
-      updateFileContent(selectedFile, fixedCode);
-
-      // Re-run inspections after applying fix to see if issue is resolved
-      setTimeout(() => {
-        handleRunInspections();
-      }, 500);
-
-    } catch (error) {
-      // Handle quick fix error silently
-    }
-  }, [selectedFile, getSelectedFileContent, updateFileContent, handleRunInspections]);
-
-  const handleCloseInspections = useCallback(() => {
-    setShowInspections(false);
-  }, []);
-
-  // Check if current file has cached documentation
-  const hasDocumentation = useMemo(() => {
-    if (!selectedFile) return false;
-    const cached = getCachedDocumentation(selectedFile);
-    return !!cached;
-  }, [selectedFile, getCachedDocumentation]);
-
-
-
-  // Helper function to get file type from language
-  const getFileTypeFromLanguage = (language: string): 'html' | 'css' | 'js' | 'json' | 'md' | 'tsx' | 'ts' | 'py' | 'txt' => {
-    const lang = language.toLowerCase();
-    switch (lang) {
-      case 'javascript':
-      case 'js':
-        return 'js';
-      case 'typescript':
-      case 'ts':
-        return 'tsx';
-      case 'html':
-        return 'html';
-      case 'css':
-        return 'css';
-      case 'json':
-        return 'json';
-      case 'markdown':
-      case 'md':
-        return 'md';
-      case 'python':
-      case 'py':
-        return 'py';
-      case 'php':
-      case 'java':
-      case 'c':
-      case 'cpp':
-      case 'c++':
-      case 'csharp':
-      case 'c#':
-      case 'go':
-      case 'rust':
-      case 'ruby':
-      case 'swift':
-      case 'kotlin':
-        return 'txt'; // Map unsupported languages to txt
-      default:
-        return 'txt';
-    }
-  };
-
-  const [showEnhancedOnboarding, setShowEnhancedOnboarding] = useState(false);
-  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
-  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('wr-welcome-dismissed') === '1' ? false : true;
-    } catch {
-      return true;
-    }
-  });
-  const dismissWelcome = useCallback(() => {
-    try { localStorage.setItem('wr-welcome-dismissed', '1'); } catch {}
-    setShowWelcome(false);
-  }, []);
-
   useEffect(() => {
     // Check if user has completed onboarding
     const hasCompletedOnboarding = localStorage.getItem('wr-onboarding-completed');
@@ -860,7 +275,6 @@ export default function CodeEditor() {
       return () => clearTimeout(timer);
     }
   }, [showEnhancedOnboarding]);
-
 
   // Show loading screen during initialization
   if (isInitializing) {
@@ -1101,32 +515,6 @@ export default function CodeEditor() {
             onFileUpdate={updateFileContent}
             onFileSelect={setSelectedFile}
           />
-          {/* Live Diff Dock */}
-          <LiveDiffDock
-            diffs={Object.values(diffs)}
-            onRevertChunk={(filename) => {
-              const entry = diffs[filename];
-              if (entry) {
-                updateFileContent(filename, entry.before);
-                setDiffs(prev => ({ ...prev, [filename]: { ...entry, after: entry.before } }));
-              }
-            }}
-            onApproveAll={() => {
-              setDiffs({});
-            }}
-            onOpenDiff={(filename) => {
-              const entry = diffs[filename];
-              if (entry) setOpenDiff(entry);
-            }}
-          />
-          {openDiff && (
-            <MonacoDiffOverlay
-              filename={openDiff.filename}
-              original={openDiff.before}
-              modified={openDiff.after}
-              onClose={() => setOpenDiff(null)}
-            />
-          )}
         </div>
           </div>
         </ResizablePanel>
@@ -1135,8 +523,8 @@ export default function CodeEditor() {
         <ResizableHandle withHandle />
 
         {/* Main Content Area */}
-        <ResizablePanel 
-          defaultSize={100 - responsiveConfig.sidebarDefaultSize} 
+        <ResizablePanel
+          defaultSize={100 - responsiveConfig.sidebarDefaultSize}
           minSize={100 - responsiveConfig.sidebarMaxSize}
         >
           <div className="flex flex-col h-full overflow-hidden">
@@ -1171,29 +559,20 @@ export default function CodeEditor() {
                   Preview
                 </Button>
                 <Button
-                  variant={viewMode === "marketplace" ? "default" : "ghost"}
+                  variant={viewMode === "git" ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setViewMode("marketplace")}
+                  onClick={() => setViewMode("git")}
+                >
+                  <GitBranch className="w-4 h-4 mr-2" />
+                  Git
+                </Button>
+                <Button
+                  variant={viewMode === "extensions" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("extensions")}
                 >
                   <Package className="w-4 h-4 mr-2" />
                   Extensions
-                </Button>
-                <Button
-                  variant={viewMode === "visual" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("visual")}
-                >
-                  <Code className="w-4 h-4 mr-2" />
-                  Visual
-                </Button>
-
-                <Button
-                  variant={viewMode === "visual-tools" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("visual-tools")}
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Visual Tools
                 </Button>
 
                 <Button
@@ -1265,192 +644,113 @@ export default function CodeEditor() {
         <div className="flex-1 overflow-hidden">
           {viewMode === "code" && (
             <div className="h-full flex flex-col">
-              {/* Advanced Editor Toolbar */}
-              <AdvancedEditorToolbar
-                files={files}
-                selectedFile={selectedFile}
-                onNavigateToResult={(file) => {
-                  setSelectedFile(file);
-                }}
-                onReplaceInFile={(fileName, searchText, replaceText) => {
-                  // Implement replace functionality
-                  const file = files.find(f => f.name === fileName);
-                  if (file) {
-                    const newContent = file.content.replace(new RegExp(searchText, 'g'), replaceText);
-                    updateFileContent(fileName, newContent);
-                  }
-                }}
-                onFormatCode={() => {
-                  // Implement format functionality
-                }}
-              />
-
               <div className="flex-1 flex flex-col">
-                {/* File Tabs */}
-                <FileTabs
-                  files={files}
-                  selectedFile={selectedFile}
-                  onSelectFile={setSelectedFile}
-                  onCloseFile={handleCloseFile}
-                  hasUnsavedChanges={autoSave.hasUnsavedChanges}
-                  showDocumentation={showDocumentation}
-                  onToggleDocumentation={handleToggleDocumentation}
-                  hasDocumentation={hasDocumentation}
-                  useAIEnhancedEditor={useAIEnhancedEditor}
-                  onToggleAIEditor={handleToggleAIEditor}
-                  aiConfigured={aiConfigured}
-                  showInspections={showInspections}
-                  onToggleInspections={handleToggleInspections}
-                  onRunInspections={handleRunInspections}
-                  inspectionCount={inspections.length}
-                />
-
-                {/* Code Editor and Side Panels */}
-                <div className="flex-1 flex">
-                  {/* Code Editor - Split Layout or Single Editor */}
-                  <div className={`${
-                    showDocumentation && showInspections ? 'flex-1' :
-                    showDocumentation || showInspections ? 'flex-1' : 'w-full'
-                  } transition-all duration-300`}>
-                    {useSplitLayout ? (
-                      <SplitEditorLayout
-                        files={files}
-                        selectedFile={selectedFile}
-                        onSelectFile={setSelectedFile}
-                        onCloseFile={handleCloseFile}
-                        onUpdateFileContent={(filename, content) => {
-                          updateFileContent(filename, content);
-                          autoSave.save({
-                            file: filename,
-                            content
-                          });
+                {/* Code Editor - Split Layout or Single Editor */}
+                <div className="w-full transition-all duration-300">
+                  {useSplitLayout ? (
+                    <SplitEditorLayout
+                      files={files}
+                      selectedFile={selectedFile}
+                      onSelectFile={setSelectedFile}
+                      onCloseFile={(filename) => {
+                        deleteFile(filename);
+                      }}
+                      onUpdateFileContent={(filename, content) => {
+                        updateFileContent(filename, content);
+                        autoSave.save({
+                          file: filename,
+                          content
+                        });
+                      }}
+                      getFileContent={getSelectedFileContent}
+                      getLanguageFromFileName={getLanguageFromFileName}
+                      hasUnsavedChanges={autoSave.hasUnsavedChanges}
+                      useAIEnhancedEditor={useAIEnhancedEditor}
+                      aiConfigured={aiConfigured}
+                      theme={codeColor ? "hex-light" : "kex-dark"}
+                      onFileCreate={(filename, content, language) => {
+                        // Create new file from AI generation in split pane
+                        const fileType = getFileTypeFromLanguage(language);
+                        const exists = files.some(f => f.name === filename);
+                        if (!exists) {
+                          addNewFile(filename, fileType);
+                        }
+                        setTimeout(() => updateFileContent(filename, content), 0);
+                        setSelectedFile(filename);
+                        trackFileCreated(fileType, filename);
+                      }}
+                      onMultipleFilesCreate={(fileList) => {
+                        // Create multiple files from AI generation in split pane
+                        fileList.forEach((file, index) => {
+                          const fileType = getFileTypeFromLanguage(file.language);
+                          const exists = files.some(f => f.name === file.filename);
+                          if (!exists) {
+                            addNewFile(file.filename, fileType);
+                          }
+                          setTimeout(() => updateFileContent(file.filename, file.content), index * 100);
+                          trackFileCreated(fileType, file.filename);
+                        });
+                        // Select the first created file
+                        if (fileList.length > 0) {
+                          setTimeout(() => setSelectedFile(fileList[0].filename), 200);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <ErrorBoundary>
+                      <FastLiveCoding
+                        value={getSelectedFileContent() || ''}
+                        onChange={(content) => {
+                          if (selectedFile && content !== undefined) {
+                            updateFileContent(selectedFile, content);
+                            autoSave.save({
+                              file: selectedFile,
+                              content
+                            });
+                          }
                         }}
-                        getFileContent={getSelectedFileContent}
-                        getLanguageFromFileName={getLanguageFromFileName}
-                        hasUnsavedChanges={autoSave.hasUnsavedChanges}
-                        useAIEnhancedEditor={useAIEnhancedEditor}
-                        aiConfigured={aiConfigured}
+                        language={getLanguageFromFileName(selectedFile)}
                         theme={codeColor ? "hex-light" : "kex-dark"}
-                        showDocumentation={showDocumentation}
-                        onToggleDocumentation={handleToggleDocumentation}
-                        hasDocumentation={hasDocumentation}
-                        showInspections={showInspections}
-                        onToggleInspections={handleToggleInspections}
-                        onRunInspections={handleRunInspections}
-                        inspectionCount={inspections.length}
-                        onToggleAIEditor={handleToggleAIEditor}
-                      />
-                    ) : (
-                      <ErrorBoundary>
-                        <FastLiveCoding
-                          value={getSelectedFileContent() || ''}
-                          onChange={(content) => {
-                            if (selectedFile && content !== undefined) {
-                              updateFileContent(selectedFile, content);
-                              autoSave.save({
-                                file: selectedFile,
-                                content
-                              });
+                        height="100%"
+                        onLanguageChange={(newLanguage) => {
+                          // Handle language change if needed
+                        }}
+                        onFileCreate={(filename, content, language) => {
+                          // Create new file from AI generation
+                          const fileType = getFileTypeFromLanguage(language);
+                          const exists = files.some(f => f.name === filename);
+                          if (!exists) {
+                            addNewFile(filename, fileType);
+                          }
+                          setTimeout(() => updateFileContent(filename, content), 0);
+                          setSelectedFile(filename);
+                          trackFileCreated(fileType, filename);
+                        }}
+                        onMultipleFilesCreate={(fileList) => {
+                          // Create multiple files from AI generation
+                          fileList.forEach((file, index) => {
+                            const fileType = getFileTypeFromLanguage(file.language);
+                            const exists = files.some(f => f.name === file.filename);
+                            if (!exists) {
+                              addNewFile(file.filename, fileType);
                             }
-                          }}
-                          language={getLanguageFromFileName(selectedFile)}
-                          theme={codeColor ? "hex-light" : "kex-dark"}
-                          height="100%"
-                          onLanguageChange={(newLanguage) => {
-                            // Handle language change if needed
-                            console.log('Language changed to:', newLanguage);
-                          }}
-                        />
-                      </ErrorBoundary>
-                    )}
-                  </div>
-
-                  {/* Right Side Panels */}
-                  {(showDocumentation || showInspections) && (
-                    <div className={`${
-                      showDocumentation && showInspections ? 'w-[800px]' : 'w-96'
-                    } border-l border-gray-200 bg-white flex transition-all duration-300`}>
-
-                      {/* Documentation Panel */}
-                      {showDocumentation && (
-                        <div className={`${showInspections ? 'w-1/2 border-r border-gray-200' : 'w-full'}`}>
-                          <DocumentationPanel
-                            documentation={documentationData}
-                            isLoading={documentationLoading}
-                            onGenerate={handleGenerateDocumentation}
-                            onClose={handleCloseDocumentation}
-                            currentFile={selectedFile}
-                            currentCode={getSelectedFileContent() || ''}
-                            className="h-full"
-                          />
-                        </div>
-                      )}
-
-                      {/* Code Inspection Panel */}
-                      {showInspections && (
-                        <div className={`${showDocumentation ? 'w-1/2' : 'w-full'}`}>
-                          <CodeInspectionPanel
-                            inspections={inspections}
-                            isLoading={inspectionLoading}
-                            onInspectionClick={handleInspectionClick}
-                            onQuickFix={handleQuickFix}
-                            onExplain={(inspection) => {
-                              const prompt = `Explain this issue in plain English and propose safe fixes.\n\nFile: ${selectedFile}\nIssue: ${inspection.message}\nCategory: ${inspection.category}\nRange: ${inspection.range.startLineNumber}:${inspection.range.startColumn}-${inspection.range.endLineNumber}:${inspection.range.endColumn}\n\nCode:\n\n\`\`\`${selectedFile.split('.').pop()}\n${getSelectedFileContent()}\n\`\`\``;
-                              handleSendMessage(prompt);
-                            }}
-                            onAutoFixAI={(inspection) => {
-                              const prompt = `Provide a minimal patch to fix this issue. Output only as UPDATE_FILE:${selectedFile} with a single \`\`\` block.\n\nIssue: ${inspection.message}\nCategory: ${inspection.category}\nRange: ${inspection.range.startLineNumber}:${inspection.range.startColumn}-${inspection.range.endLineNumber}:${inspection.range.endColumn}\n\nCurrent code:\n\n\`\`\`${selectedFile.split('.').pop()}\n${getSelectedFileContent()}\n\`\`\``;
-                              handleSendMessage(prompt);
-                            }}
-                            onRefresh={handleRunInspections}
-                            onClose={handleCloseInspections}
-                            className="h-full"
-                          />
-                        </div>
-                      )}
-                    </div>
+                            setTimeout(() => updateFileContent(file.filename, file.content), index * 100);
+                            trackFileCreated(fileType, file.filename);
+                          });
+                          // Select the first created file
+                          if (fileList.length > 0) {
+                            setTimeout(() => setSelectedFile(fileList[0].filename), 200);
+                          }
+                        }}
+                      />
+                    </ErrorBoundary>
                   )}
                 </div>
-
-              {(viewMode as string) === "git" && (
-                <div className="h-full">
-                  <GitPanel className="h-full" />
-                </div>
-              )}
-
-              {(viewMode as string) === "extensions" && (
-                <div className="h-full">
-                  <ExtensionConsole className="h-full" />
-                </div>
-              )}
-
-              {(viewMode as string) === "visual" && (
-                <div className="h-full">
-                  <VisualProgrammingInterface
-                    onCodeGenerated={(code, language) => {
-                      // Create a new file with the generated code
-                      const fileName = `visual-generated.${language === 'javascript' ? 'js' : 'js'}`;
-                      addNewFile(fileName, 'js');
-                      setTimeout(() => updateFileContent(fileName, code), 100);
-                      setSelectedFile(fileName);
-                      setViewMode('code');
-                    }}
-                    onSaveTemplate={() => {
-                      // Implementation for saving templates
-                    }}
-                    onLoadTemplate={() => {
-                      // Implementation for loading templates
-                    }}
-                    className="h-full"
-                  />
-                </div>
-              )}
-
               </div>
             </div>
           )}
 
-          {(viewMode as string) === "terminal" && (
+          {viewMode === "terminal" && (
             <div className="h-full">
               <TerminalComponent
                 session={terminal.getActiveSession() || {
@@ -1494,7 +794,7 @@ export default function CodeEditor() {
             </div>
           )}
 
-          {(viewMode as string) === "preview" && (
+          {viewMode === "preview" && (
             <div className="h-full p-4">
               <LivePreview
                 files={files}
@@ -1503,15 +803,15 @@ export default function CodeEditor() {
             </div>
           )}
 
-          {(viewMode as string) === "marketplace" && (
-            <div className="h-full p-4">
-              <ExtensionMarketplace className="h-full" />
+          {viewMode === "git" && (
+            <div className="h-full">
+              <GitPanel className="h-full" />
             </div>
           )}
 
-          {(viewMode as string) === "visual-tools" && (
-            <div className="h-full">
-              <VisualToolsDemo />
+          {viewMode === "extensions" && (
+            <div className="h-full p-4">
+              <ExtensionMarketplace className="h-full" />
             </div>
           )}
         </div>
@@ -1568,34 +868,10 @@ export default function CodeEditor() {
               >
                 Create Welcome File
               </Button>
-              <Button
-                variant="ghost"
-                type="button"
-                onClick={() => {
-                  setViewMode('visual-tools');
-                  dismissWelcome();
-                }}
-              >
-                Explore Visual Tools
-              </Button>
             </div>
           </div>
         </div>
       )}
-      <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} />
-      <CommandPalette keyboardService={ksInstance} open={showCommandPalette} onOpenChange={setShowCommandPalette} />
-      <EnhancedOnboarding
-        isOpen={showEnhancedOnboarding}
-        onClose={() => setShowEnhancedOnboarding(false)}
-        onComplete={() => {
-          setShowEnhancedOnboarding(false);
-          localStorage.setItem('wr-onboarding-completed', 'true');
-        }}
-      />
-      <CompactKeyboardShortcuts
-        isOpen={showKeyboardShortcuts}
-        onClose={() => setShowKeyboardShortcuts(false)}
-      />
 
       {/* BYOK AI Settings Modal */}
       <BYOKAISettings

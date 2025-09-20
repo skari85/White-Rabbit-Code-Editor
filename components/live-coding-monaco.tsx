@@ -29,6 +29,8 @@ interface LiveCodingMonacoProps {
   theme?: string;
   height?: string;
   className?: string;
+  onFileCreate?: (filename: string, content: string, language: string) => void;
+  onMultipleFilesCreate?: (files: Array<{filename: string, content: string, language: string}>) => void;
 }
 
 interface LiveCodingState {
@@ -45,7 +47,9 @@ export default function LiveCodingMonaco({
   language,
   theme = 'vs-dark',
   height = '100%',
-  className = ''
+  className = '',
+  onFileCreate,
+  onMultipleFilesCreate
 }: LiveCodingMonacoProps) {
 
   const [state, setState] = useState<LiveCodingState>({
@@ -70,6 +74,69 @@ export default function LiveCodingMonaco({
   } = useCodeBuilder();
   
   const { trackAIInteraction } = useAnalytics();
+
+  // Parse AI response for multiple files and create them
+  const parseAndCreateFiles = useCallback((content: string) => {
+    const codeBlockRegex = /```(\w+)?\s*(?:\/\/\s*(.+\.\w+))?\n([\s\S]*?)```/g;
+    const files: Array<{filename: string, content: string, language: string}> = [];
+    let match;
+    let fileIndex = 0;
+
+    while ((match = codeBlockRegex.exec(content)) !== null) {
+      const detectedLanguage = match[1]?.toLowerCase() || language;
+      const filename = match[2] || generateFilename(detectedLanguage, fileIndex++);
+      const fileContent = match[3].trim();
+
+      files.push({
+        filename,
+        content: fileContent,
+        language: detectedLanguage
+      });
+    }
+
+    // If multiple files detected, create them all
+    if (files.length > 1 && onMultipleFilesCreate) {
+      onMultipleFilesCreate(files);
+    } else if (files.length === 1 && onFileCreate) {
+      const file = files[0];
+      onFileCreate(file.filename, file.content, file.language);
+    }
+
+    return files;
+  }, [language, onFileCreate, onMultipleFilesCreate]);
+
+  // Generate appropriate filename based on language
+  const generateFilename = useCallback((lang: string, index: number = 0): string => {
+    const timestamp = Date.now();
+    const suffix = index > 0 ? `-${index}` : '';
+
+    switch (lang) {
+      case 'typescript':
+      case 'ts':
+        return `component${suffix}-${timestamp}.ts`;
+      case 'tsx':
+        return `Component${suffix}-${timestamp}.tsx`;
+      case 'javascript':
+      case 'js':
+        return `script${suffix}-${timestamp}.js`;
+      case 'jsx':
+        return `Component${suffix}-${timestamp}.jsx`;
+      case 'css':
+        return `styles${suffix}-${timestamp}.css`;
+      case 'html':
+        return `page${suffix}-${timestamp}.html`;
+      case 'json':
+        return `data${suffix}-${timestamp}.json`;
+      case 'python':
+      case 'py':
+        return `script${suffix}-${timestamp}.py`;
+      case 'markdown':
+      case 'md':
+        return `README${suffix}-${timestamp}.md`;
+      default:
+        return `file${suffix}-${timestamp}.txt`;
+    }
+  }, []);
 
   // Live coding: Generate code directly in Monaco
   const generateCodeInMonaco = useCallback(async (prompt: string) => {
@@ -111,6 +178,9 @@ Generate the code now:`;
         // Update Monaco editor with the generated code
         const newValue = value + '\n' + response.content;
         onChange(newValue);
+
+        // Parse and create files if multiple code blocks are detected
+        parseAndCreateFiles(response.content);
       }
 
       trackAIInteraction('response_received');

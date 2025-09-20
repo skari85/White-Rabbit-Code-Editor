@@ -2,372 +2,173 @@
 
 import MiniCodeEditor from '@/components/mini-code-editor';
 import { Button } from '@/components/ui/button';
-import { Code2 } from 'lucide-react';
+import { Code2, Terminal, Zap } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
 
 export default function LandingPage() {
-  const mainScreenRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!mainScreenRef.current) return;
-
-    const mainScreen = mainScreenRef.current;
-    
-    let rabbits: Array<{
-      element: HTMLElement;
-      x: number;
-      y: number;
-      targetX: number;
-      targetY: number;
-      speed: number;
-      moving: boolean;
-    }> = [];
-    let codeSnippets: Array<{
-      element: HTMLElement;
-      originalText: string;
-      x: number;
-      y: number;
-      speed: number;
-    }> = [];
-    let animationFrameId: number;
-    
-    const numRabbits = 5;
-    const numCodeSnippets = 50;
-    
-    const snippets = [
-      'const rabbit = new Rabbit();', 'if (hasRabbitEars) { return "🐇"; }',
-      'let isHappy = true;', '=> console.log("Hoppy coding!");',
-      '// TODO: add more carrots', '{ "ears": "fluffy", "tail": "white" }',
-      'console.error("Syntax Error: missing carrot");',
-      'const developer = { ears: true, fluffy: true };',
-      'function hop() { return "🐰"; }',
-      '// Rabbit-powered development',
-      'if (rabbit.isHappy) { productivity++; }'
-    ];
-
-    // Core Animation Loop
-    function animate() {
-      animationFrameId = requestAnimationFrame(animate);
-      updateRabbits();
-      updateCodeSnippets();
-    }
-
-    // Object Creation
-    function createRabbit() {
-      const rabbitEl = document.createElement('div');
-      rabbitEl.className = 'absolute text-4xl cursor-pointer transition-transform duration-200 hover:scale-110';
-      rabbitEl.textContent = '🐇';
-      rabbitEl.style.zIndex = '20';
-      mainScreen.appendChild(rabbitEl);
-      
-      rabbitEl.addEventListener('click', handleRabbitClick);
-
-      return {
-        element: rabbitEl,
-        x: Math.random() * (mainScreen.clientWidth - 50),
-        y: Math.random() * (mainScreen.clientHeight - 50),
-        targetX: Math.random() * (mainScreen.clientWidth - 50),
-        targetY: Math.random() * (mainScreen.clientHeight - 50),
-        speed: 0.5 + Math.random(),
-        moving: false
-      };
-    }
-
-    function createCodeSnippet() {
-      const codeEl = document.createElement('div');
-      codeEl.className = 'absolute text-lg font-mono opacity-0 outline-none cursor-text';
-      codeEl.contentEditable = 'true';
-      
-      const originalText = snippets[Math.floor(Math.random() * snippets.length)];
-      codeEl.textContent = originalText;
-      
-      const colors = ['text-green-400', 'text-cyan-400', 'text-purple-400'];
-      codeEl.classList.add(colors[Math.floor(Math.random() * colors.length)]);
-
-      mainScreen.appendChild(codeEl);
-      
-      return {
-        element: codeEl,
-        originalText: originalText,
-        x: Math.random() * mainScreen.clientWidth,
-        y: -Math.random() * mainScreen.clientHeight,
-        speed: 1 + Math.random() * 2
-      };
-    }
-
-    // Update Functions
-    function updateRabbits() {
-      rabbits.forEach(rabbit => {
-        if (Math.abs(rabbit.x - rabbit.targetX) < rabbit.speed && Math.abs(rabbit.y - rabbit.targetY) < rabbit.speed) {
-          rabbit.targetX = Math.random() * (mainScreen.clientWidth - 50);
-          rabbit.targetY = Math.random() * (mainScreen.clientHeight - 50);
-          rabbit.moving = true;
-        }
-        
-        const dx = rabbit.targetX - rabbit.x;
-        const dy = rabbit.targetY - rabbit.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance > 0) {
-          rabbit.x += (dx / distance) * rabbit.speed;
-          rabbit.y += (dy / distance) * rabbit.speed;
-        }
-
-        rabbit.element.style.left = `${rabbit.x}px`;
-        rabbit.element.style.top = `${rabbit.y}px`;
-      });
-    }
-
-    function updateCodeSnippets() {
-      codeSnippets.forEach(code => {
-        code.y += code.speed;
-        code.element.style.top = `${code.y}px`;
-        code.element.style.opacity = `${Math.max(0.1, 1 - (code.y / mainScreen.clientHeight))}`;
-
-        if (code.y > mainScreen.clientHeight) {
-          code.y = -Math.random() * 200;
-          code.x = Math.random() * mainScreen.clientWidth;
-          code.element.style.left = `${code.x}px`;
-          code.element.textContent = code.originalText;
-        }
-      });
-    }
-    
-    // Interaction Handlers
-    function handleRabbitClick(event: Event) {
-      const rabbitEl = event.currentTarget as HTMLElement;
-      const emojis = ['🐇', '🐰', '🥕', '🕳️'];
-      rabbitEl.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-      rabbitEl.classList.add('animate-bounce');
-      setTimeout(() => {
-        rabbitEl.classList.remove('animate-bounce');
-      }, 200);
-    }
-    
-
-
-    // Add typing effect
-    function addTypingEffect() {
-      const typingTexts = [
-        'console.log("🐰 Rabbit Dev Mode Activated...");',
-        'const carrot = { color: "orange", tasty: true };',
-        '// Coding with fluffy rabbit ears 🐇',
-        'if (rabbit.isHappy) { productivity++; }',
-        'function hop() { return "Bouncing to success!"; }'
-      ];
-      const typingText = typingTexts[Math.floor(Math.random() * typingTexts.length)];
-      const typingEl = document.createElement('div');
-      typingEl.className = 'absolute text-green-400 font-mono text-lg z-20';
-      typingEl.style.left = '50px';
-      typingEl.style.top = '100px';
-      typingEl.style.textShadow = '0 0 10px rgba(34, 197, 94, 0.5)';
-      mainScreen.appendChild(typingEl);
-
-      let i = 0;
-      const typeWriter = () => {
-        if (i < typingText.length) {
-          typingEl.textContent = typingText.substring(0, i + 1);
-          i++;
-          setTimeout(typeWriter, 80);
-        } else {
-          // Remove after 3 seconds
-          setTimeout(() => {
-            typingEl.remove();
-          }, 3000);
-        }
-      };
-      typeWriter();
-    }
-
-
-
-
-
-    // Environmental Dynamics
-    const screenColors = [
-      { bg: '#000a12', shadow: '0 0 50px rgba(0, 255, 255, 0.5), 0 0 100px rgba(0, 255, 255, 0.2)' },
-      { bg: '#100c25', shadow: '0 0 50px rgba(255, 0, 255, 0.5), 0 0 100px rgba(255, 0, 255, 0.2)' },
-      { bg: '#231215', shadow: '0 0 50px rgba(255, 200, 0, 0.5), 0 0 100px rgba(255, 200, 0, 0.2)' }
-    ];
-    let currentColorIndex = 0;
-
-    function changeScreenTheme() {
-      currentColorIndex = (currentColorIndex + 1) % screenColors.length;
-      const theme = screenColors[currentColorIndex];
-      mainScreen.style.backgroundColor = theme.bg;
-      mainScreen.style.boxShadow = theme.shadow;
-    }
-
-    // Initialization
-    function init() {
-      rabbits.forEach(rabbit => {
-        rabbit.element.removeEventListener('click', handleRabbitClick);
-        rabbit.element.remove();
-      });
-      codeSnippets.forEach(code => {
-        code.element.remove();
-      });
-      rabbits = [];
-      codeSnippets = [];
-      
-      for (let i = 0; i < numRabbits; i++) {
-        rabbits.push(createRabbit());
-      }
-      
-      for (let i = 0; i < numCodeSnippets; i++) {
-        codeSnippets.push(createCodeSnippet());
-      }
-      
-
-      
-      setInterval(changeScreenTheme, 5000);
-
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-      animate();
-    }
-
-    init();
-
-    // Cleanup
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-
-    };
-  }, []);
-
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-zinc-950 text-gray-100">
       {/* Header */}
-      <header className="flex justify-between items-center p-6">
-        <div className="flex items-center">
-          <Code2 className="w-6 h-6 text-white mr-2" />
-          <span className="text-white font-semibold">WHITE RABBIT</span>
-        </div>
-        <div className="flex items-center space-x-4">
-          <Link href="/visual-tools" className="text-gray-300 hover:text-white transition-colors">
-            Visual Tools
-          </Link>
-          <Link href="/enter">
-            <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white">
-              Enter White Rabbit
-            </Button>
-          </Link>
+      <header className="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm">
+        <div className="flex justify-between items-center p-6 max-w-7xl mx-auto">
+          <div className="flex items-center">
+            <Code2 className="w-6 h-6 text-gray-400 mr-2" />
+            <span className="text-gray-100 font-mono text-sm tracking-wider">WHITE RABBIT</span>
+          </div>
+          <div className="flex items-center space-x-6">
+            <Link href="/setup" className="text-gray-400 hover:text-gray-200 transition-colors text-sm font-mono">
+              setup
+            </Link>
+            <Link href="/visual-tools" className="text-gray-400 hover:text-gray-200 transition-colors text-sm font-mono">
+              visual-tools
+            </Link>
+            <Link href="/enter">
+              <Button className="bg-zinc-800 hover:bg-zinc-700 text-gray-100 border border-zinc-700 font-mono text-sm">
+                enter
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-col lg:flex-row items-center justify-center min-h-[calc(100vh-100px)] px-6">
-        {/* Left Side - Content */}
-        <div className="lg:w-1/2 max-w-2xl mb-12 lg:mb-0">
-          <h1 className="text-4xl font-bold text-white mb-6 leading-tight">
-            Build faster with a focused, AI‑powered code space
-          </h1>
-          
-          <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-            A minimal, fast web code editor with AI, visual tools, and a polished UX.
-            Click below to explore the full editor, or try the interactive code editor on the right.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 mb-12">
-            <Link href="/enter">
-              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 text-lg">
-                Enter White Rabbit
-              </Button>
-            </Link>
-            <Link href="/visual-tools">
-              <Button size="lg" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800 px-8 py-4 text-lg">
-                Explore Visual Tools
-              </Button>
-            </Link>
+      <div className="max-w-7xl mx-auto px-6 py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+          {/* Left Side - Content */}
+          <div className="space-y-8">
+            <div className="space-y-6">
+              <h1 className="text-4xl font-mono font-light text-gray-100 leading-tight">
+                build faster with<br />
+                <span className="text-gray-400">ai-powered code space</span>
+              </h1>
+              
+              <p className="text-lg text-gray-400 leading-relaxed font-mono">
+                minimal, fast web code editor with ai, visual tools, and polished ux.
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link href="/enter">
+                <Button size="lg" className="bg-zinc-800 hover:bg-zinc-700 text-gray-100 border border-zinc-700 font-mono text-sm px-8 py-4">
+                  enter white rabbit
+                </Button>
+              </Link>
+              <Link href="/visual-tools">
+                <Button size="lg" variant="outline" className="border-zinc-700 text-gray-400 hover:bg-zinc-800 hover:text-gray-200 font-mono text-sm px-8 py-4">
+                  explore tools
+                </Button>
+              </Link>
+            </div>
+
+            {/* Feature List */}
+            <div className="space-y-3 pt-8">
+              <div className="flex items-start text-gray-400 font-mono text-sm">
+                <span className="text-gray-600 mr-3 mt-1">></span>
+                <span>ai-assisted coding streamed into monaco</span>
+              </div>
+              <div className="flex items-start text-gray-400 font-mono text-sm">
+                <span className="text-gray-600 mr-3 mt-1">></span>
+                <span>visual tools hub (git history, code flow, smart file tree)</span>
+              </div>
+              <div className="flex items-start text-gray-400 font-mono text-sm">
+                <span className="text-gray-600 mr-3 mt-1">></span>
+                <span>breathing caret + focus field ripple line highlight</span>
+              </div>
+              <div className="flex items-start text-gray-400 font-mono text-sm">
+                <span className="text-gray-600 mr-3 mt-1">></span>
+                <span>unified progress bar for long tasks</span>
+              </div>
+            </div>
+
+            {/* Technical Details */}
+            <div className="pt-8 border-t border-zinc-800">
+              <div className="space-y-2">
+                <div className="text-xs font-mono text-gray-500 uppercase tracking-wider">system</div>
+                <div className="text-sm font-mono text-gray-400">
+                  next.js 15 • react 19 • monaco editor • ai integration
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Feature List */}
-          <div className="space-y-3">
-            <div className="flex items-center text-gray-300">
-              <span className="text-purple-400 mr-3">*</span>
-              AI-assisted coding streamed into Monaco
+          {/* Right Side - Code Editor */}
+          <div className="space-y-4">
+            <div className="border-b border-zinc-800 pb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Terminal className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-mono text-gray-400">interactive editor</span>
+              </div>
+              <p className="text-xs text-gray-500 font-mono">
+                syntax highlighting • multiple languages • execution
+              </p>
             </div>
-            <div className="flex items-center text-gray-300">
-              <span className="text-purple-400 mr-3">*</span>
-              Visual Tools hub (Git History, Code Flow, Smart File Tree)
-            </div>
-            <div className="flex items-center text-gray-300">
-              <span className="text-purple-400 mr-3">*</span>
-              Breathing caret + Focus Field ripple line highlight
-            </div>
-            <div className="flex items-center text-gray-300">
-              <span className="text-purple-400 mr-3">*</span>
-              Unified progress bar for long tasks
+            
+            <div className="border border-zinc-800 rounded-lg overflow-hidden bg-zinc-900/50">
+              <MiniCodeEditor />
             </div>
           </div>
-
-          <div className="mt-12">
-            <h2 className="text-2xl font-semibold text-white mb-4">Rabbits</h2>
-          </div>
-        </div>
-
-        {/* Right Side - Interactive Code Editor */}
-        <div className="lg:w-1/2 max-w-2xl">
-          <div className="mb-4">
-            <h3 className="text-xl font-semibold text-white mb-2">Try it now</h3>
-            <p className="text-gray-400 text-sm">
-              Interactive code editor with syntax highlighting, multiple languages, and execution.
-            </p>
-          </div>
-          <MiniCodeEditor />
         </div>
       </div>
 
-      {/* Developer Screen Animation Section */}
-      <section className="py-24 bg-black relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-white sm:text-4xl mb-4">
-              Interactive Code Experience
+      {/* Code Sample Section */}
+      <section className="border-t border-zinc-800 bg-zinc-950/50">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl font-mono font-light text-gray-100 mb-4">
+              code with precision
             </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Experience the magic of coding! Click on the code snippets and floating elements to see the interactive animations.
+            <p className="text-gray-400 font-mono text-sm max-w-2xl mx-auto">
+              clean interface, powerful features, zero distractions
             </p>
           </div>
           
-          <div className="relative w-full h-[600px] bg-black rounded-2xl overflow-hidden">
-
-
-            {/* Main Screen */}
-            <div 
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[1200px] h-[70%] z-[5] transition-all duration-[2000ms] ease-in-out"
-              style={{
-                backgroundColor: '#000a12',
-                borderRadius: '20px',
-                border: '5px solid #00ffff',
-                boxShadow: '0 0 50px rgba(0, 255, 255, 0.5), 0 0 100px rgba(0, 255, 255, 0.2)'
-              }}
-              id="mainScreen"
-              ref={mainScreenRef}
-            >
-              {/* Rabbits and code snippets will be added here via JavaScript */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Feature Cards */}
+            <div className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/30">
+              <div className="flex items-center gap-2 mb-3">
+                <Code2 className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-mono text-gray-300">ai assistance</span>
+              </div>
+              <p className="text-xs text-gray-500 font-mono leading-relaxed">
+                intelligent code completion and generation powered by advanced ai models
+              </p>
+            </div>
+            
+            <div className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/30">
+              <div className="flex items-center gap-2 mb-3">
+                <Terminal className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-mono text-gray-300">terminal integration</span>
+              </div>
+              <p className="text-xs text-gray-500 font-mono leading-relaxed">
+                built-in terminal with command execution and process management
+              </p>
+            </div>
+            
+            <div className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/30">
+              <div className="flex items-center gap-2 mb-3">
+                <Zap className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-mono text-gray-300">visual tools</span>
+              </div>
+              <p className="text-xs text-gray-500 font-mono leading-relaxed">
+                code flow visualization, git history, and smart file management
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-800 mt-auto py-8">
-        <div className="text-center text-gray-400">
-          <p>&copy; 2025 White Rabbit. All rights reserved.</p>
-          <div className="mt-4 space-x-4 text-sm">
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+      <footer className="border-t border-zinc-800 bg-zinc-950">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="text-center">
+            <p className="text-gray-500 font-mono text-xs">&copy; 2025 white rabbit. all rights reserved.</p>
+            <div className="mt-4 space-x-6 text-xs font-mono">
+              <Link href="/privacy" className="text-gray-500 hover:text-gray-400 transition-colors">privacy</Link>
+              <Link href="/terms" className="text-gray-500 hover:text-gray-400 transition-colors">terms</Link>
+            </div>
           </div>
         </div>
       </footer>
     </div>
   );
 }
-
-

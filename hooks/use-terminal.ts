@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface TerminalCommand {
   id: string;
@@ -27,6 +27,11 @@ export function useTerminal() {
   const [sessions, setSessions] = useState<TerminalSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const commandIdRef = useRef(0);
+
+  // Refs for browser-compatible execution state
+  const workingDirsRef = useRef<Map<string, string>>(new Map());
+  const processesRef = useRef<Map<string, any>>(new Map());
+  const projectRootRef = useRef<string>('/workspace');
 
   // Load persisted sessions
   useEffect(() => {
@@ -69,8 +74,52 @@ export function useTerminal() {
 
     setSessions(prev => [...prev, newSession]);
     setActiveSessionId(sessionId);
+    workingDirsRef.current.set(sessionId, newSession.workingDirectory);
     return sessionId;
   }, []);
+
+  // Helper: Check if command is allowed
+  const isAllowedCommand = (exec: string) => {
+    const allowed = new Set(['ls', 'pwd', 'cd', 'git', 'npm', 'pnpm', 'yarn', 'node', 'python', 'python3', 'echo', 'cat', 'mkdir', 'touch', 'rm', 'cp', 'mv', 'find', 'which']);
+    return allowed.has(exec);
+  };
+
+  // Helper: Parse and sanitize command
+  const parseCommand = useCallback((command: string): { exec: string; args: string[]; isCd: boolean; newDir?: string } | null => {
+    const trimmed = command.trim();
+    if (!trimmed) return null;
+
+    if (trimmed.startsWith('cd ')) {
+      const newDir = trimmed.slice(3).trim().replace(/["'`]/g, ''); // Basic sanitization
+      if (newDir.includes('..') || newDir.includes('/etc') || newDir.includes('~')) {
+        return null; // Reject potentially dangerous paths
+      }
+      return { exec: 'cd', args: [], isCd: true, newDir };
+    }
+
+    // Simple split, assuming no complex quoting for security (in real app, use proper shell parser)
+    const parts = trimmed.split(/\s+/);
+    const exec = parts[0];
+    const args = parts.slice(1).map(arg => arg.replace(/["';`|$]/g, '')); // Basic sanitization
+
+    if (!isAllowedCommand(exec)) {
+      return null; // Reject unknown commands
+    }
+
+    return { exec, args, isCd: false };
+  }, []);
+
+
+
+  // Helper: Get safe cwd
+  const getSafeCwd = (sessionId: string) => {
+    const sessionDir = workingDirsRef.current.get(sessionId) || projectRootRef.current;
+    // Ensure it's within project root to sandbox
+    if (!sessionDir.startsWith(projectRootRef.current)) {
+      return projectRootRef.current;
+    }
+    return sessionDir;
+  };
 
   // Rename a session
   const renameSession = useCallback((sessionId: string, newName: string) => {
@@ -91,7 +140,6 @@ export function useTerminal() {
   ): Promise<TerminalCommand> => {
     let targetSessionId = sessionId || activeSessionId;
     if (!targetSessionId) {
-      // Auto-create a default terminal session to avoid race conditions
       targetSessionId = createSession('Terminal');
     }
 
@@ -106,230 +154,131 @@ export function useTerminal() {
     };
 
     // Add command to session
-    setSessions(prev => prev.map(session => 
+    setSessions(prev => prev.map(session =>
       session.id === targetSessionId
         ? { ...session, commands: [...session.commands, newCommand] }
         : session
     ));
 
-    try {
-      // In a real implementation, this would execute the actual command
-      // For now, we'll simulate different types of commands
-      let output = '';
-      let status: 'completed' | 'error' = 'completed';
+    const parsed = parseCommand(command);
+    if (!parsed) {
+      const errorOutput = 'Command rejected: Invalid or unauthorized command.';
+      const errorCmd: TerminalCommand = { ...newCommand, output: errorOutput, status: 'error' };
+      setSessions(prev => prev.map(session =>
+        session.id === targetSessionId
+          ? { ...session, commands: session.commands.map(cmd => cmd.id === commandId ? errorCmd : cmd) }
+          : session
+      ));
+      return errorCmd;
+    }
 
-      if (command.includes('npm start') || command.includes('pnpm start') || command.includes('yarn start')) {
-        output = `Starting development server...\nLocal: http://localhost:3000\nNetwork: http://192.168.1.100:3000`;
-        if (isBackground) {
-          // For background processes, we'll keep them running
-          setTimeout(() => {
-            setSessions(prev => prev.map(session => 
-              session.id === targetSessionId
-                ? {
-                    ...session, 
-                    commands: session.commands.map(cmd => 
-                      cmd.id === commandId 
-                        ? { ...cmd, output: output + '\n✓ Ready in development mode', status: 'completed' }
-                        : cmd
-                    )
-                  }
-                : session
-            ));
-          }, 2000);
-        }
-      } else if (command.includes('npm install') || command.includes('pnpm install') || command.includes('yarn')) {
-        output = `Installing dependencies...\n✓ Dependencies installed successfully`;
-      } else if (command.includes('npm run build') || command.includes('pnpm run build') || command.includes('yarn build')) {
-        // Simulate a multi-step build with progress updates
-        const steps = [
-          { label: 'Fetching dependencies...', delay: 700 },
-          { label: 'Compiling assets...', delay: 1200 },
-          { label: 'Running tests...', delay: 1500 },
-          { label: 'Optimizing bundles...', delay: 900 },
-          { label: 'Finalizing build...', delay: 800 }
-        ];
+    if (parsed.isCd) {
+      // Handle cd command simulation
+      const newDir = parsed.newDir || '';
+      const currentDir = getSafeCwd(targetSessionId);
+      let targetDir = currentDir;
 
-        // Initialize as running with progress
-        setSessions(prev => prev.map(session =>
-          session.id === targetSessionId
-            ? {
-                ...session,
-                commands: session.commands.map(cmd =>
-                  cmd.id === commandId
-                    ? { ...cmd, output: 'Starting build...\n', status: 'running', progress: { total: steps.length, current: 0, label: 'Starting build...' } }
-                    : cmd
-                )
-              }
-            : session
-        ));
-
-        // Orchestrate steps sequentially
-        await new Promise<void>(resolve => {
-          let idx = 0;
-          const runStep = () => {
-            if (idx >= steps.length) {
-              // Complete
-              setSessions(prev => prev.map(session =>
-                session.id === targetSessionId
-                  ? {
-                      ...session,
-                      commands: session.commands.map(cmd =>
-                        cmd.id === commandId
-                          ? { ...cmd, output: (cmd.output + '✓ Build completed successfully\n'), status: 'completed', progress: { total: steps.length, current: steps.length, label: 'Completed' } }
-                          : cmd
-                      )
-                    }
-                  : session
-              ));
-              resolve();
-              return;
-            }
-            const step = steps[idx];
-            setSessions(prev => prev.map(session =>
-              session.id === targetSessionId
-                ? {
-                    ...session,
-                    commands: session.commands.map(cmd =>
-                      cmd.id === commandId
-                        ? { ...cmd, output: (cmd.output + step.label + '\n'), progress: { total: steps.length, current: idx + 1, label: step.label }, status: 'running' }
-                        : cmd
-                    )
-                  }
-                : session
-            ));
-            setTimeout(() => {
-              idx += 1;
-              runStep();
-            }, step.delay);
-          };
-          runStep();
-        });
-        // Return early since we already updated sessions and completed
-        const finalCommand: TerminalCommand = {
-          ...newCommand,
-          output: 'Build finished',
-          status: 'completed'
-        };
-        return finalCommand;
-      } else if (command.startsWith('git ')) {
-        // Lightweight simulated git commands
-        if (command.startsWith('git init')) {
-          output = `Initialized empty Git repository in ${process.cwd?.() || '/repo'}\.git/`;
-        } else if (command.startsWith('git status')) {
-          output = `On branch main\n\nNo commits yet\n\nnothing to commit (create/copy files and use "git add" to track)`;
-        } else if (command.startsWith('git add')) {
-          output = `Files staged for commit.`;
-        } else if (command.startsWith('git commit')) {
-          const msgMatch = command.match(/-m\s+"([^"]*)"/);
-          const msg = msgMatch ? msgMatch[1] : 'update';
-          output = `[main (root-commit) abc1234] ${msg}\n 1 file changed, 1 insertion(+)`;
-        } else if (command.startsWith('git push')) {
-          output = `Pushing to origin main...\n✓ Push simulated (configure a remote to push for real)`;
-        } else if (command.startsWith('git branch')) {
-          output = `* main`;
-        } else if (command.startsWith('git log')) {
-          output = `abc1234 Initial commit\nabc1235 Update files`;
-        } else if (command.startsWith('git remote')) {
-          output = `Remote updated.`;
-        } else {
-          output = `git: command not recognized in demo environment.`;
+      if (newDir === '..') {
+        const parts = currentDir.split('/');
+        if (parts.length > 1) {
+          parts.pop();
+          targetDir = parts.join('/') || '/';
         }
-      } else if (command.includes('ls') || command.includes('dir')) {
-        output = `app/  components/  hooks/  lib/  public/  styles/  package.json  README.md`;
-      } else if (command.includes('pwd')) {
-        output = `/Users/georgalbert/pwa-code`;
-      } else if (command.includes('cd ')) {
-        const newDir = command.replace('cd ', '').trim();
-        output = `Changed directory to: ${newDir}`;
-        // Update working directory in session
-        setSessions(prev => prev.map(session =>
-          session.id === targetSessionId
-            ? { ...session, workingDirectory: newDir }
-            : session
-        ));
-      } else if (command.includes('git')) {
-        if (command.includes('git status')) {
-          output = `On branch main\nYour branch is up to date with 'origin/main'.\n\nnothing to commit, working tree clean`;
-        } else if (command.includes('git log')) {
-          output = `commit abc123 (HEAD -> main, origin/main)\nAuthor: Developer\nDate: ${new Date().toDateString()}\n\n    Latest changes`;
-        } else {
-          output = `git command executed: ${command}`;
-        }
-      } else if (command.includes('python') || command.includes('node')) {
-        output = `Executing: ${command}\n✓ Script completed successfully`;
-      } else if (command.includes('test-error')) {
-        // Simulate various error types for testing
-        output = `npm ERR! code ENOENT\nnpm ERR! syscall open\nnpm ERR! path /Users/georgalbert/pwa-code-3/package.json\nnpm ERR! errno -2\nnpm ERR! enoent ENOENT: no such file or directory, open '/Users/georgalbert/pwa-code-3/package.json'\nnpm ERR! enoent This is related to npm not being able to find a file.\nnpm ERR! enoent \n\nSyntaxError: Unexpected token '}' in components/terminal.tsx:45:12\n    at Module._compile (internal/modules/cjs/loader.js:723:23)\n    at Object.Module._extensions..js (internal/modules/cjs/loader.js:789:10)\n    at Module.load (internal/modules/cjs/loader.js:653:32)\n    at Function.Module._load (internal/modules/cjs/loader.js:593:12)\n    at Function.executeUserEntryPoint [as runMain] (internal/modules/run_main.js:60:12)\n    at internal/main/run_main_module.js:17:47`;
-        status = 'error';
-      } else if (command.includes('test-warning')) {
-        // Simulate warnings for testing
-        output = `npm WARN deprecated request@2.88.2: request has been deprecated, see https://github.com/request/request/issues/3142\nnpm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@2.3.2 (node_modules/fsevents):\nnpm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@2.3.2: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})\n\nwarning: LF will be replaced by CRLF in package.json.\nwarning: The file will have its original line endings in your working directory`;
-      } else if (command.includes('test-success')) {
-        // Simulate success messages for testing
-        output = `✓ Dependencies installed successfully\n✓ Build completed in 2.3s\n✓ Tests passed: 15/15\n✨ Ready on http://localhost:3000\n🎉 Deployment successful!`;
-      } else if (command.includes('test-long')) {
-        // Simulate long output for testing collapsible feature
-        const lines = [];
-        for (let i = 1; i <= 25; i++) {
-          lines.push(`Line ${i}: This is a long output line to test the collapsible feature`);
-        }
-        output = lines.join('\n');
-      } else {
-        output = `Command executed: ${command}\n✓ Completed`;
+      } else if (newDir && !newDir.startsWith('/')) {
+        targetDir = currentDir + '/' + newDir;
+      } else if (newDir.startsWith('/')) {
+        targetDir = newDir;
       }
 
-      // Update command with result
-      const updatedCommand: TerminalCommand = {
-        ...newCommand,
-        output,
-        status
-      };
-
-      setSessions(prev => prev.map(session => 
+      const output = `Changed directory to: ${targetDir}`;
+      workingDirsRef.current.set(targetSessionId, targetDir);
+      setSessions(prev => prev.map(session =>
         session.id === targetSessionId
-          ? {
-              ...session, 
-              commands: session.commands.map(cmd => 
-                cmd.id === commandId ? updatedCommand : cmd
-              )
-            }
+          ? { ...session, workingDirectory: targetDir }
           : session
       ));
-
-      return updatedCommand;
-
-    } catch (error) {
-      const errorCommand: TerminalCommand = {
-        ...newCommand,
-        output: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        status: 'error'
-      };
-
-      setSessions(prev => prev.map(session => 
+      const cdCmd: TerminalCommand = { ...newCommand, output, status: 'completed' };
+      setSessions(prev => prev.map(session =>
         session.id === targetSessionId
-          ? {
-              ...session, 
-              commands: session.commands.map(cmd => 
-                cmd.id === commandId ? errorCommand : cmd
-              )
-            }
+          ? { ...session, commands: session.commands.map(cmd => cmd.id === commandId ? cdCmd : cmd) }
           : session
       ));
-
-      return errorCommand;
+      return cdCmd;
     }
-  }, [activeSessionId]);
 
-  // Kill a running process
+    // Simulate command execution for browser environment
+    const simulateCommand = async () => {
+      let output = '';
+
+      // Simulate different commands
+      if (parsed.exec === 'ls' || parsed.exec === 'dir') {
+        output = 'package.json\nnode_modules\nsrc\nREADME.md\n.gitignore';
+      } else if (parsed.exec === 'pwd') {
+        output = getSafeCwd(targetSessionId);
+      } else if (parsed.exec === 'whoami') {
+        output = 'developer';
+      } else if (parsed.exec === 'date') {
+        output = new Date().toString();
+      } else if (parsed.exec === 'echo') {
+        output = parsed.args.join(' ');
+      } else if (parsed.exec === 'npm' && parsed.args[0] === 'install') {
+        output = 'npm WARN deprecated package@1.0.0\nnpm WARN deprecated another-package@2.0.0\n\nadded 150 packages in 5.2s';
+      } else if (parsed.exec === 'npm' && parsed.args[0] === 'run') {
+        output = `> ${parsed.args[1]}\n\nStarting development server...\nServer running on http://localhost:3000`;
+      } else if (parsed.exec === 'git') {
+        if (parsed.args[0] === 'status') {
+          output = 'On branch main\nYour branch is up to date with \'origin/main\'.\n\nnothing to commit, working tree clean';
+        } else if (parsed.args[0] === 'log') {
+          output = 'commit abc123 (HEAD -> main)\nAuthor: Developer <dev@example.com>\nDate: ' + new Date().toDateString() + '\n\n    Latest changes';
+        } else {
+          output = 'git command executed successfully';
+        }
+      } else {
+        output = `Command '${command}' executed successfully.\nThis is a simulated terminal environment.`;
+      }
+
+      return output;
+    };
+
+    // Execute the simulated command
+    return new Promise((resolve) => {
+      setTimeout(async () => {
+        try {
+          const output = await simulateCommand();
+          const finalCmd: TerminalCommand = { ...newCommand, output, status: 'completed' };
+          setSessions(prev => prev.map(session =>
+            session.id === targetSessionId
+              ? { ...session, commands: session.commands.map(cmd => cmd.id === commandId ? finalCmd : cmd) }
+              : session
+          ));
+          resolve(finalCmd);
+        } catch (err) {
+          const errorOutput = `Error: ${err instanceof Error ? err.message : 'Unknown error'}`;
+          const errorCmd: TerminalCommand = { ...newCommand, output: errorOutput, status: 'error' };
+          setSessions(prev => prev.map(session =>
+            session.id === targetSessionId
+              ? { ...session, commands: session.commands.map(cmd => cmd.id === commandId ? errorCmd : cmd) }
+              : session
+          ));
+          resolve(errorCmd);
+        }
+      }, 500 + Math.random() * 1000); // Simulate execution time
+    });
+  }, [activeSessionId, createSession, parseCommand]);
+
+  // Kill a running process (simulated)
   const killProcess = useCallback((commandId: string, sessionId?: string) => {
     const targetSessionId = sessionId || activeSessionId;
     if (!targetSessionId) return;
 
-    setSessions(prev => prev.map(session => 
+    // In browser environment, just remove from tracking
+    processesRef.current.delete(commandId);
+
+    setSessions(prev => prev.map(session =>
       session.id === targetSessionId
         ? {
-            ...session, 
-            commands: session.commands.map(cmd => 
+            ...session,
+            commands: session.commands.map(cmd =>
               cmd.id === commandId && cmd.status === 'running'
                 ? { ...cmd, output: cmd.output + '\n^C Process terminated', status: 'completed' }
                 : cmd

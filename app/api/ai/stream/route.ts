@@ -50,7 +50,9 @@ export async function POST(request: NextRequest) {
     const systemPrompt = `You are a fast, expert ${language} developer. Generate clean, production-ready code based on the user's request.
 
 Requirements:
-- Generate ONLY the code, no explanations or markdown
+- When creating multiple files, use code blocks with filenames: \`\`\`typescript // Component.tsx
+- Always include proper file extensions in comments
+- Separate different file types (components, styles, types) into different code blocks
 - Follow ${language} best practices
 - Include proper error handling
 - Add helpful comments

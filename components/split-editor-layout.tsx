@@ -1,24 +1,22 @@
 'use client'
 
-import React, { useState, useCallback, useRef, useEffect } from 'react'
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Button } from '@/components/ui/button'
-import { 
-  SplitSquareHorizontal, 
-  SplitSquareVertical, 
-  X, 
-  MoreVertical,
-  Maximize2,
-  Copy
-} from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import { FileContent } from '@/hooks/use-code-builder'
-import { useSplitLayout } from '@/hooks/use-split-layout'
 import { useResponsiveLayout } from '@/hooks/use-responsive-layout'
+import { useSplitLayout } from '@/hooks/use-split-layout'
+import {
+    MoreVertical,
+    SplitSquareHorizontal,
+    SplitSquareVertical,
+    X
+} from 'lucide-react'
+import React, { useCallback } from 'react'
+import { ErrorBoundary } from './error-boundary'
 import FileTabs from './file-tabs'
 import LazyMonacoEditor from './lazy-monaco-editor'
-import AIEnhancedMonacoEditor from './ai-enhanced-monaco-editor'
-import { ErrorBoundary } from './error-boundary'
+import LiveCodingMonaco from './live-coding-monaco'
 
 export interface EditorPaneConfig {
   id: string
@@ -58,6 +56,9 @@ export interface SplitEditorLayoutProps {
   onRunInspections?: () => void
   inspectionCount?: number
   onToggleAIEditor?: () => void
+  // File creation callbacks for live coding
+  onFileCreate?: (filename: string, content: string, language: string) => void
+  onMultipleFilesCreate?: (fileList: Array<{filename: string, content: string, language: string}>) => void
 }
 
 interface EditorPaneProps {
@@ -85,6 +86,9 @@ interface EditorPaneProps {
   onRunInspections?: () => void
   inspectionCount?: number
   onToggleAIEditor?: () => void
+  // File creation callbacks for live coding
+  onFileCreate?: (filename: string, content: string, language: string) => void
+  onMultipleFilesCreate?: (fileList: Array<{filename: string, content: string, language: string}>) => void
 }
 
 // Individual Editor Pane Component
@@ -111,7 +115,9 @@ function EditorPane({
   onToggleInspections,
   onRunInspections,
   inspectionCount = 0,
-  onToggleAIEditor
+  onToggleAIEditor,
+  onFileCreate,
+  onMultipleFilesCreate
 }: EditorPaneProps) {
   // Filter files that are relevant to this pane
   const paneFiles = files.filter(file => pane.files.some(pf => pf.name === file.name))
@@ -173,7 +179,7 @@ function EditorPane({
       <div className="flex-1">
         <ErrorBoundary>
           {useAIEnhancedEditor && aiConfigured ? (
-            <AIEnhancedMonacoEditor
+            <LiveCodingMonaco
               value={currentSelectedFile ? getFileContent(currentSelectedFile) : ''}
               onChange={(content) => {
                 if (currentSelectedFile && content !== undefined) {
@@ -183,7 +189,32 @@ function EditorPane({
               language={currentSelectedFile ? getLanguageFromFileName(currentSelectedFile) : 'javascript'}
               theme={theme}
               height="100%"
-              enableAICompletions={true}
+              onFileCreate={(filename, content, language) => {
+                // Use the callback if provided, otherwise fallback to local handling
+                if (onFileCreate) {
+                  onFileCreate(filename, content, language);
+                } else {
+                  // Fallback: use existing file update mechanism
+                  onUpdateFileContent(filename, content);
+                  onSelectFile(filename);
+                }
+              }}
+              onMultipleFilesCreate={(fileList) => {
+                // Use the callback if provided, otherwise fallback to local handling
+                if (onMultipleFilesCreate) {
+                  onMultipleFilesCreate(fileList);
+                } else {
+                  // Fallback: create multiple files using existing mechanism
+                  fileList.forEach((file, index) => {
+                    setTimeout(() => {
+                      onUpdateFileContent(file.filename, file.content);
+                      if (index === 0) {
+                        onSelectFile(file.filename);
+                      }
+                    }, index * 100);
+                  });
+                }
+              }}
             />
           ) : (
             <LazyMonacoEditor
@@ -225,7 +256,9 @@ export default function SplitEditorLayout({
   onToggleInspections,
   onRunInspections,
   inspectionCount = 0,
-  onToggleAIEditor
+  onToggleAIEditor,
+  onFileCreate,
+  onMultipleFilesCreate
 }: SplitEditorLayoutProps) {
   // Use responsive layout to determine capabilities
   const responsiveConfig = useResponsiveLayout();
@@ -267,6 +300,8 @@ export default function SplitEditorLayout({
           onRunInspections={onRunInspections}
           inspectionCount={inspectionCount}
           onToggleAIEditor={onToggleAIEditor}
+          onFileCreate={onFileCreate}
+          onMultipleFilesCreate={onMultipleFilesCreate}
         />
       )
     } else {

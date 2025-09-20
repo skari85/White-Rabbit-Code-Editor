@@ -1,20 +1,18 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Play, 
-  Pause, 
-  SkipForward, 
-  Copy, 
-  Download,
-  FileText,
-  Code,
-  Palette
-} from 'lucide-react';
 import { useLiveAIResponse } from '@/hooks/use-live-typing';
+import {
+    Code,
+    Copy,
+    Download,
+    FileText,
+    Palette,
+    SkipForward
+} from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { darcula } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
@@ -48,15 +46,25 @@ const getDefaultFilename = (language: string, index: number) => {
     case 'html':
       return index === 0 ? 'index.html' : `page${index + 1}.html`;
     case 'css':
-      return index === 0 ? 'style.css' : `style${index + 1}.css`;
+      return index === 0 ? 'styles.css' : `styles${index + 1}.css`;
     case 'javascript':
     case 'js':
       return index === 0 ? 'script.js' : `script${index + 1}.js`;
+    case 'jsx':
+      return index === 0 ? 'Component.jsx' : `Component${index + 1}.jsx`;
     case 'typescript':
     case 'ts':
-      return index === 0 ? 'main.ts' : `file${index + 1}.ts`;
+      return index === 0 ? 'main.ts' : `utils${index + 1}.ts`;
+    case 'tsx':
+      return index === 0 ? 'Component.tsx' : `Component${index + 1}.tsx`;
     case 'json':
-      return index === 0 ? 'data.json' : `data${index + 1}.json`;
+      return index === 0 ? 'data.json' : `config${index + 1}.json`;
+    case 'python':
+    case 'py':
+      return index === 0 ? 'main.py' : `script${index + 1}.py`;
+    case 'markdown':
+    case 'md':
+      return index === 0 ? 'README.md' : `docs${index + 1}.md`;
     default:
       return `file${index + 1}.txt`;
   }

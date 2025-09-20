@@ -15,10 +15,11 @@ export default function EnterEditor() {
   const router = useRouter();
 
   useEffect(() => {
-    // If not authenticated and not loading, redirect to sign-in
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin');
-    }
+    // Temporary bypass for GitHub OAuth issues - allow direct access
+    // TODO: Re-enable authentication once GitHub OAuth is properly configured
+    // if (status === 'unauthenticated') {
+    //   router.push('/auth/signin');
+    // }
   }, [status, router]);
 
   // Show loading while checking authentication
@@ -33,10 +34,11 @@ export default function EnterEditor() {
     );
   }
 
-  // If not authenticated, don't render the editor (redirect will happen)
-  if (status === 'unauthenticated') {
-    return null;
-  }
+  // Temporary bypass - allow access without authentication
+  // TODO: Re-enable once GitHub OAuth is properly configured
+  // if (status === 'unauthenticated') {
+  //   return null;
+  // }
 
   return (
     <ErrorBoundary>

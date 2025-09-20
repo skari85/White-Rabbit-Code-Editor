@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Play, RotateCcw, Copy, Check, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Check, Copy, Download, Play, RotateCcw } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface MiniCodeEditorProps {
   className?: string;
@@ -224,51 +224,51 @@ export default function MiniCodeEditor({ className }: MiniCodeEditorProps) {
   const currentLanguage = LANGUAGES.find(lang => lang.id === selectedLanguage);
 
   return (
-    <div className={cn("bg-gray-800 rounded-lg border border-gray-700 overflow-hidden", className)}>
+    <div className={cn("bg-zinc-900 border border-zinc-800 overflow-hidden", className)}>
       {/* Header */}
-      <div className="bg-gray-700 px-4 py-3 flex justify-between items-center">
+      <div className="bg-zinc-950 px-4 py-3 flex justify-between items-center border-b border-zinc-800">
         <div className="flex items-center gap-3">
           <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
-            <SelectTrigger className="w-40 bg-gray-600 border-gray-500 text-white">
+            <SelectTrigger className="w-32 bg-zinc-800 border-zinc-700 text-gray-300 font-mono text-xs">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-zinc-900 border-zinc-700">
               {LANGUAGES.map((lang) => (
-                <SelectItem key={lang.id} value={lang.id}>
+                <SelectItem key={lang.id} value={lang.id} className="text-gray-300 font-mono text-xs">
                   {lang.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Badge variant="secondary" className="bg-gray-600 text-gray-200">
-            {currentLanguage?.extension}
+          <Badge variant="outline" className="border-zinc-700 text-gray-500 font-mono text-xs">
+            .{currentLanguage?.extension}
           </Badge>
         </div>
-        
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-1">
           <Button
             size="sm"
             variant="ghost"
             onClick={handleCopy}
-            className="text-gray-300 hover:text-white hover:bg-gray-600"
+            className="text-gray-500 hover:text-gray-300 hover:bg-zinc-800 h-7 w-7 p-0"
           >
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
           </Button>
           <Button
             size="sm"
             variant="ghost"
             onClick={handleDownload}
-            className="text-gray-300 hover:text-white hover:bg-gray-600"
+            className="text-gray-500 hover:text-gray-300 hover:bg-zinc-800 h-7 w-7 p-0"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-3 h-3" />
           </Button>
           <Button
             size="sm"
             variant="ghost"
             onClick={handleReset}
-            className="text-gray-300 hover:text-white hover:bg-gray-600"
+            className="text-gray-500 hover:text-gray-300 hover:bg-zinc-800 h-7 w-7 p-0"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3 h-3" />
           </Button>
         </div>
       </div>
@@ -279,48 +279,48 @@ export default function MiniCodeEditor({ className }: MiniCodeEditorProps) {
           ref={textareaRef}
           value={code}
           onChange={handleCodeChange}
-          className="w-full p-4 bg-gray-800 text-gray-100 font-mono text-sm resize-none border-none outline-none min-h-[200px]"
-          placeholder="Start coding..."
+          className="w-full p-4 pl-12 bg-zinc-900 text-gray-300 font-mono text-sm resize-none border-none outline-none min-h-[200px] focus:bg-zinc-900"
+          placeholder="// start coding..."
           spellCheck={false}
           style={{
             lineHeight: '1.5',
             tabSize: 2,
           }}
         />
-        
+
         {/* Line numbers overlay */}
-        <div className="absolute left-0 top-0 p-4 pointer-events-none text-gray-500 font-mono text-sm select-none">
+        <div className="absolute left-0 top-0 p-4 pr-2 pointer-events-none text-gray-600 font-mono text-sm select-none border-r border-zinc-800">
           {code.split('\n').map((_, index) => (
-            <div key={index} style={{ lineHeight: '1.5' }}>
-              {index + 1}
+            <div key={index} style={{ lineHeight: '1.5' }} className="text-right">
+              {String(index + 1).padStart(2, ' ')}
             </div>
           ))}
         </div>
       </div>
 
       {/* Actions */}
-      <div className="bg-gray-700 px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center gap-2">
+      <div className="bg-zinc-950 px-4 py-3 flex justify-between items-center border-t border-zinc-800">
+        <div className="flex items-center gap-3">
           <Button
             size="sm"
             onClick={handleRun}
             disabled={isRunning}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-zinc-800 hover:bg-zinc-700 text-gray-300 border border-zinc-700 font-mono text-xs h-7"
           >
-            <Play className="w-4 h-4 mr-1" />
-            {isRunning ? 'Running...' : 'Run'}
+            <Play className="w-3 h-3 mr-1" />
+            {isRunning ? 'running...' : 'run'}
           </Button>
-          <span className="text-gray-400 text-sm">
-            Lines: {code.split('\n').length} | Chars: {code.length}
+          <span className="text-gray-500 text-xs font-mono">
+            {code.split('\n').length}L • {code.length}C
           </span>
         </div>
       </div>
 
       {/* Output */}
       {output && (
-        <div className="bg-gray-900 border-t border-gray-600 p-4">
-          <div className="text-xs text-gray-400 mb-2">Output:</div>
-          <div className="text-green-400 font-mono text-sm whitespace-pre-wrap">
+        <div className="bg-zinc-950 border-t border-zinc-800 p-4">
+          <div className="text-xs text-gray-500 mb-2 font-mono">output:</div>
+          <div className="text-gray-300 font-mono text-sm whitespace-pre-wrap">
             {output}
           </div>
         </div>

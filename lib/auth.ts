@@ -38,7 +38,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
       })
     ] : []),
-    
+
     // Fallback credentials provider for development/testing
     ...(process.env.NODE_ENV === 'development' ? [
       Credentials({

@@ -1,5 +1,6 @@
 // Basic JavaScript debugging service
 // Note: This is a simplified implementation for educational purposes
+// Browser-compatible version without vm2
 
 export interface Breakpoint {
   id: string;
@@ -290,11 +291,16 @@ export class DebuggerService {
   }
 
   private async executeInSandbox(code: string, context: any): Promise<any> {
-    // Create a function with the debug context
-    const func = new Function(...Object.keys(context), code);
-    
-    // Execute with the context values
-    return func(...Object.values(context));
+    // Browser-compatible execution (limited sandboxing)
+    try {
+      // Create a function with the context as parameters
+      const contextKeys = Object.keys(context);
+      const contextValues = Object.values(context);
+      const func = new Function(...contextKeys, code);
+      return Promise.resolve(func(...contextValues));
+    } catch (error) {
+      throw new Error(`Execution error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   private createEvaluationContext(frame: DebugFrame): any {
@@ -309,9 +315,15 @@ export class DebuggerService {
   }
 
   private safeEval(expression: string, context: any): any {
-    // Create a safe evaluation environment
-    const func = new Function(...Object.keys(context), `return (${expression})`);
-    return func(...Object.values(context));
+    // Browser-compatible evaluation (limited sandboxing)
+    try {
+      const contextKeys = Object.keys(context);
+      const contextValues = Object.values(context);
+      const func = new Function(...contextKeys, `return (${expression});`);
+      return func(...contextValues);
+    } catch (error) {
+      throw new Error(`Evaluation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   private extractVariables(scope: any): DebugVariable[] {
