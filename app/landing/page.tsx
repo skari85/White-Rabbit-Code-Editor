@@ -63,19 +63,19 @@ export default function LandingPage() {
             {/* Feature List */}
             <div className="space-y-3 pt-8">
               <div className="flex items-start text-gray-400 font-mono text-sm">
-                <span className="text-gray-600 mr-3 mt-1">></span>
+                <span className="text-gray-600 mr-3 mt-1">&gt;</span>
                 <span>ai-assisted coding streamed into monaco</span>
               </div>
               <div className="flex items-start text-gray-400 font-mono text-sm">
-                <span className="text-gray-600 mr-3 mt-1">></span>
+                <span className="text-gray-600 mr-3 mt-1">&gt;</span>
                 <span>visual tools hub (git history, code flow, smart file tree)</span>
               </div>
               <div className="flex items-start text-gray-400 font-mono text-sm">
-                <span className="text-gray-600 mr-3 mt-1">></span>
+                <span className="text-gray-600 mr-3 mt-1">&gt;</span>
                 <span>breathing caret + focus field ripple line highlight</span>
               </div>
               <div className="flex items-start text-gray-400 font-mono text-sm">
-                <span className="text-gray-600 mr-3 mt-1">></span>
+                <span className="text-gray-600 mr-3 mt-1">&gt;</span>
                 <span>unified progress bar for long tasks</span>
               </div>
             </div>
