@@ -1,8 +1,8 @@
 'use client'
 
+import { AIMessage, AISettings } from './ai-config';
 import { AIService } from './ai-service';
-import { AISettings, AIMessage } from './ai-config';
-import { ProjectContext, ErrorAnalysis } from './ai-terminal-bridge';
+import { ErrorAnalysis, ProjectContext } from './ai-terminal-bridge';
 
 export interface ErrorPattern {
   pattern: RegExp;
@@ -26,6 +26,7 @@ export interface ErrorContext {
 }
 
 export interface DetailedErrorAnalysis extends ErrorAnalysis {
+  confidence: number;
   severity: 'low' | 'medium' | 'high' | 'critical';
   category: 'build' | 'runtime' | 'dependency' | 'configuration' | 'permission' | 'network' | 'git';
   impact: string;
@@ -119,6 +120,7 @@ export class ErrorAnalysisService {
           suggestedFixes: pattern.quickFixes,
           explanation: this.generateExplanation(pattern, context),
           relatedFiles: this.extractRelatedFiles(context.output),
+          confidence: 0.9, // High confidence for pattern matches
           severity: this.determineSeverity(pattern.type),
           category: this.determineCategory(pattern.type),
           impact: this.determineImpact(pattern.type),
@@ -225,6 +227,7 @@ export class ErrorAnalysisService {
           suggestedFixes: parsed.suggestedFixes || [],
           explanation: parsed.explanation || 'No explanation available',
           relatedFiles: parsed.relatedFiles || [],
+          confidence: parsed.confidence || 0.7, // Medium confidence for AI analysis
           severity: parsed.severity || 'medium',
           category: parsed.category || 'runtime',
           impact: parsed.impact || 'Unknown impact',
@@ -253,6 +256,7 @@ export class ErrorAnalysisService {
       ],
       explanation: 'Unable to analyze this error automatically. Please check the command syntax and try again.',
       relatedFiles: [],
+      confidence: 0.3, // Low confidence for fallback analysis
       severity: 'medium',
       category: 'runtime',
       impact: 'Command execution failed',
@@ -278,7 +282,9 @@ export class ErrorAnalysisService {
     // Limit total history size
     if (this.errorHistory.size > this.maxHistorySize) {
       const oldestKey = this.errorHistory.keys().next().value;
-      this.errorHistory.delete(oldestKey);
+      if (oldestKey) {
+        this.errorHistory.delete(oldestKey);
+      }
     }
   }
 

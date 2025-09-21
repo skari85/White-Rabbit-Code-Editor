@@ -119,24 +119,33 @@ export default function CodeEditor() {
     setSelectedFile,
     addNewFile,
     deleteFile,
-    renameFile,
     updateFileContent,
-    initializeDefaultProject,
-    setFileGenerationCallbacks
+    getSelectedFileContent,
+    getSelectedFileType,
+    initializeDefaultProject
   } = useCodeBuilder();
 
   // AI Assistant
   const {
     messages: aiMessages,
-    sendMessage: handleSendMessage,
+    sendMessage: sendAIMessage,
     clearMessages: clearAIMessages,
     isLoading: aiLoading,
     isConfigured: aiConfigured,
     settings: aiSettings,
-    updateSettings: updateAISettings,
+    saveSettings: saveAISettings,
     streamedMessage: aiStreamedMessage,
     isStreaming: aiIsStreaming
   } = useAIAssistantEnhanced();
+
+  // Wrapper function to match AIChat expected signature
+  const handleSendMessage = useCallback(async (message: string): Promise<void> => {
+    await sendAIMessage(message, {
+      files: files.map(f => ({ name: f.name, content: f.content, type: f.type })),
+      selectedFile,
+      appSettings: {}
+    });
+  }, [sendAIMessage, files, selectedFile]);
 
   // Terminal
   const terminal = useTerminal();
@@ -185,11 +194,6 @@ export default function CodeEditor() {
   });
 
   // Helper functions
-  const getSelectedFileContent = useCallback(() => {
-    if (!selectedFile) return '';
-    const file = files.find(f => f.name === selectedFile);
-    return file?.content || '';
-  }, [selectedFile, files]);
 
   const getLanguageFromFileName = useCallback((fileName: string | null): string => {
     if (!fileName) return 'javascript';
@@ -475,7 +479,7 @@ export default function CodeEditor() {
               isLoading={aiLoading}
               isConfigured={aiConfigured}
               settings={aiSettings}
-              onSettingsChange={updateAISettings}
+              onSettingsChange={saveAISettings}
               streamedMessage={aiStreamedMessage}
               isStreaming={aiIsStreaming}
               onCodeGenerated={(filename, content, language) => {
@@ -878,7 +882,7 @@ export default function CodeEditor() {
         isOpen={showAISettings}
         onClose={() => setShowAISettings(false)}
         currentSettings={aiSettings}
-        onSaveSettings={updateAISettings}
+        onSaveSettings={saveAISettings}
       />
     </div>
   );

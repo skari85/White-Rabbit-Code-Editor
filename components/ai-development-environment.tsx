@@ -1,35 +1,34 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Bot, 
-  Terminal, 
-  Code, 
-  Workflow, 
-  Settings, 
-  Zap,
-  Brain,
-  Rocket,
-  Shield,
-  CheckCircle,
-  AlertTriangle
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+    AlertTriangle,
+    Bot,
+    Brain,
+    CheckCircle,
+    Code,
+    Rocket,
+    Shield,
+    Terminal,
+    Workflow,
+    Zap
 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
+import { useAIAssistantEnhanced } from '@/hooks/use-ai-assistant-enhanced';
+import { useAITerminal } from '@/hooks/use-ai-terminal';
+import { AdvancedCodeGeneration } from '@/lib/advanced-code-generation';
+import { AISettings } from '@/lib/ai-config';
+import { DevServerManagement } from '@/lib/dev-server-management';
+import { ErrorAnalysisService } from '@/lib/error-analysis-service';
+import { ProjectSetupAutomation } from '@/lib/project-setup-automation';
+import { AIChat } from './ai-chat';
 import { EnhancedAITerminal } from './enhanced-ai-terminal';
 import { TerminalChatBridge } from './terminal-chat-bridge';
-import { AIChat } from './ai-chat';
-import { useAITerminal } from '@/hooks/use-ai-terminal';
-import { useAIAssistantEnhanced } from '@/hooks/use-ai-assistant-enhanced';
-import { AISettings } from '@/lib/ai-config';
-import { ProjectSetupAutomation } from '@/lib/project-setup-automation';
-import { DevServerManagement } from '@/lib/dev-server-management';
-import { AdvancedCodeGeneration } from '@/lib/advanced-code-generation';
-import { ErrorAnalysisService } from '@/lib/error-analysis-service';
 
 interface AIDevelopmentEnvironmentProps {
   files: Array<{ name: string; content: string; language?: string }>;
@@ -323,7 +322,6 @@ export function AIDevelopmentEnvironment({
                     settings={aiAssistant.settings}
                     onSettingsChange={aiAssistant.saveSettings}
                     onCodeGenerated={handleCodeGenerated}
-                    className="h-full"
                   />
                 </CardContent>
               </Card>

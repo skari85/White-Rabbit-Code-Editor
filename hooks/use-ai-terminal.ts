@@ -1,8 +1,11 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useTerminal, TerminalCommand, TerminalSession } from './use-terminal';
-import { NaturalLanguageParser, ParsedCommand } from '@/lib/natural-language-parser';
-import { AITerminalBridge, ProjectContext, ErrorAnalysis, WorkflowStep } from '@/lib/ai-terminal-bridge';
 import { AISettings, DEFAULT_AI_SETTINGS } from '@/lib/ai-config';
+import { AITerminalBridge, ErrorAnalysis, ProjectContext, WorkflowStep } from '@/lib/ai-terminal-bridge';
+import { NaturalLanguageParser } from '@/lib/natural-language-parser';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { TerminalCommand, TerminalSession, useTerminal } from './use-terminal';
+
+// Re-export types for external use
+export type { WorkflowStep };
 
 export interface AITerminalCommand extends TerminalCommand {
   isAIGenerated?: boolean;
