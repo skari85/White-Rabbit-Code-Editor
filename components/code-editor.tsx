@@ -175,6 +175,7 @@ export default function CodeEditor() {
   const [codeColor, setCodeColor] = useState(false);
   const [useSplitLayout, setUseSplitLayout] = useState(false);
   const [useAIEnhancedEditor, setUseAIEnhancedEditor] = useState(false);
+  const [useMonacoCodeSpace, setUseMonacoCodeSpace] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState('Initializing workspace...');
 
@@ -600,6 +601,17 @@ export default function CodeEditor() {
                   <Keyboard className="w-4 h-4 mr-2" />
                   Shortcuts
                 </Button>
+
+                <Button
+                  variant={useMonacoCodeSpace ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setUseMonacoCodeSpace(!useMonacoCodeSpace)}
+                  className="flex items-center gap-2"
+                  title="Monaco Code Space - Multi-tab editor"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Tabs
+                </Button>
               </div>
             </div>
 
@@ -649,9 +661,30 @@ export default function CodeEditor() {
           {viewMode === "code" && (
             <div className="h-full flex flex-col">
               <div className="flex-1 flex flex-col">
-                {/* Code Editor - Split Layout or Single Editor */}
+                {/* Code Editor - Monaco Code Space, Split Layout, or Single Editor */}
                 <div className="w-full transition-all duration-300">
-                  {useSplitLayout ? (
+                  {useMonacoCodeSpace ? (
+                    <MonacoCodeSpace
+                      files={files}
+                      selectedFile={selectedFile}
+                      onFileUpdate={updateFileContent}
+                      onFileSelect={setSelectedFile}
+                      onFileCreate={(filename, content, language) => {
+                        // Create new file from Monaco Code Space
+                        const fileType = getFileTypeFromLanguage(language);
+                        const exists = files.some(f => f.name === filename);
+                        if (!exists) {
+                          addNewFile(filename, fileType);
+                        }
+                        setTimeout(() => updateFileContent(filename, content), 0);
+                        setSelectedFile(filename);
+                        trackFileCreated(fileType, filename);
+                      }}
+                      theme={codeColor ? "vs-light" : "vs-dark"}
+                      height="100%"
+                      className="h-full"
+                    />
+                  ) : useSplitLayout ? (
                     <SplitEditorLayout
                       files={files}
                       selectedFile={selectedFile}
