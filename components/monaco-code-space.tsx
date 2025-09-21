@@ -1,6 +1,6 @@
 import { FileContent } from "@/hooks/use-code-builder";
 import Editor from "@monaco-editor/react";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 
 /**
@@ -116,6 +116,8 @@ export default function MonacoCodeSpace({
   });
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<any>(null);
+  const [editorHeight, setEditorHeight] = useState<number>(0);
 
   // Sync with external file changes
   useEffect(() => {
@@ -136,6 +138,39 @@ export default function MonacoCodeSpace({
       }
     }
   }, [selectedFile, docs, activeId]);
+
+  // Calculate editor height immediately to prevent layout shifts
+  useLayoutEffect(() => {
+    const calculateEditorHeight = () => {
+      if (containerRef.current) {
+        const containerHeight = containerRef.current.clientHeight;
+        const tabsHeight = 60; // Approximate height of tabs bar
+        const calculatedHeight = Math.max(containerHeight - tabsHeight, 300);
+        setEditorHeight(calculatedHeight);
+      }
+    };
+
+    calculateEditorHeight();
+
+    // Recalculate on window resize
+    const handleResize = () => {
+      calculateEditorHeight();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [height]);
+
+  // Force editor layout when height changes
+  useEffect(() => {
+    if (editorRef.current && editorHeight > 0) {
+      // Small delay to ensure DOM is updated
+      const timer = setTimeout(() => {
+        editorRef.current?.layout();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [editorHeight, activeId]);
 
   const activeIndex = docs.findIndex((d) => d.id === activeId);
   const active = docs[activeIndex];
@@ -239,14 +274,33 @@ export default function MonacoCodeSpace({
     if (doc.isProjectFile && doc.filePath && onFileSelect) {
       onFileSelect(doc.filePath);
     }
+
+    // Force editor layout after tab switch to ensure proper rendering
+    setTimeout(() => {
+      if (editorRef.current) {
+        editorRef.current.layout();
+      }
+    }, 0);
   }, [onFileSelect]);
 
+  const handleEditorDidMount = useCallback((editor: any) => {
+    editorRef.current = editor;
+    // Force immediate layout
+    editor.layout();
+  }, []);
+
   return (
-    <div className={`w-full flex flex-col bg-neutral-50 border rounded-2xl shadow-sm ${className}`}
-         style={{ height }}
-         ref={containerRef}>
+    <div
+      className={`w-full flex flex-col bg-neutral-50 border rounded-2xl shadow-sm overflow-hidden ${className}`}
+      style={{
+        height,
+        minHeight: '400px',
+        maxHeight: '100vh'
+      }}
+      ref={containerRef}
+    >
       {/* Tabs */}
-      <div className="flex items-center gap-2 p-2 border-b bg-white rounded-t-2xl">
+      <div className="flex items-center gap-2 p-2 border-b bg-white rounded-t-2xl flex-shrink-0" style={{ height: '60px' }}>
         <div className="flex flex-wrap gap-2 flex-1 min-w-0">
           {docs.map((d) => (
             <button
@@ -324,21 +378,29 @@ export default function MonacoCodeSpace({
       </div>
 
       {/* Editor */}
-      <div className="flex-1 min-h-0">
+      <div
+        className="flex-1 min-h-0 relative"
+        style={{
+          height: editorHeight > 0 ? `${editorHeight}px` : 'calc(100% - 60px)',
+          minHeight: '300px'
+        }}
+      >
         {active && (
           <Editor
-            height="100%"
+            height={editorHeight > 0 ? editorHeight : undefined}
+            width="100%"
             defaultLanguage={active.language}
             language={active.language}
             value={active.value}
             onChange={(val) => setValue(active.id, val ?? "")}
+            onMount={handleEditorDidMount}
             options={{
-              automaticLayout: true,
+              automaticLayout: false, // Disable automatic layout to prevent gradual expansion
               minimap: { enabled: false },
               scrollBeyondLastLine: false,
               tabSize: 2,
               fontSize: 14,
-              smoothScrolling: true,
+              smoothScrolling: false, // Disable smooth scrolling to prevent layout shifts
               padding: { top: 16 },
               renderWhitespace: "selection",
               wordWrap: "on",
@@ -346,8 +408,31 @@ export default function MonacoCodeSpace({
               folding: true,
               bracketMatching: "always",
               autoIndent: "full",
+              fixedOverflowWidgets: true, // Prevent overflow widgets from affecting layout
+              overviewRulerLanes: 0, // Disable overview ruler to save space
+              hideCursorInOverviewRuler: true,
+              scrollbar: {
+                useShadows: false,
+                verticalHasArrows: false,
+                horizontalHasArrows: false,
+                vertical: 'visible',
+                horizontal: 'visible',
+                verticalScrollbarSize: 14,
+                horizontalScrollbarSize: 14
+              }
             }}
             theme={theme}
+            loading={
+              <div
+                className="flex items-center justify-center w-full bg-gray-900"
+                style={{ height: editorHeight > 0 ? `${editorHeight}px` : '300px' }}
+              >
+                <div className="text-center">
+                  <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <p className="text-sm text-gray-400">Loading Editor...</p>
+                </div>
+              </div>
+            }
           />
         )}
       </div>
