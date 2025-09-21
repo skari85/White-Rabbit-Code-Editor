@@ -682,7 +682,7 @@ export default function CodeEditor() {
                         trackFileCreated(fileType, filename);
                       }}
                       theme={codeColor ? "vs-light" : "vs-dark"}
-                      height="100%"
+                      height="calc(100vh - 120px)"
                       className="h-full"
                     />
                   ) : useSplitLayout ? (

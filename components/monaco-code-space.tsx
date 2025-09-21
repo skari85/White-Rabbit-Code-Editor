@@ -117,7 +117,7 @@ export default function MonacoCodeSpace({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<any>(null);
-  const [editorHeight, setEditorHeight] = useState<number>(0);
+  const [editorHeight, setEditorHeight] = useState<number>(500); // Start with a reasonable default height
 
   // Sync with external file changes
   useEffect(() => {
@@ -145,12 +145,22 @@ export default function MonacoCodeSpace({
       if (containerRef.current) {
         const containerHeight = containerRef.current.clientHeight;
         const tabsHeight = 60; // Approximate height of tabs bar
-        const calculatedHeight = Math.max(containerHeight - tabsHeight, 300);
+        const calculatedHeight = Math.max(containerHeight - tabsHeight, 500);
         setEditorHeight(calculatedHeight);
+      } else {
+        // If container not ready, use a reasonable default based on height prop
+        const defaultHeight = typeof height === 'string' && height.includes('vh')
+          ? Math.floor(window.innerHeight * (parseInt(height) / 100)) - 60
+          : 500;
+        setEditorHeight(Math.max(defaultHeight, 500));
       }
     };
 
+    // Calculate immediately
     calculateEditorHeight();
+
+    // Also calculate on next tick to ensure DOM is ready
+    const timer = setTimeout(calculateEditorHeight, 0);
 
     // Recalculate on window resize
     const handleResize = () => {
@@ -158,7 +168,10 @@ export default function MonacoCodeSpace({
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timer);
+    };
   }, [height]);
 
   // Force editor layout when height changes
@@ -285,16 +298,21 @@ export default function MonacoCodeSpace({
 
   const handleEditorDidMount = useCallback((editor: any) => {
     editorRef.current = editor;
-    // Force immediate layout
-    editor.layout();
-  }, []);
+    // Force immediate layout with explicit dimensions
+    editor.layout({ width: editor.getLayoutInfo().width, height: editorHeight });
+
+    // Force another layout after a brief delay to ensure proper rendering
+    setTimeout(() => {
+      editor.layout({ width: editor.getLayoutInfo().width, height: editorHeight });
+    }, 100);
+  }, [editorHeight]);
 
   return (
     <div
       className={`w-full flex flex-col bg-neutral-50 border rounded-2xl shadow-sm overflow-hidden ${className}`}
       style={{
-        height,
-        minHeight: '400px',
+        height: height || '600px', // Ensure we always have a height
+        minHeight: '600px',
         maxHeight: '100vh'
       }}
       ref={containerRef}
@@ -381,13 +399,13 @@ export default function MonacoCodeSpace({
       <div
         className="flex-1 min-h-0 relative"
         style={{
-          height: editorHeight > 0 ? `${editorHeight}px` : 'calc(100% - 60px)',
-          minHeight: '300px'
+          height: `${editorHeight}px`,
+          minHeight: '500px'
         }}
       >
         {active && (
           <Editor
-            height={editorHeight > 0 ? editorHeight : undefined}
+            height={editorHeight}
             width="100%"
             defaultLanguage={active.language}
             language={active.language}
@@ -425,7 +443,7 @@ export default function MonacoCodeSpace({
             loading={
               <div
                 className="flex items-center justify-center w-full bg-gray-900"
-                style={{ height: editorHeight > 0 ? `${editorHeight}px` : '300px' }}
+                style={{ height: `${editorHeight}px` }}
               >
                 <div className="text-center">
                   <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
