@@ -46,8 +46,8 @@ export function useTerminal() {
         setSessions(parsed);
       }
       if (savedActive) setActiveSessionId(savedActive);
-    } catch (error) {
-      console.warn('Failed to load terminal sessions from localStorage:', error);
+    } catch {
+      // Silently handle localStorage errors
     }
   }, []);
 
@@ -59,8 +59,8 @@ export function useTerminal() {
       if (activeSessionId) {
         window.localStorage.setItem('wr_terminal_active', activeSessionId);
       }
-    } catch (error) {
-      console.warn('Failed to save terminal sessions to localStorage:', error);
+    } catch {
+      // Silently handle localStorage errors
     }
   }, [sessions, activeSessionId]);
 
