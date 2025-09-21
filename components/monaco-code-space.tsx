@@ -1,6 +1,6 @@
 import { FileContent } from "@/hooks/use-code-builder";
 import Editor from "@monaco-editor/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 
 /**
@@ -406,7 +406,7 @@ export default function MonacoCodeSpace({
               wordWrap: "on",
               lineNumbers: "on",
               folding: true,
-              bracketMatching: "always",
+              matchBrackets: "always",
               autoIndent: "full",
               fixedOverflowWidgets: true, // Prevent overflow widgets from affecting layout
               overviewRulerLanes: 0, // Disable overview ruler to save space

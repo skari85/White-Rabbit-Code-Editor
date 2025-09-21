@@ -22,6 +22,7 @@ import ExtensionMarketplace from "@/components/extension-marketplace";
 import GitPanel from "@/components/git-panel";
 import LiveCodingEngine from "@/components/live-coding-engine";
 import LivePreview from "@/components/live-preview";
+import MonacoCodeSpace from "@/components/monaco-code-space";
 import NewAppWizard from "@/components/new-app-wizard";
 import PublishModal from "@/components/publish-modal";
 import SplitControls from "@/components/split-controls";
