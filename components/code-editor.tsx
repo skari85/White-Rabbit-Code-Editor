@@ -15,8 +15,11 @@ import { Button } from "@/components/ui/button";
 import { useCallback, useEffect, useState } from "react";
 
 import { AIChat } from "@/components/ai-chat";
+import { AIDevelopmentOracleComponent } from "@/components/ai-development-oracle";
 import BYOKAISettings from "@/components/byok-ai-settings";
+import { CompileVibesOverlay } from "@/components/compile-vibes-overlay";
 import DarkModeToggleButton from "@/components/DarkModeToggleButton";
+import { DeveloperWellnessSuite } from "@/components/developer-wellness-suite";
 import { ErrorBoundary } from "@/components/error-boundary";
 import ExtensionMarketplace from "@/components/extension-marketplace";
 import GitPanel from "@/components/git-panel";
@@ -30,6 +33,7 @@ import SplitEditorLayout from "@/components/split-editor-layout";
 import StylePanel from "@/components/style-panel";
 import { TerminalComponent } from "@/components/terminal";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { VisualCodeIntelligenceComponent } from "@/components/visual-code-intelligence";
 import { useAIAssistantEnhanced } from "@/hooks/use-ai-assistant-enhanced";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { FileContent, useCodeBuilder } from "@/hooks/use-code-builder";
@@ -37,11 +41,14 @@ import { useAutoSave } from '@/hooks/use-debounced-auto-save';
 import { useResponsiveLayout } from '@/hooks/use-responsive-layout';
 import { useTerminal } from "@/hooks/use-terminal";
 import {
+    Brain,
     Download,
     ExternalLink,
     FileText,
     GitBranch,
+    Heart,
     Keyboard,
+    Network,
     Package,
     Plus,
     RefreshCw,
@@ -172,7 +179,7 @@ export default function CodeEditor() {
   const responsiveConfig = useResponsiveLayout();
 
   // UI state
-  const [viewMode, setViewMode] = useState<'code' | 'preview' | 'terminal' | 'git' | 'extensions'>('code');
+  const [viewMode, setViewMode] = useState<'code' | 'preview' | 'terminal' | 'git' | 'extensions' | 'oracle' | 'wellness' | 'intelligence'>('code');
   const [codeColor, setCodeColor] = useState(false);
   const [useSplitLayout, setUseSplitLayout] = useState(false);
   const [useAIEnhancedEditor, setUseAIEnhancedEditor] = useState(false);
@@ -485,15 +492,25 @@ export default function CodeEditor() {
               streamedMessage={aiStreamedMessage}
               isStreaming={aiIsStreaming}
               onCodeGenerated={(filename, content, language) => {
-                // Create or update the target file in Monaco and focus it
-                const fileType = getFileTypeFromLanguage(language);
-                const exists = files.some(f => f.name === filename);
-                if (!exists) {
-                  addNewFile(filename, fileType);
+                try {
+                  // Validate inputs
+                  if (!filename || !content) {
+                    console.warn('onCodeGenerated: Invalid filename or content:', { filename, content });
+                    return;
+                  }
+
+                  // Create or update the target file in Monaco and focus it
+                  const fileType = getFileTypeFromLanguage(language);
+                  const exists = files.some(f => f.name === filename);
+                  if (!exists) {
+                    addNewFile(filename, fileType);
+                  }
+                  setTimeout(() => updateFileContent(filename, content), 0);
+                  setSelectedFile(filename);
+                  setViewMode('code');
+                } catch (error) {
+                  console.error('Error in onCodeGenerated:', error);
                 }
-                setTimeout(() => updateFileContent(filename, content), 0);
-                setSelectedFile(filename);
-                setViewMode('code');
               }}
             />
           </div>
@@ -579,6 +596,30 @@ export default function CodeEditor() {
                 >
                   <Package className="w-4 h-4 mr-2" />
                   Extensions
+                </Button>
+                <Button
+                  variant={viewMode === "oracle" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("oracle")}
+                >
+                  <Brain className="w-4 h-4 mr-2" />
+                  Oracle
+                </Button>
+                <Button
+                  variant={viewMode === "wellness" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("wellness")}
+                >
+                  <Heart className="w-4 h-4 mr-2" />
+                  Wellness
+                </Button>
+                <Button
+                  variant={viewMode === "intelligence" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("intelligence")}
+                >
+                  <Network className="w-4 h-4 mr-2" />
+                  Intelligence
                 </Button>
 
                 <Button
@@ -852,6 +893,54 @@ export default function CodeEditor() {
               <ExtensionMarketplace className="h-full" />
             </div>
           )}
+
+          {viewMode === "oracle" && (
+            <div className="h-full p-4">
+              <AIDevelopmentOracleComponent
+                className="h-full"
+                onArchitectureGenerated={(architecture) => {
+                  // Handle architecture generation - could create files automatically
+                  console.log('Architecture generated:', architecture);
+                }}
+                onBugsDetected={(bugs) => {
+                  // Handle bug detection - could show notifications
+                  console.log('Bugs detected:', bugs);
+                }}
+              />
+            </div>
+          )}
+
+          {viewMode === "wellness" && (
+            <div className="h-full p-4">
+              <DeveloperWellnessSuite
+                className="h-full"
+                onThemeChange={(theme) => {
+                  // Handle adaptive theme changes
+                  console.log('Theme adapted:', theme);
+                }}
+                onBreakRecommended={() => {
+                  // Handle break recommendations
+                  console.log('Break recommended');
+                }}
+              />
+            </div>
+          )}
+
+          {viewMode === "intelligence" && (
+            <div className="h-full p-4">
+              <VisualCodeIntelligenceComponent
+                className="h-full"
+                onFocusModeChange={(focusMode) => {
+                  // Handle focus mode changes
+                  console.log('Focus mode changed:', focusMode);
+                }}
+                onPatternDetected={(patterns) => {
+                  // Handle pattern detection
+                  console.log('Patterns detected:', patterns);
+                }}
+              />
+            </div>
+          )}
         </div>
           </div>
         </ResizablePanel>
@@ -917,6 +1006,14 @@ export default function CodeEditor() {
         onClose={() => setShowAISettings(false)}
         currentSettings={aiSettings}
         onSaveSettings={saveAISettings}
+      />
+
+      {/* Compile Vibes Overlay - Shows organic animations for build processes */}
+      <CompileVibesOverlay
+        enabled={true}
+        position="top-right"
+        size="medium"
+        sensitivity="medium"
       />
     </div>
   );

@@ -1,7 +1,6 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { z } from 'zod';
 import { SECURITY_CONFIG, globalRateLimiter } from '@/lib/security-config';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 const filenamePattern = SECURITY_CONFIG.VALIDATION.FILENAME_PATTERN;
 
@@ -32,6 +31,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing GITHUB_REPO' }, { status: 500 });
     }
 
+    // Dynamic import to avoid build-time issues
+    const { auth } = await import('@/lib/auth');
     const session = await auth();
     const sessionUserId = (session as any)?.user?.id || 'anonymous';
     const token = (session as any)?.accessToken as string | undefined;

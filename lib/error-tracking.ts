@@ -81,16 +81,30 @@ export class ErrorTrackingService {
     if (typeof window !== 'undefined') {
       const originalConsoleError = console.error;
       console.error = (...args) => {
-        // Check if this is a React error
-        const message = args.join(' ');
-        if (message.includes('React') || message.includes('component')) {
-          this.captureError({
-            message: `React Error: ${message}`,
-            component: 'react',
-            severity: 'medium',
-            context: { args }
-          });
+        // Filter out empty objects and meaningless errors
+        const hasValidContent = args.some(arg => {
+          if (typeof arg === 'string' && arg.trim().length > 0) return true;
+          if (arg instanceof Error) return true;
+          if (typeof arg === 'object' && arg !== null && Object.keys(arg).length > 0) return true;
+          return false;
+        });
+
+        if (hasValidContent) {
+          // Check if this is a React error
+          const message = args.map(arg =>
+            typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+          ).join(' ');
+
+          if (message.includes('React') || message.includes('component')) {
+            this.captureError({
+              message: `React Error: ${message}`,
+              component: 'react',
+              severity: 'medium',
+              context: { args: args.filter(arg => arg != null) }
+            });
+          }
         }
+
         originalConsoleError.apply(console, args);
       };
     }
@@ -118,10 +132,22 @@ export class ErrorTrackingService {
       return;
     }
 
+    // Better error message extraction
+    let message = 'Unknown error';
+    if (error.message) {
+      message = error.message;
+    } else if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === 'string') {
+      message = error;
+    } else if (error && typeof error === 'object') {
+      message = JSON.stringify(error);
+    }
+
     const errorReport: ErrorReport = {
       id: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      message: error.message || 'Unknown error',
-      stack: error.stack,
+      message,
+      stack: error.stack || (error instanceof Error ? error.stack : '') || '',
       url: window.location.href,
       userAgent: navigator.userAgent,
       timestamp: new Date(),

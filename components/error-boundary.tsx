@@ -1,8 +1,8 @@
 'use client';
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw, Home, Bug, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Bug, Home, RefreshCw } from 'lucide-react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -43,11 +43,16 @@ export class ProductionErrorBoundary extends Component<Props, State> {
       return;
     }
 
-    console.error('Error caught by production boundary:', error, errorInfo);
-    
-    // Call custom error handler if provided
-    if (this.props.onError) {
-      this.props.onError(error, errorInfo);
+    // Only log meaningful errors
+    if (error && (error.message || error.stack)) {
+      console.error('Error caught by production boundary:', error, errorInfo);
+
+      // Call custom error handler if provided
+      if (this.props.onError) {
+        this.props.onError(error, errorInfo);
+      }
+    } else {
+      console.warn('Empty error caught by boundary, skipping:', error);
     }
     
     // Log to monitoring service in production

@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
 import JSZip from 'jszip';
+import { useCallback, useEffect, useState } from 'react';
 
 const PROJECT_STORAGE_KEY = 'white-rabbit-project';
 const PROJECTS_LIST_KEY = 'white-rabbit-projects-list';
@@ -616,13 +616,20 @@ document.addEventListener('mousemove', function(e) {
   }, []);
 
   const addNewFile = useCallback((name: string, type: FileContent['type'] = 'html') => {
-    // Check if file already exists
-    const existingFile = files.find(f => f.name === name);
-    if (existingFile) {
-      // File already exists, just select it
-      setSelectedFile(name);
-      return;
-    }
+    try {
+      // Validate inputs
+      if (!name || typeof name !== 'string') {
+        console.warn('addNewFile: Invalid filename provided:', name);
+        return;
+      }
+
+      // Check if file already exists
+      const existingFile = files.find(f => f.name === name);
+      if (existingFile) {
+        // File already exists, just select it
+        setSelectedFile(name);
+        return;
+      }
 
     const defaultContent = {
       html: `<!DOCTYPE html>
@@ -658,8 +665,12 @@ export default function Component() {
       type,
       lastModified: new Date()
     };
+
     setFiles(prev => [...prev, newFile]);
     setSelectedFile(name);
+    } catch (error) {
+      console.error('Error in addNewFile:', error);
+    }
   }, [files]);
 
   // Remove duplicate files

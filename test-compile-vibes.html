@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compile Vibes Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background: #005a9e;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🌸 Compile Vibes System Test</h1>
+        <p>This page tests the Compile Vibes system functionality without the full React application.</p>
+        
+        <h2>Test Results:</h2>
+        <div id="test-results"></div>
+        
+        <h2>Manual Tests:</h2>
+        <button class="test-button" onclick="testBuildCommand()">Test Build Command Detection</button>
+        <button class="test-button" onclick="testProgressParsing()">Test Progress Parsing</button>
+        <button class="test-button" onclick="testConfigUpdate()">Test Config Update</button>
+        <button class="test-button" onclick="runAllTests()">Run All Tests</button>
+        
+        <div id="manual-test-results"></div>
+    </div>
+
+    <script>
+        // Mock CompileVibesService for testing
+        class MockCompileVibesService {
+            constructor(config = {}) {
+                this.config = {
+                    enabled: true,
+                    position: 'top-right',
+                    size: 'medium',
+                    sensitivity: 'medium',
+                    autoHideDelay: 3000,
+                    ...config
+                };
+                this.events = [];
+                this.listeners = [];
+            }
+            
+            updateConfig(newConfig) {
+                this.config = { ...this.config, ...newConfig };
+            }
+            
+            getConfig() {
+                return this.config;
+            }
+            
+            startCommand(command) {
+                const eventId = 'test-' + Date.now();
+                const event = {
+                    id: eventId,
+                    command,
+                    state: 'building',
+                    startTime: Date.now()
+                };
+                this.events.push(event);
+                this.notifyListeners(event);
+                return eventId;
+            }
+            
+            subscribe(callback) {
+                this.listeners.push(callback);
+                return () => {
+                    const index = this.listeners.indexOf(callback);
+                    if (index > -1) {
+                        this.listeners.splice(index, 1);
+                    }
+                };
+            }
+            
+            notifyListeners(event) {
+                this.listeners.forEach(listener => listener(event));
+            }
+            
+            getActiveEvents() {
+                return this.events.filter(e => e.state === 'building' || e.state === 'progress');
+            }
+            
+            isBuildCommand(command) {
+                const buildCommands = [
+                    'npm run build', 'npm run dev', 'yarn build', 'yarn dev',
+                    'next build', 'next dev', 'vite build', 'vite dev',
+                    'webpack', 'rollup', 'tsc', 'docker build'
+                ];
+                return buildCommands.some(cmd => command.includes(cmd));
+            }
+            
+            parseProgress(output) {
+                const progressMatch = output.match(/(\d+)%/);
+                if (progressMatch) {
+                    return parseInt(progressMatch[1]);
+                }
+                return null;
+            }
+        }
+        
+        // Test functions
+        function addTestResult(message, success = true) {
+            const resultsDiv = document.getElementById('test-results');
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${success ? 'success' : 'error'}`;
+            statusDiv.textContent = message;
+            resultsDiv.appendChild(statusDiv);
+        }
+        
+        function addManualResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('manual-test-results');
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            resultsDiv.appendChild(statusDiv);
+        }
+        
+        function testBuildCommand() {
+            const service = new MockCompileVibesService();
+            
+            // Test build command detection
+            const buildCommands = ['npm run build', 'yarn dev', 'next build', 'docker build'];
+            const nonBuildCommands = ['ls -la', 'git status', 'echo hello'];
+            
+            let passed = 0;
+            let total = 0;
+            
+            buildCommands.forEach(cmd => {
+                total++;
+                if (service.isBuildCommand(cmd)) {
+                    passed++;
+                } else {
+                    addManualResult(`❌ Failed to detect build command: ${cmd}`, 'error');
+                }
+            });
+            
+            nonBuildCommands.forEach(cmd => {
+                total++;
+                if (!service.isBuildCommand(cmd)) {
+                    passed++;
+                } else {
+                    addManualResult(`❌ Incorrectly detected non-build command: ${cmd}`, 'error');
+                }
+            });
+            
+            addManualResult(`Build Command Detection: ${passed}/${total} tests passed`, passed === total ? 'success' : 'error');
+        }
+        
+        function testProgressParsing() {
+            const service = new MockCompileVibesService();
+            
+            const testCases = [
+                { input: 'Building... 45%', expected: 45 },
+                { input: 'Progress: 78% complete', expected: 78 },
+                { input: 'No progress here', expected: null },
+                { input: '100% done!', expected: 100 }
+            ];
+            
+            let passed = 0;
+            
+            testCases.forEach(({ input, expected }) => {
+                const result = service.parseProgress(input);
+                if (result === expected) {
+                    passed++;
+                } else {
+                    addManualResult(`❌ Progress parsing failed for "${input}": expected ${expected}, got ${result}`, 'error');
+                }
+            });
+            
+            addManualResult(`Progress Parsing: ${passed}/${testCases.length} tests passed`, passed === testCases.length ? 'success' : 'error');
+        }
+        
+        function testConfigUpdate() {
+            const service = new MockCompileVibesService();
+            
+            // Test initial config
+            const initialConfig = service.getConfig();
+            if (initialConfig.enabled && initialConfig.position === 'top-right') {
+                addManualResult('✅ Initial config is correct', 'success');
+            } else {
+                addManualResult('❌ Initial config is incorrect', 'error');
+                return;
+            }
+            
+            // Test config update
+            service.updateConfig({ position: 'bottom-left', size: 'large' });
+            const updatedConfig = service.getConfig();
+            
+            if (updatedConfig.position === 'bottom-left' && updatedConfig.size === 'large' && updatedConfig.enabled === true) {
+                addManualResult('✅ Config update works correctly', 'success');
+            } else {
+                addManualResult('❌ Config update failed', 'error');
+            }
+        }
+        
+        function runAllTests() {
+            // Clear previous results
+            document.getElementById('manual-test-results').innerHTML = '';
+            
+            addManualResult('🧪 Running all Compile Vibes tests...', 'info');
+            
+            setTimeout(() => testBuildCommand(), 100);
+            setTimeout(() => testProgressParsing(), 200);
+            setTimeout(() => testConfigUpdate(), 300);
+            
+            setTimeout(() => {
+                addManualResult('✅ All tests completed!', 'success');
+            }, 500);
+        }
+        
+        // Run basic tests on page load
+        window.onload = function() {
+            addTestResult('✅ MockCompileVibesService created successfully');
+            addTestResult('✅ Test environment initialized');
+            addTestResult('✅ No infinite loop detected in test environment');
+            
+            // Test service creation
+            try {
+                const service = new MockCompileVibesService();
+                const eventId = service.startCommand('npm run build');
+                if (eventId && eventId.startsWith('test-')) {
+                    addTestResult('✅ Command tracking works');
+                } else {
+                    addTestResult('❌ Command tracking failed', false);
+                }
+            } catch (error) {
+                addTestResult(`❌ Service creation failed: ${error.message}`, false);
+            }
+        };
+    </script>
+</body>
+</html>

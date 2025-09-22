@@ -1,13 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AIMessage, AI_PROVIDERS, AISettings } from '@/lib/ai-config';
-import { Send, Trash2, User, Loader2, ChevronDown, Settings2, Target, Wand2, Code, Download, Copy } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import { AI_PROVIDERS, AIMessage, AISettings } from '@/lib/ai-config';
+import { ChevronDown, Loader2, Send, Settings2, Target, Trash2, User, Wand2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import PromptOptimizerComponent from './prompt-optimizer';
-import LiveAIResponse from './live-ai-response';
 
 // Import OCR utility (Node.js require for demo; use dynamic import or API in production)
 // @ts-ignore
@@ -42,7 +41,21 @@ export function AIChat({
   personality,
   isStreaming
 }: AIChatProps) {
+  const [processedMessages, setProcessedMessages] = useState<Set<string>>(new Set());
+  const [pendingProcessedMessages, setPendingProcessedMessages] = useState<string[]>([]);
   const [input, setInput] = useState('');
+
+  // Handle pending processed messages
+  useEffect(() => {
+    if (pendingProcessedMessages.length > 0) {
+      setProcessedMessages(prev => {
+        const newSet = new Set(prev);
+        pendingProcessedMessages.forEach(id => newSet.add(id));
+        return newSet;
+      });
+      setPendingProcessedMessages([]);
+    }
+  }, [pendingProcessedMessages]);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [expandedBlocks, setExpandedBlocks] = useState<{ [key: string]: boolean }>({});
   const [codeTheme, setCodeTheme] = useState<'dark' | 'light'>('dark');
@@ -218,38 +231,86 @@ export function AIChat({
 
     // For assistant messages, use LiveAIResponse component
     if (!isUser) {
-      // For streamed assistant message, render simple live text (no typing animation)
+      // For streamed assistant message, render simple live text and auto-generate code
       if (isStreamed) {
         return (
           <div key={message.id || 'streamed'} className="mb-4">
             <div className="rounded-lg px-4 py-3 bg-gray-700 text-gray-100 whitespace-pre-wrap text-sm">
               {message.content}
             </div>
+            
+            {/* Auto-generate code blocks from streamed content */}
+            {(() => {
+              const codeBlockRegex = /```(\w+)?\s*(?:\/\/\s*(.+?)\s*)?\n([\s\S]*?)```/g;
+              const blocks: Array<{ language: string; code: string; filename?: string }> = [];
+              let match;
+              while ((match = codeBlockRegex.exec(message.content)) !== null) {
+                const [, language = 'text', filename, code] = match;
+                blocks.push({ language: language.toLowerCase(), code, filename });
+              }
+              
+            // Auto-generate files to Monaco editor (only if not already processed)
+            if (blocks.length > 0 && onCodeGenerated && !processedMessages.has(message.id || 'streamed')) {
+              blocks.forEach((block, index) => {
+                const ext = (block.language || 'txt').toLowerCase();
+                const safeExt = ext === 'typescript' ? 'ts' : ext === 'javascript' ? 'js' : ext === 'jsx' ? 'jsx' : ext === 'tsx' ? 'tsx' : ext;
+                const timestamp = Date.now();
+                const randomId = Math.random().toString(36).substring(2, 8);
+                const filename = block.filename || `ai-streaming-${timestamp}-${randomId}.${safeExt}`;
+                onCodeGenerated(filename, block.code, block.language);
+              });
+              // Mark as processed (will be handled in useEffect)
+              setPendingProcessedMessages(prev => [...prev, message.id || 'streamed']);
+            }
+              
+              return null;
+            })()}
           </div>
         );
       }
       
-      // For finalized assistant messages, show typing animation with code extraction UI
+      // For finalized assistant messages, auto-generate code directly to Monaco
       return (
         <div key={message.id} className="mb-4">
-          <LiveAIResponse
-            response={message.content}
-            onCodeGenerated={onCodeGenerated}
-            onCodeStreamUpdate={(filename, content, language) => {
-              // Stream into Monaco: create/update a temp file steadily
-              if (onCodeGenerated) {
-                // Use a deterministic filename per message
-                const ext = (language || 'txt').toLowerCase();
-                const safeExt = ext === 'typescript' ? 'ts' : ext === 'javascript' ? 'js' : ext;
-                const streamName = filename || `ai-stream-${(message.id || 'msg')}.${safeExt}`;
-                onCodeGenerated(streamName, content, language);
-              }
-            }}
-            className="w-full"
-          />
+          <div className="rounded-lg px-4 py-3 bg-gray-700 text-gray-100 whitespace-pre-wrap text-sm">
+            {message.content}
+          </div>
           
-          {/* Code Insertion Buttons */}
-          {renderCodeInsertionButtons(message.content)}
+          {/* Auto-generate code blocks directly to Monaco */}
+          {(() => {
+            const codeBlockRegex = /```(\w+)?\s*(?:\/\/\s*(.+?)\s*)?\n([\s\S]*?)```/g;
+            const blocks: Array<{ language: string; code: string; filename?: string }> = [];
+            let match;
+            while ((match = codeBlockRegex.exec(message.content)) !== null) {
+              const [, language = 'text', filename, code] = match;
+              blocks.push({ language: language.toLowerCase(), code, filename });
+            }
+            
+            // Auto-generate files to Monaco editor (only if not already processed)
+            if (blocks.length > 0 && onCodeGenerated && !processedMessages.has(message.id)) {
+              try {
+                blocks.forEach((block, index) => {
+                  if (!block.code || typeof block.code !== 'string') {
+                    console.warn('Skipping invalid code block:', block);
+                    return;
+                  }
+
+                  const ext = (block.language || 'txt').toLowerCase();
+                  const safeExt = ext === 'typescript' ? 'ts' : ext === 'javascript' ? 'js' : ext === 'jsx' ? 'jsx' : ext === 'tsx' ? 'tsx' : ext;
+                  const timestamp = Date.now();
+                  const randomId = Math.random().toString(36).substring(2, 8);
+                  const filename = block.filename || `ai-generated-${timestamp}-${randomId}.${safeExt}`;
+                  onCodeGenerated(filename, block.code, block.language);
+                });
+                // Mark as processed (will be handled in useEffect)
+                setPendingProcessedMessages(prev => [...prev, message.id]);
+              } catch (error) {
+                console.error('Error processing code blocks:', error);
+              }
+            }
+            
+            return null;
+          })()}
         </div>
       );
     }
@@ -291,77 +352,9 @@ export function AIChat({
   };
 
   // Render code insertion buttons for AI responses
-  const renderCodeInsertionButtons = (content: string) => {
-    const codeBlocks = extractCodeBlocks(content);
-    
-    if (codeBlocks.length === 0) return null;
+  // Code insertion buttons removed - code now auto-generates to Monaco
 
-    return (
-      <div className="mt-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
-        <div className="flex items-center gap-2 mb-2">
-          <Code className="w-4 h-4 text-blue-400" />
-          <span className="text-sm font-medium text-gray-300">Insert Code into Editor</span>
-        </div>
-        
-        <div className="space-y-2">
-          {codeBlocks.map((block, index) => (
-            <div key={index} className="flex items-center gap-2 p-2 bg-gray-700 rounded border border-gray-600">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs text-gray-400 bg-gray-600 px-2 py-1 rounded">
-                    {block.language || 'text'}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {block.code.length} characters
-                  </span>
-                </div>
-                <div className="text-xs text-gray-300 font-mono truncate">
-                  {block.code.substring(0, 100)}{block.code.length > 100 ? '...' : ''}
-                </div>
-              </div>
-              
-              <div className="flex gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => insertCodeIntoEditor(block.code, block.language)}
-                  className="h-7 px-2 text-xs"
-                >
-                  <Download className="w-3 h-3 mr-1" />
-                  Insert
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(block.code, 'code')}
-                  className="h-7 px-2 text-xs"
-                >
-                  <Copy className="w-3 h-3" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  // Extract code blocks from AI response
-  const extractCodeBlocks = (content: string) => {
-    const codeBlocks: { code: string; language: string }[] = [];
-    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-    
-    let match;
-    while ((match = codeBlockRegex.exec(content)) !== null) {
-      codeBlocks.push({
-        language: match[1] || 'text',
-        code: match[2]
-      });
-    }
-    
-    return codeBlocks;
-  };
+  // Code extraction now handled inline for auto-generation
 
   // Insert code into the Monaco editor
   const insertCodeIntoEditor = (code: string, language: string) => {
@@ -477,12 +470,6 @@ export function AIChat({
         zIndex: 10
       } : {}}
     >
-      {/* White Rabbit Banner */}
-      {isRabbit && (
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-50 px-6 py-2 rounded-b-xl bg-blue-400 text-white font-bold text-sm flex items-center gap-2 animate-pulse shadow-lg border-b-2 border-blue-500" style={{letterSpacing:'0.05em'}}>
-          <span className="text-lg">🐰</span> WHITE RABBIT MODE <span className="text-lg">🐰</span>
-        </div>
-      )}
       
       {/* Simplified Header with Controls */}
       <div className="flex items-center justify-between p-3 border-b border-gray-700">

@@ -1,6 +1,7 @@
 import { FileContent } from "@/hooks/use-code-builder";
+import type { ScopeGlowConfig } from "@/lib/scope-detection-engine";
 import Editor from "@monaco-editor/react";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 
 /**
@@ -117,7 +118,14 @@ export default function MonacoCodeSpace({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<any>(null);
-  const [editorHeight, setEditorHeight] = useState<number>(500); // Start with a reasonable default height
+  const [scopeGlowConfig] = useState<ScopeGlowConfig>({
+    enabled: true,
+    intensity: 0.8,
+    colorScheme: 'hybrid',
+    animationSpeed: 1800,
+    fadeInDuration: 250,
+    fadeOutDuration: 200
+  });
 
   // Sync with external file changes
   useEffect(() => {
@@ -138,52 +146,6 @@ export default function MonacoCodeSpace({
       }
     }
   }, [selectedFile, docs, activeId]);
-
-  // Calculate editor height immediately to prevent layout shifts
-  useLayoutEffect(() => {
-    const calculateEditorHeight = () => {
-      if (containerRef.current) {
-        const containerHeight = containerRef.current.clientHeight;
-        const tabsHeight = 60; // Approximate height of tabs bar
-        const calculatedHeight = Math.max(containerHeight - tabsHeight, 500);
-        setEditorHeight(calculatedHeight);
-      } else {
-        // If container not ready, use a reasonable default based on height prop
-        const defaultHeight = typeof height === 'string' && height.includes('vh')
-          ? Math.floor(window.innerHeight * (parseInt(height) / 100)) - 60
-          : 500;
-        setEditorHeight(Math.max(defaultHeight, 500));
-      }
-    };
-
-    // Calculate immediately
-    calculateEditorHeight();
-
-    // Also calculate on next tick to ensure DOM is ready
-    const timer = setTimeout(calculateEditorHeight, 0);
-
-    // Recalculate on window resize
-    const handleResize = () => {
-      calculateEditorHeight();
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(timer);
-    };
-  }, [height]);
-
-  // Force editor layout when height changes
-  useEffect(() => {
-    if (editorRef.current && editorHeight > 0) {
-      // Small delay to ensure DOM is updated
-      const timer = setTimeout(() => {
-        editorRef.current?.layout();
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-  }, [editorHeight, activeId]);
 
   const activeIndex = docs.findIndex((d) => d.id === activeId);
   const active = docs[activeIndex];
@@ -287,31 +249,35 @@ export default function MonacoCodeSpace({
     if (doc.isProjectFile && doc.filePath && onFileSelect) {
       onFileSelect(doc.filePath);
     }
-
-    // Force editor layout after tab switch to ensure proper rendering
-    setTimeout(() => {
-      if (editorRef.current) {
-        editorRef.current.layout();
-      }
-    }, 0);
+    // Let Monaco handle its own layout - no forced resizing
   }, [onFileSelect]);
 
   const handleEditorDidMount = useCallback((editor: any) => {
     editorRef.current = editor;
-    // Force immediate layout with explicit dimensions
-    editor.layout({ width: editor.getLayoutInfo().width, height: editorHeight });
-
-    // Force another layout after a brief delay to ensure proper rendering
-    setTimeout(() => {
-      editor.layout({ width: editor.getLayoutInfo().width, height: editorHeight });
-    }, 100);
-  }, [editorHeight]);
+    
+    // Initialize Monaco extensions after editor mounts
+    if (editor && active) {
+      // Scope Glow Extension
+      const scopeGlowExt = new (require('@/components/scope-glow-extension').ScopeGlowExtension)(
+        editor,
+        active.value,
+        active.language,
+        scopeGlowConfig
+      );
+      
+      // Monaco Spirits Extension
+      const spiritsExt = new (require('@/components/monaco-spirits-extension').MonacoSpiritsExtension)(
+        editor,
+        true
+      );
+    }
+  }, [active, scopeGlowConfig]);
 
   return (
     <div
       className={`w-full flex flex-col bg-neutral-50 border rounded-2xl shadow-sm overflow-hidden ${className}`}
       style={{
-        height: height || '600px', // Ensure we always have a height
+        height: height || '600px',
         minHeight: '600px',
         maxHeight: '100vh'
       }}
@@ -396,16 +362,10 @@ export default function MonacoCodeSpace({
       </div>
 
       {/* Editor */}
-      <div
-        className="flex-1 min-h-0 relative"
-        style={{
-          height: `${editorHeight}px`,
-          minHeight: '500px'
-        }}
-      >
+      <div className="flex-1 min-h-0 relative">
         {active && (
           <Editor
-            height={editorHeight}
+            height="100%"
             width="100%"
             defaultLanguage={active.language}
             language={active.language}
@@ -413,12 +373,12 @@ export default function MonacoCodeSpace({
             onChange={(val) => setValue(active.id, val ?? "")}
             onMount={handleEditorDidMount}
             options={{
-              automaticLayout: false, // Disable automatic layout to prevent gradual expansion
+              automaticLayout: true, // Enable automatic layout for proper sizing
               minimap: { enabled: false },
               scrollBeyondLastLine: false,
               tabSize: 2,
               fontSize: 14,
-              smoothScrolling: false, // Disable smooth scrolling to prevent layout shifts
+              smoothScrolling: true, // Enable smooth scrolling
               padding: { top: 16 },
               renderWhitespace: "selection",
               wordWrap: "on",
@@ -426,8 +386,8 @@ export default function MonacoCodeSpace({
               folding: true,
               matchBrackets: "always",
               autoIndent: "full",
-              fixedOverflowWidgets: true, // Prevent overflow widgets from affecting layout
-              overviewRulerLanes: 0, // Disable overview ruler to save space
+              fixedOverflowWidgets: true,
+              overviewRulerLanes: 0,
               hideCursorInOverviewRuler: true,
               scrollbar: {
                 useShadows: false,
@@ -441,10 +401,7 @@ export default function MonacoCodeSpace({
             }}
             theme={theme}
             loading={
-              <div
-                className="flex items-center justify-center w-full bg-gray-900"
-                style={{ height: `${editorHeight}px` }}
-              >
+              <div className="flex items-center justify-center w-full h-full bg-gray-900">
                 <div className="text-center">
                   <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                   <p className="text-sm text-gray-400">Loading Editor...</p>

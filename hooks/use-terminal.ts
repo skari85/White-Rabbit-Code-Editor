@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCompileVibes } from '@/hooks/use-compile-vibes';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface TerminalCommand {
   id: string;
@@ -7,6 +8,7 @@ export interface TerminalCommand {
   status: 'running' | 'completed' | 'error';
   timestamp: Date;
   isBackground?: boolean;
+  vibeEventId?: string; // Track compile vibe event
   progress?: {
     total: number;
     current: number;
@@ -27,6 +29,16 @@ export function useTerminal() {
   const [sessions, setSessions] = useState<TerminalSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const commandIdRef = useRef(0);
+
+  // Initialize compile vibes for tracking build commands
+  const compileVibesOptions = useMemo(() => ({
+    enabled: true,
+    position: 'top-right' as const,
+    size: 'medium' as const,
+    sensitivity: 'medium' as const
+  }), []);
+  
+  const compileVibes = useCompileVibes(compileVibesOptions);
 
   // Refs for browser-compatible execution state
   const workingDirsRef = useRef<Map<string, string>>(new Map());
@@ -148,13 +160,18 @@ export function useTerminal() {
     }
 
     const commandId = `cmd-${++commandIdRef.current}`;
+
+    // Start compile vibe tracking for build commands
+    const vibeEventId = compileVibes.startCommand(command);
+
     const newCommand: TerminalCommand = {
       id: commandId,
       command,
       output: '',
       status: 'running',
       timestamp: new Date(),
-      isBackground
+      isBackground,
+      vibeEventId: vibeEventId || undefined
     };
 
     // Add command to session
@@ -250,6 +267,12 @@ export function useTerminal() {
         try {
           const output = await simulateCommand();
           const finalCmd: TerminalCommand = { ...newCommand, output, status: 'completed' };
+
+          // Complete compile vibe with success
+          if (vibeEventId) {
+            compileVibes.completeSuccess(vibeEventId, output);
+          }
+
           setSessions(prev => prev.map(session =>
             session.id === targetSessionId
               ? { ...session, commands: session.commands.map(cmd => cmd.id === commandId ? finalCmd : cmd) }
@@ -259,6 +282,12 @@ export function useTerminal() {
         } catch (err) {
           const errorOutput = `Error: ${err instanceof Error ? err.message : 'Unknown error'}`;
           const errorCmd: TerminalCommand = { ...newCommand, output: errorOutput, status: 'error' };
+
+          // Complete compile vibe with failure
+          if (vibeEventId) {
+            compileVibes.completeFailure(vibeEventId, 1, errorOutput);
+          }
+
           setSessions(prev => prev.map(session =>
             session.id === targetSessionId
               ? { ...session, commands: session.commands.map(cmd => cmd.id === commandId ? errorCmd : cmd) }
@@ -268,7 +297,7 @@ export function useTerminal() {
         }
       }, 500 + Math.random() * 1000); // Simulate execution time
     });
-  }, [activeSessionId, createSession, parseCommand]);
+  }, [activeSessionId, createSession, parseCommand, compileVibes]);
 
   // Kill a running process (simulated)
   const killProcess = useCallback((commandId: string, sessionId?: string) => {

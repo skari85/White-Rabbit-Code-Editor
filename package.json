@@ -37,7 +37,6 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "electron": "electron .",
-    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3012 && electron .\"",
     "electron:build": "npm run build:static && electron-builder",
     "electron:build:mac": "npm run build:static && electron-builder --mac",
     "electron:build:win": "npm run build:static && electron-builder --win",

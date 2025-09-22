@@ -63,6 +63,7 @@ export default function FastLiveCoding({
   const [naturalLanguageInput, setNaturalLanguageInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [quickCommands] = useState([
     { command: 'Create React component', icon: '⚛️', shortcut: 'Ctrl+1' },
     { command: 'Add TypeScript types', icon: '📝', shortcut: 'Ctrl+2' },
@@ -143,6 +144,9 @@ export default function FastLiveCoding({
   const startFastStreaming = useCallback(async (prompt: string) => {
     if (streamingState.isStreaming) return;
 
+    // Clear any previous errors
+    setError(null);
+
     setStreamingState(prev => ({
       ...prev,
       isStreaming: true,
@@ -175,6 +179,12 @@ export default function FastLiveCoding({
       });
 
       if (!response.ok) {
+        // If it's a 500 error (no API keys), show a helpful message instead of crashing
+        if (response.status === 500) {
+          setError('AI features require API keys. Please configure GROQ_API_KEY or OPENAI_API_KEY in your environment variables.');
+          setStreamingState(prev => ({ ...prev, isStreaming: false }));
+          return;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -235,6 +245,7 @@ export default function FastLiveCoding({
       if (!isAbort) {
         const errorMessage = error instanceof Error ? error.message : typeof error === 'string' ? error : 'Unknown error';
         console.error('Streaming error:', error);
+        setError(`Streaming error: ${errorMessage}`);
         trackLiveCoding('streaming_error', { error: errorMessage });
       }
     } finally {
@@ -389,6 +400,22 @@ export default function FastLiveCoding({
                 Paused
               </Badge>
             )}
+          </div>
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <div className="absolute top-4 left-4 right-4 flex items-center gap-2 bg-red-500/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-red-500/20">
+            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+            <span className="text-sm font-medium text-red-600 flex-1">{error}</span>
+            <Button
+              onClick={() => setError(null)}
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+            >
+              ×
+            </Button>
           </div>
         )}
 

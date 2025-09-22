@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import type { ScopeGlowConfig } from '@/lib/scope-detection-engine';
+import { useEffect, useState } from 'react';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
@@ -25,6 +26,14 @@ export default function StylePanel({ open, onOpenChange }: StylePanelProps) {
   const [font, setFont] = useState('geist');
   const [radius, setRadius] = useState(8);
   const [shadow, setShadow] = useState(12);
+  const [scopeGlow, setScopeGlow] = useState<ScopeGlowConfig>({
+    enabled: true,
+    intensity: 0.8,
+    colorScheme: 'hybrid',
+    animationSpeed: 1800,
+    fadeInDuration: 250,
+    fadeOutDuration: 200
+  });
   const reset = () => {
     setFont(DEFAULTS.font);
     setRadius(DEFAULTS.radius);
@@ -41,6 +50,7 @@ export default function StylePanel({ open, onOpenChange }: StylePanelProps) {
         if (v.font) setFont(v.font);
         if (typeof v.radius === 'number') setRadius(v.radius);
         if (typeof v.shadow === 'number') setShadow(v.shadow);
+        if (v.scopeGlow) setScopeGlow(v.scopeGlow as ScopeGlowConfig);
       }
     } catch {}
   }, []);
@@ -68,9 +78,9 @@ export default function StylePanel({ open, onOpenChange }: StylePanelProps) {
   // Persist to localStorage on changes
   useEffect(() => {
     try {
-      localStorage.setItem('wr-style', JSON.stringify({ font, radius, shadow }));
+      localStorage.setItem('wr-style', JSON.stringify({ font, radius, shadow, scopeGlow }));
     } catch {}
-  }, [font, radius, shadow]);
+  }, [font, radius, shadow, scopeGlow]);
 
 
   return (
@@ -111,6 +121,40 @@ export default function StylePanel({ open, onOpenChange }: StylePanelProps) {
             <Label>Shadow</Label>
             <Slider value={[shadow]} max={32} step={1} onValueChange={(v) => setShadow(v[0])} />
             <div className="text-xs text-muted-foreground">Components can use var(--shadow) to standardize depth.</div>
+          </div>
+
+          {/* Scope Glow */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Scope Glow</Label>
+              <input type="checkbox" checked={scopeGlow.enabled} onChange={(e) => setScopeGlow({ ...scopeGlow, enabled: e.target.checked })} />
+            </div>
+            {scopeGlow.enabled && (
+              <div className="grid gap-3">
+                <div className="space-y-2">
+                  <Label>Intensity</Label>
+                  <Slider value={[Math.round(scopeGlow.intensity * 100)]} max={100} step={1} onValueChange={([v]) => setScopeGlow({ ...scopeGlow, intensity: v / 100 })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Color Scheme</Label>
+                  <select className="px-2 py-1 border rounded-md bg-white" value={scopeGlow.colorScheme} onChange={(e) => setScopeGlow({ ...scopeGlow, colorScheme: e.target.value as any })}>
+                    <option value="depth-based">Depth-based</option>
+                    <option value="type-based">Type-based</option>
+                    <option value="hybrid">Hybrid</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Animation Speed (ms)</Label>
+                    <input type="number" className="px-2 py-1 border rounded-md w-full" value={scopeGlow.animationSpeed} min={600} max={5000} step={100} onChange={(e) => setScopeGlow({ ...scopeGlow, animationSpeed: parseInt(e.target.value || '0', 10) })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Fade In (ms)</Label>
+                    <input type="number" className="px-2 py-1 border rounded-md w-full" value={scopeGlow.fadeInDuration} min={0} max={2000} step={50} onChange={(e) => setScopeGlow({ ...scopeGlow, fadeInDuration: parseInt(e.target.value || '0', 10) })} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-between pt-2">

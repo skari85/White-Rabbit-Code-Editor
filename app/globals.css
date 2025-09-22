@@ -2,6 +2,7 @@
 
 @import '../styles/monaco-editor.css';
 @import '../styles/tokens.css';
+@import '../styles/compile-vibes.css';
 
 /* Focus Field Visual Effects */
 .focus-field-related-line {

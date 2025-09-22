@@ -233,6 +233,31 @@ export default function ExtensionMarketplace({ className = '' }: ExtensionMarket
   const generateMockExtensions = (): Extension[] => {
     return [
       {
+        id: 'white-rabbit.compile-vibes',
+        name: 'Compile Vibes',
+        displayName: 'Compile Vibes - Organic Feedback Animations',
+        description: 'Beautiful nature-inspired animations for build processes. Watch your code bloom on success and gently wilt on failure.',
+        version: '1.0.0',
+        publisher: {
+          displayName: 'White Rabbit',
+          publisherId: 'white-rabbit'
+        },
+        categories: ['Other', 'Themes'],
+        tags: ['animation', 'feedback', 'organic', 'build', 'compile', 'wellness'],
+        downloadCount: 50000,
+        rating: 4.9,
+        ratingCount: 342,
+        lastUpdated: '2024-01-20',
+        publishedDate: '2024-01-01',
+        iconUrl: '🌸',
+        repository: 'https://github.com/white-rabbit/compile-vibes',
+        homepage: 'https://white-rabbit-code-editor.com/compile-vibes',
+        license: 'MIT',
+        isInstalled: true,
+        isEnabled: true,
+        isUpdateAvailable: false
+      },
+      {
         id: 'ms-vscode.vscode-typescript-next',
         name: 'TypeScript Next',
         displayName: 'TypeScript Next',

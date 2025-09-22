@@ -18,6 +18,10 @@ const getAuthSecret = () => {
 
   // For production, require environment variable
   if (process.env.NODE_ENV === 'production') {
+    // During build time, we can't throw errors, so return a placeholder
+    if (typeof window === 'undefined' && process.env.NEXT_PHASE === 'phase-production-build') {
+      return 'build-time-secret-placeholder';
+    }
     throw new Error('NEXTAUTH_SECRET environment variable is required in production');
   }
 
