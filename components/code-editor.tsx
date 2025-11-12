@@ -137,23 +137,77 @@ export default function CodeEditor() {
   const {
     messages: aiMessages,
     sendMessage: sendAIMessage,
+    sendStreamingMessage: sendAIStreamingMessage,
     clearMessages: clearAIMessages,
     isLoading: aiLoading,
     isConfigured: aiConfigured,
     settings: aiSettings,
     saveSettings: saveAISettings,
     streamedMessage: aiStreamedMessage,
-    isStreaming: aiIsStreaming
+    isStreaming: aiIsStreaming,
+    setFileGenerationCallbacks
   } = useAIAssistantEnhanced();
 
-  // Wrapper function to match AIChat expected signature
-  const handleSendMessage = useCallback(async (message: string): Promise<void> => {
-    await sendAIMessage(message, {
-      files: files.map(f => ({ name: f.name, content: f.content, type: f.type })),
-      selectedFile,
-      appSettings: {}
+  // Set up file generation callbacks for real-time code generation
+  useEffect(() => {
+    setFileGenerationCallbacks({
+      onCreate: (name: string, content: string, type?: string) => {
+        try {
+          const fileType = getFileTypeFromLanguage(type || 'javascript');
+          const exists = files.some(f => f.name === name);
+          if (!exists) {
+            addNewFile(name, fileType);
+          }
+          setTimeout(() => updateFileContent(name, content), 0);
+          setSelectedFile(name);
+          setViewMode('code');
+          trackFileCreated(fileType, name);
+        } catch (error) {
+          console.error('Error creating file from AI:', error);
+        }
+      },
+      onUpdate: (name: string, content: string) => {
+        try {
+          updateFileContent(name, content);
+        } catch (error) {
+          console.error('Error updating file from AI:', error);
+        }
+      },
+      onSelect: (name: string) => {
+        try {
+          setSelectedFile(name);
+          setViewMode('code');
+        } catch (error) {
+          console.error('Error selecting file from AI:', error);
+        }
+      }
     });
-  }, [sendAIMessage, files, selectedFile]);
+  }, [setFileGenerationCallbacks, files, addNewFile, updateFileContent, setSelectedFile, trackFileCreated, getFileTypeFromLanguage]);
+
+  // Wrapper function to match AIChat expected signature - uses streaming for real-time code generation
+  const handleSendMessage = useCallback(async (message: string): Promise<void> => {
+    try {
+      // Use streaming message for real-time code generation like Gemini/Codex
+      await sendAIStreamingMessage(message, {
+        files: files.map(f => ({ name: f.name, content: f.content, type: f.type })),
+        selectedFile,
+        appSettings: {}
+      });
+    } catch (error) {
+      console.error('Error sending AI message:', error);
+      // Fallback to non-streaming if streaming fails
+      try {
+        await sendAIMessage(message, {
+          files: files.map(f => ({ name: f.name, content: f.content, type: f.type })),
+          selectedFile,
+          appSettings: {}
+        });
+      } catch (fallbackError) {
+        console.error('Error with fallback message:', fallbackError);
+        throw fallbackError;
+      }
+    }
+  }, [sendAIStreamingMessage, sendAIMessage, files, selectedFile]);
 
   // Terminal
   const terminal = useTerminal();
@@ -204,32 +258,8 @@ export default function CodeEditor() {
 
   // Helper functions
 
-  const getLanguageFromFileName = useCallback((fileName: string | null): string => {
-    if (!fileName) return 'javascript';
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    switch (ext) {
-      case 'js': case 'jsx': return 'javascript';
-      case 'ts': case 'tsx': return 'typescript';
-      case 'html': return 'html';
-      case 'css': return 'css';
-      case 'json': return 'json';
-      case 'md': return 'markdown';
-      case 'py': return 'python';
-      default: return 'javascript';
-    }
-  }, []);
-
-  const handleCodeColorToggle = useCallback(() => {
-    setCodeColor(prev => !prev);
-  }, []);
-
-  const dismissWelcome = useCallback(() => {
-    try { localStorage.setItem('wr-welcome-dismissed', '1'); } catch {}
-    setShowWelcome(false);
-  }, []);
-
-  // Helper function to get file type from language
-  const getFileTypeFromLanguage = (language: string): FileContent['type'] => {
+  // Helper function to get file type from language (moved before useEffect that uses it)
+  const getFileTypeFromLanguage = useCallback((language: string): FileContent['type'] => {
     switch (language.toLowerCase()) {
       case 'javascript':
       case 'js':
@@ -255,7 +285,31 @@ export default function CodeEditor() {
       default:
         return 'txt';
     }
-  };
+  }, []);
+
+  const getLanguageFromFileName = useCallback((fileName: string | null): string => {
+    if (!fileName) return 'javascript';
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'js': case 'jsx': return 'javascript';
+      case 'ts': case 'tsx': return 'typescript';
+      case 'html': return 'html';
+      case 'css': return 'css';
+      case 'json': return 'json';
+      case 'md': return 'markdown';
+      case 'py': return 'python';
+      default: return 'javascript';
+    }
+  }, []);
+
+  const handleCodeColorToggle = useCallback(() => {
+    setCodeColor(prev => !prev);
+  }, []);
+
+  const dismissWelcome = useCallback(() => {
+    try { localStorage.setItem('wr-welcome-dismissed', '1'); } catch {}
+    setShowWelcome(false);
+  }, []);
 
   // Initialize app
   useEffect(() => {
