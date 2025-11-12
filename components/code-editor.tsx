@@ -110,6 +110,35 @@ const getFileTypeIcon = (filename: string): string => {
   }
 };
 
+// Helper function to get file type from language
+const getFileTypeFromLanguage = (language: string): FileContent['type'] => {
+  switch (language.toLowerCase()) {
+    case 'javascript':
+    case 'js':
+      return 'js';
+    case 'typescript':
+    case 'ts':
+      return 'ts';
+    case 'tsx':
+    case 'jsx':
+      return 'tsx';
+    case 'css':
+      return 'css';
+    case 'html':
+      return 'html';
+    case 'json':
+      return 'json';
+    case 'python':
+    case 'py':
+      return 'py';
+    case 'markdown':
+    case 'md':
+      return 'md';
+    default:
+      return 'txt';
+  }
+};
+
 export default function CodeEditor() {
   // Analytics
   const {
@@ -227,35 +256,6 @@ export default function CodeEditor() {
     try { localStorage.setItem('wr-welcome-dismissed', '1'); } catch {}
     setShowWelcome(false);
   }, []);
-
-  // Helper function to get file type from language
-  const getFileTypeFromLanguage = (language: string): FileContent['type'] => {
-    switch (language.toLowerCase()) {
-      case 'javascript':
-      case 'js':
-        return 'js';
-      case 'typescript':
-      case 'ts':
-        return 'ts';
-      case 'tsx':
-      case 'jsx':
-        return 'tsx';
-      case 'css':
-        return 'css';
-      case 'html':
-        return 'html';
-      case 'json':
-        return 'json';
-      case 'python':
-      case 'py':
-        return 'py';
-      case 'markdown':
-      case 'md':
-        return 'md';
-      default:
-        return 'txt';
-    }
-  };
 
   // Initialize app
   useEffect(() => {
