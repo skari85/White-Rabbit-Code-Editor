@@ -2,7 +2,7 @@
 
 import MiniCodeEditor from '@/components/mini-code-editor';
 import { Button } from '@/components/ui/button';
-import { Code2, Terminal, Zap } from 'lucide-react';
+import { Brain, Code2, Rocket, Terminal, Users, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LandingPage() {
@@ -38,54 +38,66 @@ export default function LandingPage() {
           <div className="space-y-8">
             <div className="space-y-6">
               <h1 className="text-4xl font-mono font-light text-gray-100 leading-tight">
-                build faster with<br />
-                <span className="text-gray-400">ai-powered code space</span>
+                build web apps<br />
+                <span className="text-gray-400">with AI by your side</span>
               </h1>
               
               <p className="text-lg text-gray-400 leading-relaxed font-mono">
-                minimal, fast web code editor with ai, visual tools, and polished ux.
+                a visual code editor that helps you create web applications faster. perfect for developers who want AI assistance without leaving their workflow.
               </p>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/enter">
                 <Button size="lg" className="bg-zinc-800 hover:bg-zinc-700 text-gray-100 border border-zinc-700 font-mono text-sm px-8 py-4">
-                  enter white rabbit
+                  start building
                 </Button>
               </Link>
               <Link href="/visual-tools">
                 <Button size="lg" variant="outline" className="border-zinc-700 text-gray-400 hover:bg-zinc-800 hover:text-gray-200 font-mono text-sm px-8 py-4">
-                  explore tools
+                  see the tools
                 </Button>
               </Link>
             </div>
 
-            {/* Feature List */}
-            <div className="space-y-3 pt-8">
-              <div className="flex items-start text-gray-400 font-mono text-sm">
-                <span className="text-gray-600 mr-3 mt-1">{'>'}</span>
-                <span>ai-assisted coding streamed into monaco</span>
-              </div>
-              <div className="flex items-start text-gray-400 font-mono text-sm">
-                <span className="text-gray-600 mr-3 mt-1">{'>'}</span>
-                <span>visual tools hub (git history, code flow, smart file tree)</span>
-              </div>
-              <div className="flex items-start text-gray-400 font-mono text-sm">
-                <span className="text-gray-600 mr-3 mt-1">{'>'}</span>
-                <span>breathing caret + focus field ripple line highlight</span>
-              </div>
-              <div className="flex items-start text-gray-400 font-mono text-sm">
-                <span className="text-gray-600 mr-3 mt-1">{'>'}</span>
-                <span>unified progress bar for long tasks</span>
+            {/* Who This Is For */}
+            <div className="pt-8">
+              <div className="text-sm font-mono text-gray-500 uppercase tracking-wider mb-4">who's this for?</div>
+              <div className="space-y-3">
+                <div className="flex items-start text-gray-400 font-mono text-sm">
+                  <Users className="w-4 h-4 text-gray-600 mr-3 mt-0.5" />
+                  <span>web developers building modern applications</span>
+                </div>
+                <div className="flex items-start text-gray-400 font-mono text-sm">
+                  <Brain className="w-4 h-4 text-gray-600 mr-3 mt-0.5" />
+                  <span>developers who want AI coding assistance</span>
+                </div>
+                <div className="flex items-start text-gray-400 font-mono text-sm">
+                  <Rocket className="w-4 h-4 text-gray-600 mr-3 mt-0.5" />
+                  <span>teams who prefer visual tools over command lines</span>
+                </div>
               </div>
             </div>
 
-            {/* Technical Details */}
+            {/* What You Get */}
             <div className="pt-8 border-t border-zinc-800">
-              <div className="space-y-2">
-                <div className="text-xs font-mono text-gray-500 uppercase tracking-wider">system</div>
-                <div className="text-sm font-mono text-gray-400">
-                  next.js 15 • react 19 • monaco editor • ai integration
+              <div className="text-sm font-mono text-gray-500 uppercase tracking-wider mb-4">what you get</div>
+              <div className="space-y-3">
+                <div className="flex items-start text-gray-400 font-mono text-sm">
+                  <span className="text-gray-600 mr-3 mt-1">{'>'}</span>
+                  <span>AI code generation & intelligent suggestions</span>
+                </div>
+                <div className="flex items-start text-gray-400 font-mono text-sm">
+                  <span className="text-gray-600 mr-3 mt-1">{'>'}</span>
+                  <span>visual git history and code flow analysis</span>
+                </div>
+                <div className="flex items-start text-gray-400 font-mono text-sm">
+                  <span className="text-gray-600 mr-3 mt-1">{'>'}</span>
+                  <span>built-in terminal with instant preview</span>
+                </div>
+                <div className="flex items-start text-gray-400 font-mono text-sm">
+                  <span className="text-gray-600 mr-3 mt-1">{'>'}</span>
+                  <span>zero setup - just code and deploy</span>
                 </div>
               </div>
             </div>
@@ -96,10 +108,10 @@ export default function LandingPage() {
             <div className="border-b border-zinc-800 pb-4">
               <div className="flex items-center gap-2 mb-2">
                 <Terminal className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-mono text-gray-400">interactive editor</span>
+                <span className="text-sm font-mono text-gray-400">live coding demo</span>
               </div>
               <p className="text-xs text-gray-500 font-mono">
-                syntax highlighting • multiple languages • execution
+                experience the editor • ai assistance • instant preview
               </p>
             </div>
             
@@ -110,15 +122,15 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Code Sample Section */}
+      {/* Features Section */}
       <section className="border-t border-zinc-800 bg-zinc-950/50">
         <div className="max-w-7xl mx-auto px-6 py-16">
           <div className="text-center mb-12">
             <h2 className="text-2xl font-mono font-light text-gray-100 mb-4">
-              code with precision
+              built for modern web development
             </h2>
             <p className="text-gray-400 font-mono text-sm max-w-2xl mx-auto">
-              clean interface, powerful features, zero distractions
+              everything you need to build, test, and deploy web applications in one place
             </p>
           </div>
           
@@ -126,21 +138,11 @@ export default function LandingPage() {
             {/* Feature Cards */}
             <div className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/30">
               <div className="flex items-center gap-2 mb-3">
-                <Code2 className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-mono text-gray-300">ai assistance</span>
+                <Brain className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-mono text-gray-300">ai-powered coding</span>
               </div>
               <p className="text-xs text-gray-500 font-mono leading-relaxed">
-                intelligent code completion and generation powered by advanced ai models
-              </p>
-            </div>
-            
-            <div className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/30">
-              <div className="flex items-center gap-2 mb-3">
-                <Terminal className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-mono text-gray-300">terminal integration</span>
-              </div>
-              <p className="text-xs text-gray-500 font-mono leading-relaxed">
-                built-in terminal with command execution and process management
+                get code suggestions, generate components, and receive intelligent debugging help powered by advanced AI
               </p>
             </div>
             
@@ -150,7 +152,58 @@ export default function LandingPage() {
                 <span className="text-sm font-mono text-gray-300">visual tools</span>
               </div>
               <p className="text-xs text-gray-500 font-mono leading-relaxed">
-                code flow visualization, git history, and smart file management
+                see your code structure, track changes visually, and understand your project's architecture at a glance
+              </p>
+            </div>
+            
+            <div className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/30">
+              <div className="flex items-center gap-2 mb-3">
+                <Rocket className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-mono text-gray-300">rapid deployment</span>
+              </div>
+              <p className="text-xs text-gray-500 font-mono leading-relaxed">
+                build, test, and deploy your web applications with integrated tools and instant preview capabilities
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose White Rabbit */}
+      <section className="border-t border-zinc-800">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl font-mono font-light text-gray-100 mb-4">
+              why developers choose white rabbit
+            </h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+            <div className="text-center">
+              <h3 className="text-lg font-mono text-gray-300 mb-3">visual-first approach</h3>
+              <p className="text-sm text-gray-500 font-mono leading-relaxed">
+                instead of memorizing complex commands, use visual tools to understand and manage your code
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <h3 className="text-lg font-mono text-gray-300 mb-3">ai that actually helps</h3>
+              <p className="text-sm text-gray-500 font-mono leading-relaxed">
+                get relevant code suggestions and intelligent assistance without interrupting your workflow
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <h3 className="text-lg font-mono text-gray-300 mb-3">zero configuration</h3>
+              <p className="text-sm text-gray-500 font-mono leading-relaxed">
+                start coding immediately. no setup, no complex configuration, just pure development
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <h3 className="text-lg font-mono text-gray-300 mb-3">team collaboration</h3>
+              <p className="text-sm text-gray-500 font-mono leading-relaxed">
+                built-in sharing and collaboration features for teams working on web projects together
               </p>
             </div>
           </div>
