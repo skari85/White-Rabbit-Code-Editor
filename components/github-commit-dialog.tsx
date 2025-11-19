@@ -86,22 +86,28 @@ export function GitHubCommitDialog({
       for (const file of files) {
         setCommittingFile(file.path);
 
-        // Get SHA if file exists (for updates)
-        const sha = await client.getFileSha(
-          currentRepo.fullName,
-          file.path,
-          branch
-        );
+        try {
+          // Get SHA if file exists (for updates)
+          const sha = await client.getFileSha(
+            currentRepo.fullName,
+            file.path,
+            branch
+          );
 
-        // Create or update file
-        await client.createOrUpdateFile(
-          currentRepo.fullName,
-          file.path,
-          file.content,
-          commitMessage,
-          branch,
-          sha || undefined
-        );
+          // Create or update file
+          await client.createOrUpdateFile(
+            currentRepo.fullName,
+            file.path,
+            file.content,
+            commitMessage,
+            branch,
+            sha || undefined
+          );
+        } catch (fileError) {
+          // If individual file fails, continue with others but log error
+          console.error(`Failed to commit ${file.path}:`, fileError);
+          throw fileError; // Re-throw to show error to user
+        }
       }
 
       setSuccess(true);
