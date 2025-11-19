@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, ReactElement } from 'react';
 import { 
   Folder, 
   File, 
@@ -192,8 +192,8 @@ export function GitHubFileTree({ className, onFileSelect, onRepoChange }: GitHub
     onFileSelect?.(path);
   };
 
-  const renderNode = (node: FileTreeNode, level: number = 0): JSX.Element[] => {
-    const elements: JSX.Element[] = [];
+  const renderNode = (node: FileTreeNode, level: number = 0): ReactElement[] => {
+    const elements: ReactElement[] = [];
     const isExpanded = expandedPaths.has(node.path);
     const isSelected = selectedPath === node.path;
 
