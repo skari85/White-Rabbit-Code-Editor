@@ -42,6 +42,41 @@ export interface GitHubFile {
   download_url: string | null;
 }
 
+export interface GitHubTreeItem {
+  path: string;
+  mode: string;
+  type: 'blob' | 'tree';
+  sha: string;
+  size?: number;
+  url: string;
+}
+
+export interface GitHubTree {
+  sha: string;
+  url: string;
+  tree: GitHubTreeItem[];
+  truncated: boolean;
+}
+
+export interface GitHubFileContent {
+  name: string;
+  path: string;
+  sha: string;
+  size: number;
+  url: string;
+  html_url: string;
+  git_url: string;
+  download_url: string | null;
+  type: string;
+  content: string; // base64 encoded
+  encoding: string;
+  _links: {
+    self: string;
+    git: string;
+    html: string;
+  };
+}
+
 export interface GitHubRateLimit {
   limit: number;
   remaining: number;
@@ -203,23 +238,62 @@ export class GitHubClient {
   }
 
   /**
-   * Get file contents
+   * Get repository tree recursively
+   */
+  async getTree(
+    repo: string,
+    branch: string = 'main',
+    recursive: boolean = true
+  ): Promise<GitHubTree> {
+    const repoPath = repo.includes('/') ? repo : `user/${repo}`;
+    
+    // First get the branch SHA
+    const branchData = await this.request<{ commit: { sha: string } }>(
+      `/repos/${repoPath}/branches/${branch}`
+    );
+    
+    const treeSha = branchData.commit.sha;
+    const params = new URLSearchParams({
+      recursive: recursive ? '1' : '0',
+    });
+    
+    return this.request<GitHubTree>(
+      `/repos/${repoPath}/git/trees/${treeSha}?${params.toString()}`
+    );
+  }
+
+  /**
+   * Get file contents with full metadata
    */
   async getFileContents(
     repo: string,
     path: string,
     branch: string = 'main'
-  ): Promise<{ content: string; encoding: string; size: number }> {
+  ): Promise<GitHubFileContent> {
     const repoPath = repo.includes('/') ? repo : `user/${repo}`;
     const params = new URLSearchParams({ ref: branch });
     
-    const file = await this.request<{
-      content: string;
-      encoding: string;
-      size: number;
-    }>(`/repos/${repoPath}/contents/${path}?${params.toString()}`);
+    const file = await this.request<GitHubFileContent>(
+      `/repos/${repoPath}/contents/${path}?${params.toString()}`
+    );
 
     return file;
+  }
+
+  /**
+   * Decode base64 file content
+   */
+  static decodeContent(base64Content: string): string {
+    try {
+      // GitHub API returns base64 with newlines, remove them
+      const cleanBase64 = base64Content.replace(/\n/g, '');
+      const binaryString = atob(cleanBase64);
+      return decodeURIComponent(
+        escape(binaryString)
+      );
+    } catch (error) {
+      throw new Error('Failed to decode file content');
+    }
   }
 
   /**

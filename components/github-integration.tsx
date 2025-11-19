@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import { GitHubConnectButton } from './github-connect-button';
 import { GitHubRepoPicker } from './github-repo-picker';
 import { GitHubOAuth } from '@/lib/github-oauth';
-import { Card, CardContent } from '@/components/ui/card';
+import { GitHubRepoStorage } from '@/lib/github-repo-storage';
 
 interface GitHubIntegrationProps {
   className?: string;
   showRepoPicker?: boolean;
+  onOpenRepo?: (repo: string, branch: string) => void;
 }
 
 /**
@@ -17,7 +18,7 @@ interface GitHubIntegrationProps {
  * Shows Connect GitHub button when not authenticated,
  * and repo picker when authenticated.
  */
-export function GitHubIntegration({ className, showRepoPicker = true }: GitHubIntegrationProps) {
+export function GitHubIntegration({ className, showRepoPicker = true, onOpenRepo }: GitHubIntegrationProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -60,7 +61,16 @@ export function GitHubIntegration({ className, showRepoPicker = true }: GitHubIn
       </div>
       
       {isAuthenticated && showRepoPicker && (
-        <GitHubRepoPicker />
+        <GitHubRepoPicker 
+          onOpenRepo={(repo, branch) => {
+            GitHubRepoStorage.setCurrentRepo(
+              repo.split('/')[0],
+              repo.split('/')[1],
+              branch
+            );
+            onOpenRepo?.(repo, branch);
+          }}
+        />
       )}
     </div>
   );

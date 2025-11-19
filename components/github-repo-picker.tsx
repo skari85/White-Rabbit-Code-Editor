@@ -25,13 +25,15 @@ interface GitHubRepoPickerProps {
   onRepoSelect?: (repo: GitHubRepository) => void;
   onBranchSelect?: (repo: string, branch: string) => void;
   onFileSelect?: (repo: string, branch: string, file: GitHubFile) => void;
+  onOpenRepo?: (repo: string, branch: string) => void;
 }
 
 export function GitHubRepoPicker({ 
   className, 
   onRepoSelect,
   onBranchSelect,
-  onFileSelect 
+  onFileSelect,
+  onOpenRepo
 }: GitHubRepoPickerProps) {
   const [repos, setRepos] = useState<GitHubRepository[]>([]);
   const [branches, setBranches] = useState<GitHubBranch[]>([]);
@@ -207,12 +209,11 @@ export function GitHubRepoPicker({
                 {filteredRepos.map((repo) => (
                   <div
                     key={repo.id}
-                    className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                    className={`p-4 rounded-lg border transition-colors ${
                       selectedRepo?.id === repo.id
                         ? 'bg-blue-900/20 border-blue-700'
                         : 'bg-gray-900/50 border-gray-700 hover:bg-gray-800/50'
                     }`}
-                    onClick={() => loadBranches(repo)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
@@ -248,6 +249,27 @@ export function GitHubRepoPicker({
                           <span>⭐ {repo.stargazers_count}</span>
                           <span>🍴 {repo.forks_count}</span>
                         </div>
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => loadBranches(repo)}
+                          className="text-xs"
+                        >
+                          Browse
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => {
+                            onOpenRepo?.(repo.full_name, repo.default_branch);
+                            loadBranches(repo);
+                          }}
+                          className="text-xs"
+                        >
+                          Open
+                        </Button>
                       </div>
                     </div>
                   </div>
