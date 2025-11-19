@@ -315,4 +315,126 @@ export class GitHubClient {
   }> {
     return this.request('/user');
   }
+
+  /**
+   * Get file SHA (needed for updates)
+   */
+  async getFileSha(repo: string, path: string, branch: string = 'main'): Promise<string | null> {
+    try {
+      const file = await this.getFileContents(repo, path, branch);
+      return file.sha;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Create or update a file
+   */
+  async createOrUpdateFile(
+    repo: string,
+    path: string,
+    content: string,
+    message: string,
+    branch: string = 'main',
+    sha?: string
+  ): Promise<{
+    content: GitHubFileContent;
+    commit: {
+      sha: string;
+      html_url: string;
+    };
+  }> {
+    const repoPath = repo.includes('/') ? repo : `user/${repo}`;
+    
+    // Encode content to base64
+    const base64Content = btoa(unescape(encodeURIComponent(content)));
+
+    const body: any = {
+      message,
+      content: base64Content,
+      branch,
+    };
+
+    // Include SHA for updates
+    if (sha) {
+      body.sha = sha;
+    }
+
+    return this.request<{
+      content: GitHubFileContent;
+      commit: {
+        sha: string;
+        html_url: string;
+      };
+    }>(`/repos/${repoPath}/contents/${path}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  /**
+   * Get branch SHA
+   */
+  async getBranchSha(repo: string, branch: string): Promise<string> {
+    const repoPath = repo.includes('/') ? repo : `user/${repo}`;
+    const branchData = await this.request<{ commit: { sha: string } }>(
+      `/repos/${repoPath}/branches/${branch}`
+    );
+    return branchData.commit.sha;
+  }
+
+  /**
+   * Create a new branch
+   */
+  async createBranch(
+    repo: string,
+    newBranchName: string,
+    fromBranch: string = 'main'
+  ): Promise<{ ref: string; sha: string }> {
+    const repoPath = repo.includes('/') ? repo : `user/${repo}`;
+    const sha = await this.getBranchSha(repo, fromBranch);
+
+    return this.request<{ ref: string; object: { sha: string } }>(
+      `/repos/${repoPath}/git/refs`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          ref: `refs/heads/${newBranchName}`,
+          sha,
+        }),
+      }
+    ).then(response => ({
+      ref: response.ref,
+      sha: response.object.sha,
+    }));
+  }
+
+  /**
+   * Get commit diff (client-side)
+   */
+  async getCommitDiff(
+    repo: string,
+    baseSha: string,
+    headSha: string
+  ): Promise<string> {
+    const repoPath = repo.includes('/') ? repo : `user/${repo}`;
+    
+    // Get base commit tree
+    const baseCommit = await this.request<{ tree: { sha: string } }>(
+      `/repos/${repoPath}/git/commits/${baseSha}`
+    );
+    
+    // Get head commit tree
+    const headCommit = await this.request<{ tree: { sha: string } }>(
+      `/repos/${repoPath}/git/commits/${headSha}`
+    );
+
+    // Compare trees
+    const diff = await this.request<{ ahead_by: number; behind_by: number; files: any[] }>(
+      `/repos/${repoPath}/compare/${baseSha}...${headSha}`
+    );
+
+    return JSON.stringify(diff, null, 2);
+  }
 }
