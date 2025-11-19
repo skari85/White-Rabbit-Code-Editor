@@ -1,5 +1,6 @@
 'use client';
 
+import GitHubConnectCard from '@/components/github/github-connect-card';
 import MiniCodeEditor from '@/components/mini-code-editor';
 import { Button } from '@/components/ui/button';
 import { Code2, Terminal, Zap } from 'lucide-react';
@@ -91,22 +92,22 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Right Side - Code Editor */}
-          <div className="space-y-4">
-            <div className="border-b border-zinc-800 pb-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Terminal className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-mono text-gray-400">interactive editor</span>
+            {/* Right Side - Code Editor */}
+            <div className="space-y-4">
+              <div className="border-b border-zinc-800 pb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Terminal className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-mono text-gray-400">interactive editor</span>
+                </div>
+                <p className="text-xs text-gray-500 font-mono">
+                  syntax highlighting • multiple languages • execution
+                </p>
               </div>
-              <p className="text-xs text-gray-500 font-mono">
-                syntax highlighting • multiple languages • execution
-              </p>
+              <div className="border border-zinc-800 rounded-lg overflow-hidden bg-zinc-900/50">
+                <MiniCodeEditor />
+              </div>
+              <GitHubConnectCard />
             </div>
-            
-            <div className="border border-zinc-800 rounded-lg overflow-hidden bg-zinc-900/50">
-              <MiniCodeEditor />
-            </div>
-          </div>
         </div>
       </div>
 
