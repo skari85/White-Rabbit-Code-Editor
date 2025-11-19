@@ -27,6 +27,7 @@ import LiveCodingEngine from "@/components/live-coding-engine";
 import LivePreview from "@/components/live-preview";
 import MonacoCodeSpace from "@/components/monaco-code-space";
 import NewAppWizard from "@/components/new-app-wizard";
+import { OpenProjectDialog } from "@/components/open-project-dialog";
 import PublishModal from "@/components/publish-modal";
 import SplitControls from "@/components/split-controls";
 import SplitEditorLayout from "@/components/split-editor-layout";
@@ -45,6 +46,7 @@ import {
     Download,
     ExternalLink,
     FileText,
+    FolderOpen,
     GitBranch,
     Heart,
     Keyboard,
@@ -189,6 +191,7 @@ export default function CodeEditor() {
 
   // Modal states
   const [showNewApp, setShowNewApp] = useState(false);
+  const [showOpenProject, setShowOpenProject] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
   const [showStyle, setShowStyle] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
@@ -310,6 +313,15 @@ export default function CodeEditor() {
   return (
     <div className="h-screen bg-gray-900">
       {/* New App Wizard & Publish Modals */}
+      <OpenProjectDialog
+        open={showOpenProject}
+        onOpenChange={setShowOpenProject}
+        onProjectOpen={(repo, branch) => {
+          // Project will be opened via GitHubRepoViewer component
+          // The storage event will trigger the file tree to load
+          console.log('Opening project:', repo, branch);
+        }}
+      />
       <NewAppWizard
         open={showNewApp}
         onOpenChange={setShowNewApp}
@@ -413,6 +425,16 @@ export default function CodeEditor() {
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium">Files</h3>
               <div className="flex items-center gap-1">
+                <Button
+                  onClick={() => setShowOpenProject(true)}
+                  variant="ghost"
+                  size="sm"
+                  title="Open Project from GitHub"
+                  className="text-xs"
+                >
+                  <FolderOpen className="w-4 h-4 mr-1" />
+                  Open
+                </Button>
                 <Button
                   onClick={() => initializeDefaultProject()}
                   variant="ghost"
