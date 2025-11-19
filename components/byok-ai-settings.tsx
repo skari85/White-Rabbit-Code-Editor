@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, Eye, EyeOff, Check, AlertTriangle, Info } from 'lucide-react';
 import { AISettings } from '@/types/ai';
+import { getAIClient, AIProviderConfig } from '@/lib/ai-client';
 
 interface BYOKAISettingsProps {
   isOpen: boolean;
@@ -36,6 +37,22 @@ export default function BYOKAISettings({
   const handleSave = () => {
     // Save to localStorage for persistence
     localStorage.setItem('byok-ai-settings', JSON.stringify(settings));
+    
+    // Also save to AIClient
+    const client = getAIClient();
+    const config: AIProviderConfig = {
+      id: settings.provider,
+      name: settings.provider === 'openai' ? 'OpenAI' : 
+            settings.provider === 'anthropic' ? 'Anthropic' :
+            settings.provider === 'groq' ? 'Groq' : 'Generic',
+      apiKey: settings.apiKey || '',
+      baseURL: settings.provider === 'generic' ? (settings as any).baseURL : undefined,
+      model: settings.model,
+      temperature: settings.temperature,
+      maxTokens: settings.maxTokens,
+    };
+    client.setConfig(config);
+    
     onSaveSettings(settings);
     onClose();
   };
@@ -80,6 +97,19 @@ export default function BYOKAISettings({
           break;
         case 'groq':
           testUrl = 'https://api.groq.com/openai/v1/models';
+          testHeaders = {
+            'Authorization': `Bearer ${settings.apiKey}`,
+            'Content-Type': 'application/json'
+          };
+          break;
+        case 'generic':
+          const baseURL = (settings as any).baseURL || '';
+          if (!baseURL) {
+            setConnectionStatus('error');
+            setErrorMessage('Base URL is required for generic provider');
+            return;
+          }
+          testUrl = `${baseURL.replace(/\/$/, '')}/v1/models`;
           testHeaders = {
             'Authorization': `Bearer ${settings.apiKey}`,
             'Content-Type': 'application/json'
@@ -130,6 +160,13 @@ export default function BYOKAISettings({
           keyFormat: 'gsk_...',
           website: 'https://console.groq.com/keys'
         };
+      case 'generic':
+        return {
+          name: 'Generic OpenAI-Compatible',
+          description: 'Any OpenAI-compatible API endpoint',
+          keyFormat: 'varies',
+          website: ''
+        };
       default:
         return {
           name: 'Unknown',
@@ -166,7 +203,7 @@ export default function BYOKAISettings({
             <Label htmlFor="provider-select">AI Provider</Label>
             <Select
               value={settings.provider}
-              onValueChange={(value: 'openai' | 'anthropic' | 'groq') =>
+              onValueChange={(value: 'openai' | 'anthropic' | 'groq' | 'generic') =>
                 setSettings({ ...settings, provider: value, apiKey: '' })
               }
             >
@@ -177,6 +214,7 @@ export default function BYOKAISettings({
                 <SelectItem value="openai">OpenAI (GPT-4, GPT-3.5)</SelectItem>
                 <SelectItem value="anthropic">Anthropic (Claude 3)</SelectItem>
                 <SelectItem value="groq">Groq (Fast Inference)</SelectItem>
+                <SelectItem value="generic">Generic OpenAI-Compatible</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -199,6 +237,24 @@ export default function BYOKAISettings({
               </a>
             </AlertDescription>
           </Alert>
+
+          {/* Base URL Input (for generic provider) */}
+          {settings.provider === 'generic' && (
+            <div className="space-y-2">
+              <Label htmlFor="baseURL">Base URL</Label>
+              <Input
+                id="baseURL"
+                type="text"
+                value={(settings as any).baseURL || ''}
+                onChange={(e) => setSettings({ ...settings, baseURL: e.target.value } as any)}
+                placeholder="https://api.example.com"
+                className="font-mono"
+              />
+              <p className="text-xs text-gray-500">
+                Enter the base URL for your OpenAI-compatible API (e.g., https://api.example.com)
+              </p>
+            </div>
+          )}
 
           {/* API Key Input */}
           <div className="space-y-2">
