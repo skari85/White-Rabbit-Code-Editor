@@ -2,7 +2,7 @@
 
 import MiniCodeEditor from '@/components/mini-code-editor';
 import { Button } from '@/components/ui/button';
-import { Code2, Terminal, Zap } from 'lucide-react';
+import { Code2, Github, Brain, Lock } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LandingPage() {
@@ -43,7 +43,7 @@ export default function LandingPage() {
               </h1>
               
               <p className="text-lg text-gray-400 leading-relaxed font-mono">
-                minimal, fast web code editor with ai, visual tools, and polished ux.
+                minimal, fast web code editor with github integration, byok ai, and zero server storage.
               </p>
             </div>
             
@@ -64,28 +64,38 @@ export default function LandingPage() {
             <div className="space-y-3 pt-8">
               <div className="flex items-start text-gray-400 font-mono text-sm">
                 <span className="text-gray-600 mr-3 mt-1">{'>'}</span>
-                <span>ai-assisted coding streamed into monaco</span>
+                <span>github integration — browse repos, edit files, commit directly</span>
               </div>
               <div className="flex items-start text-gray-400 font-mono text-sm">
                 <span className="text-gray-600 mr-3 mt-1">{'>'}</span>
-                <span>visual tools hub (git history, code flow, smart file tree)</span>
+                <span>byok ai — bring your own api key (openai, anthropic, groq)</span>
               </div>
               <div className="flex items-start text-gray-400 font-mono text-sm">
                 <span className="text-gray-600 mr-3 mt-1">{'>'}</span>
-                <span>breathing caret + focus field ripple line highlight</span>
+                <span>client-side only — zero server storage, all data stays in browser</span>
               </div>
               <div className="flex items-start text-gray-400 font-mono text-sm">
                 <span className="text-gray-600 mr-3 mt-1">{'>'}</span>
-                <span>unified progress bar for long tasks</span>
+                <span>ai editor actions — explain, refactor, fix, generate, document</span>
+              </div>
+              <div className="flex items-start text-gray-400 font-mono text-sm">
+                <span className="text-gray-600 mr-3 mt-1">{'>'}</span>
+                <span>open project from github — browse repos, select branch, load files</span>
               </div>
             </div>
 
             {/* Technical Details */}
             <div className="pt-8 border-t border-zinc-800">
               <div className="space-y-2">
-                <div className="text-xs font-mono text-gray-500 uppercase tracking-wider">system</div>
+                <div className="text-xs font-mono text-gray-500 uppercase tracking-wider">privacy first</div>
                 <div className="text-sm font-mono text-gray-400">
-                  next.js 15 • react 19 • monaco editor • ai integration
+                  no server storage • no token proxying • all operations client-side
+                </div>
+              </div>
+              <div className="space-y-2 mt-4">
+                <div className="text-xs font-mono text-gray-500 uppercase tracking-wider">tech stack</div>
+                <div className="text-sm font-mono text-gray-400">
+                  next.js 15 • react 19 • monaco editor • github api • byok ai
                 </div>
               </div>
             </div>
@@ -95,11 +105,11 @@ export default function LandingPage() {
           <div className="space-y-4">
             <div className="border-b border-zinc-800 pb-4">
               <div className="flex items-center gap-2 mb-2">
-                <Terminal className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-mono text-gray-400">interactive editor</span>
+                <Code2 className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-mono text-gray-400">monaco editor</span>
               </div>
               <p className="text-xs text-gray-500 font-mono">
-                syntax highlighting • multiple languages • execution
+                syntax highlighting • multiple languages • github integration • ai assistance
               </p>
             </div>
             
@@ -115,42 +125,52 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 py-16">
           <div className="text-center mb-12">
             <h2 className="text-2xl font-mono font-light text-gray-100 mb-4">
-              code with precision
+              code with privacy
             </h2>
             <p className="text-gray-400 font-mono text-sm max-w-2xl mx-auto">
-              clean interface, powerful features, zero distractions
+              clean interface, powerful features, zero server storage — all operations stay in your browser
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Feature Cards */}
             <div className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/30">
               <div className="flex items-center gap-2 mb-3">
+                <Github className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-mono text-gray-300">github integration</span>
+              </div>
+              <p className="text-xs text-gray-500 font-mono leading-relaxed">
+                browse repos, edit files, commit changes — all client-side with your token
+              </p>
+            </div>
+            
+            <div className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/30">
+              <div className="flex items-center gap-2 mb-3">
+                <Brain className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-mono text-gray-300">byok ai</span>
+              </div>
+              <p className="text-xs text-gray-500 font-mono leading-relaxed">
+                bring your own api key — openai, anthropic, groq, or custom endpoint
+              </p>
+            </div>
+            
+            <div className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/30">
+              <div className="flex items-center gap-2 mb-3">
+                <Lock className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-mono text-gray-300">privacy first</span>
+              </div>
+              <p className="text-xs text-gray-500 font-mono leading-relaxed">
+                zero server storage — all operations happen directly in your browser
+              </p>
+            </div>
+            
+            <div className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/30">
+              <div className="flex items-center gap-2 mb-3">
                 <Code2 className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-mono text-gray-300">ai assistance</span>
+                <span className="text-sm font-mono text-gray-300">ai editor actions</span>
               </div>
               <p className="text-xs text-gray-500 font-mono leading-relaxed">
-                intelligent code completion and generation powered by advanced ai models
-              </p>
-            </div>
-            
-            <div className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/30">
-              <div className="flex items-center gap-2 mb-3">
-                <Terminal className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-mono text-gray-300">terminal integration</span>
-              </div>
-              <p className="text-xs text-gray-500 font-mono leading-relaxed">
-                built-in terminal with command execution and process management
-              </p>
-            </div>
-            
-            <div className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/30">
-              <div className="flex items-center gap-2 mb-3">
-                <Zap className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-mono text-gray-300">visual tools</span>
-              </div>
-              <p className="text-xs text-gray-500 font-mono leading-relaxed">
-                code flow visualization, git history, and smart file management
+                explain code, refactor, fix errors, generate functions — powered by your ai
               </p>
             </div>
           </div>
