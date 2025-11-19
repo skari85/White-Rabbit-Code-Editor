@@ -1,0 +1,244 @@
+/**
+ * GitHub Client - Client-Side Only
+ * 
+ * Lightweight client for interacting with GitHub API.
+ * All requests go directly from browser → GitHub API.
+ * No backend, no server-side storage, no caching except in-memory.
+ */
+
+const GITHUB_API_URL = 'https://api.github.com';
+
+export interface GitHubRepository {
+  id: number;
+  name: string;
+  full_name: string;
+  description: string | null;
+  private: boolean;
+  html_url: string;
+  default_branch: string;
+  updated_at: string;
+  language: string | null;
+  stargazers_count: number;
+  forks_count: number;
+}
+
+export interface GitHubBranch {
+  name: string;
+  commit: {
+    sha: string;
+    url: string;
+  };
+  protected: boolean;
+}
+
+export interface GitHubFile {
+  name: string;
+  path: string;
+  type: 'file' | 'dir';
+  size: number;
+  sha: string;
+  url: string;
+  html_url: string;
+  download_url: string | null;
+}
+
+export interface GitHubRateLimit {
+  limit: number;
+  remaining: number;
+  reset: number;
+  used: number;
+}
+
+export class GitHubClient {
+  private token: string;
+  private rateLimitInfo: GitHubRateLimit | null = null;
+
+  constructor(token: string) {
+    if (!token) {
+      throw new Error('GitHub token is required');
+    }
+    this.token = token;
+  }
+
+  /**
+   * Make authenticated request to GitHub API
+   */
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const url = endpoint.startsWith('http') ? endpoint : `${GITHUB_API_URL}${endpoint}`;
+    
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        ...options.headers,
+      },
+    });
+
+    // Update rate limit info from headers
+    this.updateRateLimitInfo(response);
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      
+      if (response.status === 401) {
+        throw new Error('Authentication failed. Please reconnect to GitHub.');
+      }
+      
+      if (response.status === 403) {
+        const rateLimitRemaining = response.headers.get('x-ratelimit-remaining');
+        if (rateLimitRemaining === '0') {
+          const resetTime = response.headers.get('x-ratelimit-reset');
+          const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000) : null;
+          throw new Error(
+            `GitHub API rate limit exceeded. Reset at: ${resetDate?.toLocaleTimeString() || 'unknown'}`
+          );
+        }
+        throw new Error('Access forbidden. Check your token permissions.');
+      }
+
+      if (response.status === 404) {
+        throw new Error('Resource not found.');
+      }
+
+      throw new Error(`GitHub API error: ${response.status} - ${errorText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Update rate limit information from response headers
+   */
+  private updateRateLimitInfo(response: Response): void {
+    const limit = response.headers.get('x-ratelimit-limit');
+    const remaining = response.headers.get('x-ratelimit-remaining');
+    const reset = response.headers.get('x-ratelimit-reset');
+    const used = response.headers.get('x-ratelimit-used');
+
+    if (limit && remaining && reset && used) {
+      this.rateLimitInfo = {
+        limit: parseInt(limit, 10),
+        remaining: parseInt(remaining, 10),
+        reset: parseInt(reset, 10),
+        used: parseInt(used, 10),
+      };
+    }
+  }
+
+  /**
+   * Get current rate limit information
+   */
+  getRateLimit(): GitHubRateLimit | null {
+    return this.rateLimitInfo;
+  }
+
+  /**
+   * List all repositories (private + public) for the authenticated user
+   */
+  async listRepos(options: {
+    type?: 'all' | 'owner' | 'member';
+    sort?: 'created' | 'updated' | 'pushed' | 'full_name';
+    direction?: 'asc' | 'desc';
+    per_page?: number;
+    page?: number;
+  } = {}): Promise<GitHubRepository[]> {
+    const params = new URLSearchParams({
+      type: options.type || 'all',
+      sort: options.sort || 'updated',
+      direction: options.direction || 'desc',
+      per_page: String(options.per_page || 100),
+      page: String(options.page || 1),
+    });
+
+    return this.request<GitHubRepository[]>(`/user/repos?${params.toString()}`);
+  }
+
+  /**
+   * List all repositories (with pagination support)
+   */
+  async listAllRepos(): Promise<GitHubRepository[]> {
+    const allRepos: GitHubRepository[] = [];
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const repos = await this.listRepos({ per_page: 100, page });
+      allRepos.push(...repos);
+      
+      // If we got less than 100 repos, we've reached the end
+      hasMore = repos.length === 100;
+      page++;
+    }
+
+    return allRepos;
+  }
+
+  /**
+   * List branches for a repository
+   */
+  async listBranches(repo: string): Promise<GitHubBranch[]> {
+    // repo can be either "owner/repo" or just "repo" (assumes current user)
+    const repoPath = repo.includes('/') ? repo : `user/${repo}`;
+    return this.request<GitHubBranch[]>(`/repos/${repoPath}/branches`);
+  }
+
+  /**
+   * List files in a repository branch
+   */
+  async listFiles(
+    repo: string,
+    branch: string = 'main',
+    path: string = ''
+  ): Promise<GitHubFile[]> {
+    // repo can be either "owner/repo" or just "repo" (assumes current user)
+    const repoPath = repo.includes('/') ? repo : `user/${repo}`;
+    const apiPath = path ? `/repos/${repoPath}/contents/${path}` : `/repos/${repoPath}/contents`;
+    
+    const params = new URLSearchParams({ ref: branch });
+    const files = await this.request<GitHubFile[]>(`${apiPath}?${params.toString()}`);
+    
+    return files;
+  }
+
+  /**
+   * Get file contents
+   */
+  async getFileContents(
+    repo: string,
+    path: string,
+    branch: string = 'main'
+  ): Promise<{ content: string; encoding: string; size: number }> {
+    const repoPath = repo.includes('/') ? repo : `user/${repo}`;
+    const params = new URLSearchParams({ ref: branch });
+    
+    const file = await this.request<{
+      content: string;
+      encoding: string;
+      size: number;
+    }>(`/repos/${repoPath}/contents/${path}?${params.toString()}`);
+
+    return file;
+  }
+
+  /**
+   * Get repository details
+   */
+  async getRepo(repo: string): Promise<GitHubRepository> {
+    const repoPath = repo.includes('/') ? repo : `user/${repo}`;
+    return this.request<GitHubRepository>(`/repos/${repoPath}`);
+  }
+
+  /**
+   * Get authenticated user information
+   */
+  async getUser(): Promise<{
+    login: string;
+    name: string;
+    avatar_url: string;
+    email: string | null;
+  }> {
+    return this.request('/user');
+  }
+}

@@ -245,18 +245,10 @@ export class GitHubOAuth {
     }
 
     try {
-      const response = await fetch(`${GITHUB_API_URL}/user/repos?sort=updated&per_page=100`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch repositories: ${response.status}`);
-      }
-
-      return await response.json();
+      // Use GitHubClient for consistency
+      const { GitHubClient } = await import('./github-client');
+      const client = new GitHubClient(token);
+      return await client.listRepos({ per_page: 100 });
     } catch (error) {
       console.error('Failed to fetch repositories:', error);
       throw error;
