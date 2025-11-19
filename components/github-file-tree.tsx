@@ -192,7 +192,7 @@ export function GitHubFileTree({ className, onFileSelect, onRepoChange }: GitHub
     onFileSelect?.(path);
   };
 
-  const renderNode = (node: FileTreeNode, level: number = 0): ReactElement[] => {
+  const renderNode = (node: FileTreeNode, level: number = 0) => {
     const elements: ReactElement[] = [];
     const isExpanded = expandedPaths.has(node.path);
     const isSelected = selectedPath === node.path;
