@@ -22,6 +22,9 @@ export default function LandingPage() {
             <Link href="/visual-tools" className="text-gray-400 hover:text-gray-200 transition-colors text-sm font-mono">
               visual-tools
             </Link>
+            <Link href="/w" className="text-gray-400 hover:text-gray-200 transition-colors text-sm font-mono">
+              workspace
+            </Link>
             <Link href="/enter">
               <Button className="bg-zinc-800 hover:bg-zinc-700 text-gray-100 border border-zinc-700 font-mono text-sm">
                 enter
