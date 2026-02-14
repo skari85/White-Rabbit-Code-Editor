@@ -1,20 +1,15 @@
 'use client';
 
-import { SessionProvider } from "next-auth/react";
-import { ReactNode } from "react";
+import { ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
 }
 
+/**
+ * Auth session provider stub — GitHub authentication has been removed.
+ * This is now a simple passthrough so any remaining imports don't break.
+ */
 export function AuthSessionProvider({ children }: Props) {
-  return (
-    <SessionProvider
-      // Enable automatic session fetching for proper auth state
-      refetchInterval={5 * 60} // Refetch every 5 minutes
-      refetchOnWindowFocus={true}
-    >
-      {children}
-    </SessionProvider>
-  );
+  return <>{children}</>;
 }

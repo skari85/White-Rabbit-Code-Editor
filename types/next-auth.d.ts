@@ -1,19 +1,5 @@
-import NextAuth from "next-auth"
-
-declare module "next-auth" {
-  interface Session {
-    accessToken?: string
-    user: {
-      id: string
-      name?: string | null
-      email?: string | null
-      image?: string | null
-      githubId?: string
-    }
-  }
-
-  interface JWT {
-    accessToken?: string
-    githubId?: string
-  }
-}
+/**
+ * next-auth type declarations — auth has been removed.
+ * This file is kept empty to prevent import errors from any stale references.
+ */
+export {};

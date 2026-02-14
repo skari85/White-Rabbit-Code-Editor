@@ -94,7 +94,6 @@
     "ml-matrix": "^6.10.7",
     "monaco-editor": "^0.52.2",
     "next": "15.5.12",
-    "next-auth": "^5.0.0-beta.29",
     "next-themes": "latest",
     "papaparse": "^5.4.1",
     "plotly.js": "^2.29.1",
