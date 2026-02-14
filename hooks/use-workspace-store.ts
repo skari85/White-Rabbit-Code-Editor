@@ -133,10 +133,58 @@ export function useWorkspaceStore() {
     persistStore(store);
   }, [store]);
 
-  // Re-hydrate on mount (covers SSR/hydration)
+  // Re-hydrate on mount (covers SSR/hydration) + auto-migrate legacy project data
   useEffect(() => {
     const saved = loadStore();
-    if (saved) setStore(saved);
+    if (saved) {
+      setStore(saved);
+    }
+
+    // ---------- Migration from single-project mode ----------
+    // If the user has existing project data in the old `white-rabbit-project`
+    // localStorage key but no artifacts in the workspace store, we import
+    // those files as artifacts in the default "Coding" category.
+    try {
+      const migrated = localStorage.getItem('wr-migration-v1-done');
+      if (migrated) return;
+
+      const legacyRaw = localStorage.getItem('white-rabbit-project');
+      if (!legacyRaw) return;
+
+      const legacyProject = JSON.parse(legacyRaw);
+      if (!legacyProject?.files || !Array.isArray(legacyProject.files)) return;
+
+      const currentStore = loadStore() ?? store;
+      // Find the first "Coding" category in the active workspace
+      const codingCat = currentStore.categories.find(
+        (c) =>
+          c.workspaceId === currentStore.activeWorkspaceId &&
+          c.name === 'Coding'
+      );
+      if (!codingCat) return;
+
+      const newArtifacts = legacyProject.files.map((f: any) => ({
+        id: `migrated-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        categoryId: codingCat.id,
+        type: 'code' as const,
+        title: f.name ?? 'untitled',
+        content: f.content ?? '',
+        language: f.type ?? 'txt',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }));
+
+      if (newArtifacts.length > 0) {
+        setStore((prev) => ({
+          ...prev,
+          artifacts: [...prev.artifacts, ...newArtifacts],
+        }));
+      }
+
+      localStorage.setItem('wr-migration-v1-done', '1');
+    } catch {
+      // migration is best-effort
+    }
   }, []);
 
   // ------ derived getters ------
