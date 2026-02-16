@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import Image from 'next/image';
 import {
   ChevronDown,
   ClipboardList,
@@ -74,7 +75,7 @@ export default function WorkspaceSidebar({
 
   onSelectWorkspace,
   onCreateWorkspace,
-  onRenameWorkspace,
+  onRenameWorkspace: _onRenameWorkspace,
   onDeleteWorkspace,
 
   onSelectCategory,
@@ -125,9 +126,11 @@ export default function WorkspaceSidebar({
       {/* ------- Header ------- */}
       <div className="ios-glass-panel-header px-4 py-3 flex items-center gap-2">
         <div className="w-7 h-7 rounded-lg border border-white/40 bg-white/80 dark:border-white/20 dark:bg-white/10 flex items-center justify-center p-0.5 shrink-0 shadow-sm backdrop-blur-sm">
-          <img
+          <Image
             src="/whiterabbitlogo.png"
             alt="White Rabbit"
+            width={24}
+            height={24}
             className="w-full h-full object-contain"
           />
         </div>
