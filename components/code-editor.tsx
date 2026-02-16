@@ -58,7 +58,6 @@ import {
     Terminal,
     X
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
 
 // Lazy load heavy components
@@ -116,9 +115,6 @@ export default function CodeEditor() {
     trackFileCreated,
     trackUserSession
   } = useAnalytics();
-
-  // Session
-  const { data: session } = useSession();
 
   // Core state
   const {
@@ -370,39 +366,8 @@ export default function CodeEditor() {
                 <Settings className="w-4 h-4" />
               </Button>
 
-              {/* User Profile */}
-              {session?.user ? (
-                <div className="flex items-center gap-2">
-                  {session.user.image && (
-                    <img
-                      src={session.user.image}
-                      alt={session.user.name || 'User'}
-                      className="w-6 h-6 rounded-full"
-                    />
-
-                  )}
-                  <span className="text-xs text-gray-300">
-                    {session.user.name || session.user.email}
-                  </span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => window.location.href = '/setup'}
-                  >
-                    Setup GitHub
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => window.location.href = '/auth/signin'}
-                  >
-                    Sign In
-                  </Button>
-                </div>
-              )}
+              {/* User label */}
+              <span className="text-xs text-gray-400">White Rabbit</span>
             </div>
           </div>
         </div>

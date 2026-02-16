@@ -5,8 +5,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = 'edge';
-
 interface StreamRequest {
   prompt: string;
   language: string;

@@ -1,7 +1,6 @@
 import { HelpProvider } from '@/components/contextual-help'
 import { ErrorTrackingProvider } from '@/components/error-tracking-provider'
 import { CopyrightFooter } from '@/components/license-notice'
-import { AuthSessionProvider } from '@/components/session-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { NotificationProvider } from '@/components/ui/notification-system'
 import { Analytics } from '@vercel/analytics/next'
@@ -111,7 +110,6 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <AuthSessionProvider>
               <NotificationProvider>
                 <HelpProvider>
                   {children}
@@ -120,7 +118,6 @@ export default function RootLayout({
                 <Analytics />
                 <SpeedInsights />
               </NotificationProvider>
-            </AuthSessionProvider>
           </ThemeProvider>
         </ErrorTrackingProvider>
       </body>

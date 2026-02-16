@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useSession } from 'next-auth/react';
 import { FileContent } from '@/hooks/use-code-builder';
 import { 
   Github, 
@@ -26,7 +25,7 @@ interface GitHubIntegrationProps {
 }
 
 export default function GitHubIntegration({ files, projectName, className }: GitHubIntegrationProps) {
-  const { data: session } = useSession();
+  const session: any = null; // Auth removed
   const [repoName, setRepoName] = useState(projectName.toLowerCase().replace(/\s+/g, '-'));
   const [description, setDescription] = useState(`Project created with Hex & Kex Code Editor`);
   const [isPrivate, setIsPrivate] = useState(false);

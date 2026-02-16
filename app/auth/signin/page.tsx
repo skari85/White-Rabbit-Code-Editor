@@ -1,118 +1,22 @@
 'use client';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Github } from "lucide-react";
-import { getProviders, signIn } from "next-auth/react";
-import { useEffect, useState } from "react";
+import Link from 'next/link';
 
-interface Provider {
-  id: string;
-  name: string;
-  type: string;
-  signinUrl: string;
-  callbackUrl: string;
-}
-
-export default function SignIn() {
-  const [providers, setProviders] = useState<Record<string, Provider> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchProviders = async () => {
-      try {
-        setLoading(true);
-        const res = await getProviders();
-        console.log('Providers response:', res);
-        setProviders(res);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching providers:', err);
-        setError('Failed to load authentication providers');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProviders();
-  }, []);
-
+export default function SignInPage() {
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-950 border-gray-800">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <img
-              src="/whiterabbitlogo.png"
-              alt="White Rabbit Logo"
-              className="w-16 h-16 object-contain"
-            />
-          </div>
-          <CardTitle className="text-2xl text-white">Welcome to White Rabbit</CardTitle>
-          <CardDescription className="text-gray-400">
-            Sign in with your GitHub account to continue
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-              <span className="ml-2 text-gray-400">Loading...</span>
-            </div>
-          ) : error ? (
-            <div className="text-center py-4">
-              <p className="text-red-400 mb-4">{error}</p>
-              <Button
-                onClick={() => signIn("github", { callbackUrl: "/enter" })}
-                className="w-full bg-gray-800 hover:bg-gray-700 text-white border border-gray-600"
-                size="lg"
-              >
-                <Github className="w-5 h-5 mr-2" />
-                Sign in with GitHub
-              </Button>
-            </div>
-          ) : providers && Object.keys(providers).length > 0 ? (
-            Object.values(providers).map((provider) => (
-              <div key={provider.name}>
-                <Button
-                  onClick={() => signIn(provider.id, { callbackUrl: "/enter" })}
-                  className="w-full bg-gray-800 hover:bg-gray-700 text-white border border-gray-600"
-                  size="lg"
-                >
-                  <Github className="w-5 h-5 mr-2" />
-                  Sign in with {provider.name}
-                </Button>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-4">
-              <p className="text-gray-400 mb-4">GitHub OAuth Setup Required</p>
-              <Button
-                onClick={() => signIn("github", { callbackUrl: "/enter" })}
-                className="w-full bg-gray-800 hover:bg-gray-700 text-white border border-gray-600"
-                size="lg"
-              >
-                <Github className="w-5 h-5 mr-2" />
-                Sign in with GitHub
-              </Button>
-              <div className="mt-4 p-3 bg-gray-800 rounded-lg text-left">
-                <p className="text-xs text-gray-400 mb-2 font-semibold">Quick Setup:</p>
-                <ol className="text-xs text-gray-500 space-y-1">
-                  <li>1. Go to <span className="text-blue-400">github.com/settings/developers</span></li>
-                  <li>2. Create "New OAuth App"</li>
-                  <li>3. Callback URL: <span className="text-green-400">http://localhost:3012/api/auth/callback/github</span></li>
-                  <li>4. Add credentials to <span className="text-yellow-400">.env.local</span></li>
-                  <li>5. Restart server</li>
-                </ol>
-              </div>
-            </div>
-          )}
-
-          <div className="text-center text-sm text-gray-500 mt-6">
-            <p>By signing in, you agree to our terms of service and privacy policy.</p>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+      <div className="text-center space-y-4">
+        <h1 className="text-xl font-semibold text-zinc-200">Authentication Removed</h1>
+        <p className="text-zinc-400 text-sm max-w-md">
+          This app no longer requires sign-in. You can use the editor directly.
+        </p>
+        <Link
+          href="/enter"
+          className="inline-block px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-md text-sm transition-colors"
+        >
+          Go to Editor
+        </Link>
+      </div>
     </div>
   );
 }
