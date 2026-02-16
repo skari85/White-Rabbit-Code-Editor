@@ -10,10 +10,10 @@ import type { FileContent } from '@/hooks/use-code-builder';
 // Lazy-load Monaco to keep initial bundle small
 const FastLiveCoding = dynamic(() => import('@/components/fast-live-coding'), {
   loading: () => (
-    <div className="flex items-center justify-center h-full bg-zinc-950">
+    <div className="ios-glass-surface flex items-center justify-center h-full">
       <div className="text-center">
         <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-        <p className="text-xs text-zinc-500">Loading editor…</p>
+        <p className="text-xs text-foreground/55">Loading editor...</p>
       </div>
     </div>
   ),
@@ -74,25 +74,25 @@ export default function EditorPanel({
     files.find((f) => f.name === selectedFile)?.content ?? '';
 
   return (
-    <div className={`flex flex-col h-full bg-zinc-950 ${className}`}>
+    <div className={`ios-glass-surface-strong flex flex-col h-full ${className}`}>
       {/* Tab bar */}
-      <div className="flex items-center gap-0.5 px-2 py-1 bg-zinc-900 border-b border-zinc-800 overflow-x-auto scrollbar-none">
+      <div className="ios-glass-panel-header flex items-center gap-1 px-2 py-1 overflow-x-auto scrollbar-none">
         {files.map((f) => (
           <button
             key={f.name}
             type="button"
             onClick={() => onSelectFile(f.name)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs whitespace-nowrap transition-colors ${
+            className={`ios-glass-chip flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] whitespace-nowrap transition-colors ${
               selectedFile === f.name
-                ? 'bg-zinc-800 text-zinc-100'
-                : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                ? 'ios-glass-chip-active text-foreground'
+                : 'text-foreground/60 hover:text-foreground'
             }`}
           >
             <FileText className="w-3 h-3 shrink-0" />
             <span className="truncate max-w-[120px]">{f.name}</span>
             {selectedFile === f.name && (
               <X
-                className="w-3 h-3 shrink-0 opacity-50 hover:opacity-100"
+                className="w-3 h-3 shrink-0 opacity-60 hover:opacity-100"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDeleteFile(f.name);
@@ -104,7 +104,7 @@ export default function EditorPanel({
         <Button
           size="sm"
           variant="ghost"
-          className="h-6 w-6 p-0 ml-1 shrink-0 text-zinc-500 hover:text-zinc-300"
+          className="h-7 w-7 p-0 ml-1 shrink-0 text-foreground/60 hover:text-foreground"
           onClick={() => onAddFile('new-file.js', 'js')}
           title="New file"
         >

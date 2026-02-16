@@ -36,20 +36,20 @@ export default function PromptPanel({
   }, [localText, instructionsText, onInstructionsChange]);
 
   return (
-    <div className={`flex flex-col h-full bg-zinc-950 ${className}`}>
+    <div className={`ios-glass-surface flex flex-col h-full ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-900 border-b border-zinc-800">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-400">
+      <div className="ios-glass-panel-header flex items-center justify-between px-3 py-1.5">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-foreground/70">
           <ClipboardList className="w-3.5 h-3.5" />
           <span>Instructions</span>
           {categoryName && (
-            <span className="text-zinc-600 ml-1">— {categoryName}</span>
+            <span className="text-foreground/45 ml-1">- {categoryName}</span>
           )}
         </div>
         <Button
           size="sm"
           variant="ghost"
-          className="h-6 w-6 p-0 text-zinc-500 hover:text-zinc-300"
+          className="h-7 w-7 p-0 text-foreground/55 hover:text-foreground"
           onClick={() => {
             setLocalText('');
             onInstructionsChange('');
@@ -65,8 +65,8 @@ export default function PromptPanel({
         ref={textareaRef}
         value={localText}
         onChange={(e) => setLocalText(e.target.value)}
-        placeholder="Write instructions or context for this category…&#10;&#10;Examples:&#10;• Build a REST API for user management&#10;• Use TypeScript with Zod validation&#10;• Follow the existing project conventions"
-        className="flex-1 w-full resize-none bg-transparent text-sm text-zinc-300 placeholder:text-zinc-600 px-3 py-2 focus:outline-none font-mono leading-relaxed"
+        placeholder="Write instructions or context for this category...&#10;&#10;Examples:&#10;• Build a REST API for user management&#10;• Use TypeScript with Zod validation&#10;• Follow the existing project conventions"
+        className="flex-1 w-full resize-none bg-transparent text-sm text-foreground/90 placeholder:text-foreground/45 px-3 py-2 focus:outline-none font-sans leading-relaxed"
         spellCheck={false}
       />
     </div>

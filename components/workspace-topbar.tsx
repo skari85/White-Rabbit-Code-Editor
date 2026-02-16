@@ -35,13 +35,13 @@ export default function WorkspaceTopBar({
   onOpenSettings,
 }: WorkspaceTopBarProps) {
   return (
-    <div className="flex items-center justify-between h-10 px-3 bg-zinc-900 border-b border-zinc-800 select-none shrink-0">
+    <div className="ios-glass-panel-header flex items-center justify-between h-11 px-3 select-none shrink-0">
       {/* Left: breadcrumb */}
-      <div className="flex items-center gap-1.5 text-xs text-zinc-400 min-w-0">
-        <span className="font-medium text-zinc-300 truncate max-w-[140px]">
+      <div className="flex items-center gap-1.5 text-xs text-foreground/65 min-w-0">
+        <span className="font-medium text-foreground/90 truncate max-w-[140px]">
           {workspaceName}
         </span>
-        <span className="text-zinc-600">/</span>
+        <span className="text-foreground/35">/</span>
         <span className="truncate max-w-[140px]">{categoryName}</span>
       </div>
 
@@ -49,10 +49,10 @@ export default function WorkspaceTopBar({
       <div className="flex items-center gap-1.5">
         {/* BYOK status */}
         <div
-          className={`flex items-center gap-1 text-[10px] rounded px-1.5 py-0.5 ${
+          className={`ios-glass-chip flex items-center gap-1 text-[10px] px-2 py-0.5 ${
             isBYOKConfigured
-              ? 'bg-emerald-500/10 text-emerald-400'
-              : 'bg-amber-500/10 text-amber-400'
+              ? 'border-emerald-500/45 bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
+              : 'border-amber-500/45 bg-amber-500/15 text-amber-600 dark:text-amber-300'
           }`}
           title={
             isBYOKConfigured
@@ -68,10 +68,10 @@ export default function WorkspaceTopBar({
 
         {/* Save indicator */}
         <div
-          className={`flex items-center gap-1 text-[10px] rounded px-1.5 py-0.5 ${
+          className={`ios-glass-chip flex items-center gap-1 text-[10px] px-2 py-0.5 ${
             hasUnsavedChanges
-              ? 'bg-amber-500/10 text-amber-400'
-              : 'bg-zinc-800 text-zinc-500'
+              ? 'border-amber-500/45 bg-amber-500/15 text-amber-600 dark:text-amber-300'
+              : 'text-foreground/55'
           }`}
         >
           {hasUnsavedChanges ? (
@@ -92,7 +92,7 @@ export default function WorkspaceTopBar({
           size="sm"
           disabled={!isBYOKConfigured || isRunning}
           onClick={onRunTask}
-          className="h-7 text-xs gap-1.5 bg-purple-600 hover:bg-purple-500 text-white disabled:opacity-40"
+          className="h-8 text-xs gap-1.5 px-3 disabled:opacity-40"
           title={
             !isBYOKConfigured
               ? 'Set an API key in Settings to enable Run Task'
@@ -110,7 +110,7 @@ export default function WorkspaceTopBar({
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 w-7 p-0 text-zinc-400 hover:text-zinc-200"
+          className="h-8 w-8 p-0 text-foreground/60 hover:text-foreground"
           onClick={onSave}
           title="Save"
         >
@@ -122,7 +122,7 @@ export default function WorkspaceTopBar({
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 w-7 p-0 text-zinc-400 hover:text-zinc-200"
+          className="h-8 w-8 p-0 text-foreground/60 hover:text-foreground"
           onClick={onOpenSettings}
           title="AI Settings (BYOK)"
         >

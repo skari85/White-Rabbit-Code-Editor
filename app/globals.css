@@ -143,6 +143,16 @@
     --rabbit-foreground: #eaeaea;      /* off-white, clean for code */
     --rabbit-error: #ff3c75;           /* hot magenta, dramatic feedback */
     --rabbit-subtle: #7a7a7a;          /* muted gray for secondary labels */
+    /* iOS glass design tokens */
+    --ios-bg-start: #edf2ff;
+    --ios-bg-end: #e5ecff;
+    --ios-glass-surface: rgba(255, 255, 255, 0.58);
+    --ios-glass-surface-strong: rgba(255, 255, 255, 0.74);
+    --ios-glass-border: rgba(255, 255, 255, 0.7);
+    --ios-glass-shadow: 0 24px 48px rgba(73, 88, 132, 0.18);
+    --ios-glass-shadow-soft: 0 10px 28px rgba(73, 88, 132, 0.12);
+    --ios-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    --ios-glass-accent: rgba(108, 120, 255, 0.25);
 
     /* Light theme CSS variables for accessibility */
     --background: 0 0% 100%;          /* white background */
@@ -214,6 +224,15 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --ios-bg-start: #090d1a;
+    --ios-bg-end: #141127;
+    --ios-glass-surface: rgba(18, 24, 40, 0.64);
+    --ios-glass-surface-strong: rgba(16, 22, 36, 0.82);
+    --ios-glass-border: rgba(194, 207, 255, 0.18);
+    --ios-glass-shadow: 0 24px 60px rgba(2, 5, 14, 0.55);
+    --ios-glass-shadow-soft: 0 10px 26px rgba(2, 5, 14, 0.38);
+    --ios-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    --ios-glass-accent: rgba(108, 120, 255, 0.32);
   }
 }
 
@@ -224,9 +243,113 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-variant-ligatures: contextual;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
   }
+}
+
+/* iOS-native liquid glass primitives */
+.ios-safe-area {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+  padding-right: max(0.5rem, env(safe-area-inset-right));
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  padding-left: max(0.5rem, env(safe-area-inset-left));
+}
+
+.ios-app-root {
+  background:
+    radial-gradient(46rem 28rem at -8% -14%, rgba(118, 132, 255, 0.28), transparent 60%),
+    radial-gradient(34rem 22rem at 108% 2%, rgba(72, 198, 255, 0.2), transparent 58%),
+    radial-gradient(40rem 28rem at 50% 108%, rgba(167, 118, 255, 0.2), transparent 62%),
+    linear-gradient(160deg, var(--ios-bg-start), var(--ios-bg-end));
+}
+
+.ios-glass-shell {
+  border-radius: 1.25rem;
+  border: 1px solid var(--ios-glass-border);
+  background: var(--ios-glass-surface-strong);
+  box-shadow: var(--ios-glass-shadow), var(--ios-glass-highlight);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+}
+
+.ios-glass-surface {
+  background: var(--ios-glass-surface);
+  box-shadow: var(--ios-glass-shadow-soft), var(--ios-glass-highlight);
+  backdrop-filter: blur(20px) saturate(155%);
+  -webkit-backdrop-filter: blur(20px) saturate(155%);
+}
+
+.ios-glass-surface-strong {
+  background: var(--ios-glass-surface-strong);
+  box-shadow: var(--ios-glass-shadow-soft), var(--ios-glass-highlight);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+}
+
+.ios-glass-panel-header {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+}
+
+.dark .ios-glass-panel-header {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.14);
+}
+
+.ios-glass-chip {
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.08);
+  transition: all 160ms ease;
+}
+
+.dark .ios-glass-chip {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ios-glass-chip-active {
+  border-color: rgba(161, 173, 255, 0.6);
+  background: var(--ios-glass-accent);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.22);
+}
+
+.ios-glass-list-item {
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  transition: all 160ms ease;
+}
+
+.ios-glass-list-item:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dark .ios-glass-list-item:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ios-glass-list-item-active {
+  border-color: rgba(161, 173, 255, 0.58);
+  background: var(--ios-glass-accent);
+}
+
+.ios-glass-input {
+  border-color: rgba(255, 255, 255, 0.26) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+}
+
+.dark .ios-glass-input {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* ✨ Glitchy Animations (Kex-style) */

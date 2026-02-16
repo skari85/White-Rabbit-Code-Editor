@@ -200,119 +200,123 @@ export default function WorkspaceLayout() {
   // ---- render ----
 
   return (
-    <div className="h-screen w-screen bg-zinc-950 text-zinc-200 overflow-hidden">
-      <ResizablePanelGroup direction="horizontal" className="h-full">
-        {/* ====== Sidebar (resizable) ====== */}
-        <ResizablePanel
-          defaultSize={ws.panelSizes.sidebarWidth}
-          minSize={10}
-          maxSize={25}
-          onResize={(size) => ws.savePanelSizes({ sidebarWidth: size })}
-        >
-          <WorkspaceSidebar
-            workspaces={ws.store.workspaces}
-            activeWorkspace={ws.activeWorkspace}
-            categories={ws.categoriesForWorkspace}
-            activeCategory={ws.activeCategory}
-            onSelectWorkspace={ws.selectWorkspace}
-            onCreateWorkspace={ws.createWorkspace}
-            onRenameWorkspace={ws.renameWorkspace}
-            onDeleteWorkspace={ws.deleteWorkspace}
-            onSelectCategory={ws.selectCategory}
-            onCreateCategory={ws.createCategory}
-            onRenameCategory={ws.renameCategory}
-            onDeleteCategory={ws.deleteCategory}
-          />
-        </ResizablePanel>
+    <div className="ios-app-root h-screen w-screen overflow-hidden text-foreground">
+      <div className="ios-safe-area h-full w-full">
+        <div className="ios-glass-shell h-full w-full overflow-hidden">
+          <ResizablePanelGroup direction="horizontal" className="h-full">
+            {/* ====== Sidebar (resizable) ====== */}
+            <ResizablePanel
+              defaultSize={ws.panelSizes.sidebarWidth}
+              minSize={10}
+              maxSize={25}
+              onResize={(size) => ws.savePanelSizes({ sidebarWidth: size })}
+            >
+              <WorkspaceSidebar
+                workspaces={ws.store.workspaces}
+                activeWorkspace={ws.activeWorkspace}
+                categories={ws.categoriesForWorkspace}
+                activeCategory={ws.activeCategory}
+                onSelectWorkspace={ws.selectWorkspace}
+                onCreateWorkspace={ws.createWorkspace}
+                onRenameWorkspace={ws.renameWorkspace}
+                onDeleteWorkspace={ws.deleteWorkspace}
+                onSelectCategory={ws.selectCategory}
+                onCreateCategory={ws.createCategory}
+                onRenameCategory={ws.renameCategory}
+                onDeleteCategory={ws.deleteCategory}
+              />
+            </ResizablePanel>
 
-        <ResizableHandle />
+            <ResizableHandle />
 
-        {/* ====== Main area ====== */}
-        <ResizablePanel defaultSize={100 - ws.panelSizes.sidebarWidth} minSize={50}>
-          <div className="flex flex-col h-full min-w-0">
-            {/* Top bar */}
-            <WorkspaceTopBar
-              workspaceName={workspaceName}
-              categoryName={categoryName}
-              isBYOKConfigured={ai.isConfigured}
-              isRunning={isRunning}
-              hasUnsavedChanges={hasUnsavedChanges}
-              onRunTask={handleRunTask}
-              onSave={handleSave}
-              onOpenSettings={() => setShowSettings(true)}
-            />
+            {/* ====== Main area ====== */}
+            <ResizablePanel defaultSize={100 - ws.panelSizes.sidebarWidth} minSize={50}>
+              <div className="flex flex-col h-full min-w-0">
+                {/* Top bar */}
+                <WorkspaceTopBar
+                  workspaceName={workspaceName}
+                  categoryName={categoryName}
+                  isBYOKConfigured={ai.isConfigured}
+                  isRunning={isRunning}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  onRunTask={handleRunTask}
+                  onSave={handleSave}
+                  onOpenSettings={() => setShowSettings(true)}
+                />
 
-            {/* Panels area (resizable) */}
-            <div className="flex-1 min-h-0">
-              <ResizablePanelGroup direction="horizontal" className="h-full">
-                {/* ---- Left: Editor ---- */}
-                <ResizablePanel
-                  defaultSize={ws.panelSizes.editorWidth}
-                  minSize={25}
-                  onResize={(size) => ws.savePanelSizes({ editorWidth: size })}
-                >
-                  <EditorPanel
-                    files={cb.files}
-                    selectedFile={cb.selectedFile}
-                    onSelectFile={cb.setSelectedFile}
-                    onUpdateContent={handleEditorChange}
-                    onAddFile={cb.addNewFile}
-                    onDeleteFile={cb.deleteFile}
-                    theme="vs-dark"
-                  />
-                </ResizablePanel>
-
-                <ResizableHandle withHandle />
-
-                {/* ---- Right: Prompt + Output + Artifacts (vertical stack) ---- */}
-                <ResizablePanel
-                  defaultSize={100 - ws.panelSizes.editorWidth}
-                  minSize={20}
-                >
-                  <ResizablePanelGroup direction="vertical" className="h-full">
-                    {/* Prompt / Instructions */}
-                    <ResizablePanel defaultSize={30} minSize={10}>
-                      <PromptPanel
-                        instructionsText={promptText}
-                        onInstructionsChange={ws.updatePrompt}
-                        categoryName={categoryName}
+                {/* Panels area (resizable) */}
+                <div className="flex-1 min-h-0">
+                  <ResizablePanelGroup direction="horizontal" className="h-full">
+                    {/* ---- Left: Editor ---- */}
+                    <ResizablePanel
+                      defaultSize={ws.panelSizes.editorWidth}
+                      minSize={25}
+                      onResize={(size) => ws.savePanelSizes({ editorWidth: size })}
+                    >
+                      <EditorPanel
+                        files={cb.files}
+                        selectedFile={cb.selectedFile}
+                        onSelectFile={cb.setSelectedFile}
+                        onUpdateContent={handleEditorChange}
+                        onAddFile={cb.addNewFile}
+                        onDeleteFile={cb.deleteFile}
+                        theme="vs-dark"
                       />
                     </ResizablePanel>
 
                     <ResizableHandle withHandle />
 
-                    {/* Output / Logs */}
-                    <ResizablePanel defaultSize={40} minSize={10}>
-                      <OutputPanel
-                        outputs={ws.outputsForCategory}
-                        onClear={ws.clearOutputs}
-                        onSaveAsArtifact={handleSaveAsArtifact}
-                        streamingContent={streamingContent}
-                        isStreaming={isRunning}
-                      />
-                    </ResizablePanel>
+                    {/* ---- Right: Prompt + Output + Artifacts (vertical stack) ---- */}
+                    <ResizablePanel
+                      defaultSize={100 - ws.panelSizes.editorWidth}
+                      minSize={20}
+                    >
+                      <ResizablePanelGroup direction="vertical" className="h-full">
+                        {/* Prompt / Instructions */}
+                        <ResizablePanel defaultSize={30} minSize={10}>
+                          <PromptPanel
+                            instructionsText={promptText}
+                            onInstructionsChange={ws.updatePrompt}
+                            categoryName={categoryName}
+                          />
+                        </ResizablePanel>
 
-                    <ResizableHandle withHandle />
+                        <ResizableHandle withHandle />
 
-                    {/* Artifacts + Tasks (tabbed bottom section) */}
-                    <ResizablePanel defaultSize={30} minSize={10}>
-                      <BottomTabs
-                        artifacts={ws.artifactsForCategory}
-                        onSelectArtifact={handleSelectArtifact}
-                        onDeleteArtifact={ws.deleteArtifact}
-                        onRenameArtifact={(id, title) =>
-                          ws.updateArtifact(id, { title })
-                        }
-                        categoryId={ws.activeCategory?.id ?? ''}
-                      />
+                        {/* Output / Logs */}
+                        <ResizablePanel defaultSize={40} minSize={10}>
+                          <OutputPanel
+                            outputs={ws.outputsForCategory}
+                            onClear={ws.clearOutputs}
+                            onSaveAsArtifact={handleSaveAsArtifact}
+                            streamingContent={streamingContent}
+                            isStreaming={isRunning}
+                          />
+                        </ResizablePanel>
+
+                        <ResizableHandle withHandle />
+
+                        {/* Artifacts + Tasks (tabbed bottom section) */}
+                        <ResizablePanel defaultSize={30} minSize={10}>
+                          <BottomTabs
+                            artifacts={ws.artifactsForCategory}
+                            onSelectArtifact={handleSelectArtifact}
+                            onDeleteArtifact={ws.deleteArtifact}
+                            onRenameArtifact={(id, title) =>
+                              ws.updateArtifact(id, { title })
+                            }
+                            categoryId={ws.activeCategory?.id ?? ''}
+                          />
+                        </ResizablePanel>
+                      </ResizablePanelGroup>
                     </ResizablePanel>
                   </ResizablePanelGroup>
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            </div>
-          </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+                </div>
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
+      </div>
 
       {/* ====== BYOK Settings Modal (untouched) ====== */}
       <BYOKAISettings
@@ -347,14 +351,14 @@ function BottomTabs({
   return (
     <div className="flex flex-col h-full">
       {/* Tab switcher */}
-      <div className="flex items-center gap-0.5 px-2 py-1 bg-zinc-900 border-b border-zinc-800">
+      <div className="ios-glass-panel-header flex items-center gap-1 px-2 py-1">
         <button
           type="button"
           onClick={() => setTab('artifacts')}
-          className={`px-2 py-0.5 rounded text-[11px] transition-colors ${
+          className={`ios-glass-chip px-2.5 py-1 rounded-full text-[11px] transition-colors ${
             tab === 'artifacts'
-              ? 'bg-zinc-800 text-zinc-200'
-              : 'text-zinc-500 hover:text-zinc-300'
+              ? 'ios-glass-chip-active text-foreground'
+              : 'text-foreground/60 hover:text-foreground'
           }`}
         >
           Artifacts
@@ -362,10 +366,10 @@ function BottomTabs({
         <button
           type="button"
           onClick={() => setTab('tasks')}
-          className={`px-2 py-0.5 rounded text-[11px] transition-colors ${
+          className={`ios-glass-chip px-2.5 py-1 rounded-full text-[11px] transition-colors ${
             tab === 'tasks'
-              ? 'bg-zinc-800 text-zinc-200'
-              : 'text-zinc-500 hover:text-zinc-300'
+              ? 'ios-glass-chip-active text-foreground'
+              : 'text-foreground/60 hover:text-foreground'
           }`}
         >
           Tasks
