@@ -96,12 +96,36 @@ const DEFAULT_PANEL_SIZES: PanelSizes = {
   outputHeight: 50,
 };
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function normalizePanelSizes(sizes: PanelSizes): PanelSizes {
+  const normalized: PanelSizes = {
+    sidebarWidth: clamp(sizes.sidebarWidth, 10, 25),
+    editorWidth: clamp(sizes.editorWidth, 25, 80),
+    promptHeight: clamp(sizes.promptHeight, 10, 80),
+    outputHeight: clamp(sizes.outputHeight, 10, 80),
+  };
+
+  // Keep room for the artifacts/tasks panel in the right column.
+  const maxCombinedHeight = 90;
+  const combined = normalized.promptHeight + normalized.outputHeight;
+  if (combined > maxCombinedHeight) {
+    const scale = maxCombinedHeight / combined;
+    normalized.promptHeight = Math.round(normalized.promptHeight * scale);
+    normalized.outputHeight = Math.round(normalized.outputHeight * scale);
+  }
+
+  return normalized;
+}
+
 function loadPanelSizes(): PanelSizes {
   if (typeof window === 'undefined') return DEFAULT_PANEL_SIZES;
   try {
     const raw = localStorage.getItem(PANEL_SIZES_KEY);
     if (!raw) return DEFAULT_PANEL_SIZES;
-    return { ...DEFAULT_PANEL_SIZES, ...JSON.parse(raw) };
+    return normalizePanelSizes({ ...DEFAULT_PANEL_SIZES, ...JSON.parse(raw) });
   } catch {
     return DEFAULT_PANEL_SIZES;
   }
@@ -246,21 +270,33 @@ export function useWorkspaceStore() {
     setStore((prev) => {
       const remaining = prev.workspaces.filter((w) => w.id !== id);
       const catIds = prev.categories.filter((c) => c.workspaceId === id).map((c) => c.id);
+      const remainingCategories = prev.categories.filter((c) => c.workspaceId !== id);
+      const nextActiveWorkspaceId =
+        prev.activeWorkspaceId === id
+          ? (remaining[0]?.id ?? null)
+          : prev.activeWorkspaceId;
+      const nextActiveCategoryId = remainingCategories.find(
+        (c) => c.workspaceId === nextActiveWorkspaceId
+      )?.id ?? null;
+
       return {
         ...prev,
         workspaces: remaining,
-        categories: prev.categories.filter((c) => c.workspaceId !== id),
+        categories: remainingCategories,
         artifacts: prev.artifacts.filter((a) => !catIds.includes(a.categoryId)),
         prompts: prev.prompts.filter((p) => !catIds.includes(p.categoryId)),
         outputs: prev.outputs.filter((o) => !catIds.includes(o.categoryId)),
-        activeWorkspaceId: remaining[0]?.id ?? null,
-        activeCategoryId: null,
+        activeWorkspaceId: nextActiveWorkspaceId,
+        activeCategoryId: nextActiveCategoryId,
       };
     });
   }, []);
 
   const selectWorkspace = useCallback((id: string) => {
     setStore((prev) => {
+      const workspaceExists = prev.workspaces.some((w) => w.id === id);
+      if (!workspaceExists) return prev;
+
       const firstCat = prev.categories.find((c) => c.workspaceId === id);
       return {
         ...prev,
@@ -302,17 +338,31 @@ export function useWorkspaceStore() {
 
   const deleteCategory = useCallback((id: string) => {
     setStore((prev) => {
+      const targetCategory = prev.categories.find((c) => c.id === id);
+      if (!targetCategory) return prev;
+
+      const sameWorkspaceCount = prev.categories.filter(
+        (c) => c.workspaceId === targetCategory.workspaceId
+      ).length;
+
+      // Prevent removing the final category from a workspace.
+      if (sameWorkspaceCount <= 1) return prev;
+
       const remaining = prev.categories.filter((c) => c.id !== id);
       const firstInWorkspace = remaining.find(
-        (c) => c.workspaceId === prev.activeWorkspaceId
+        (c) => c.workspaceId === targetCategory.workspaceId
       );
+
       return {
         ...prev,
         categories: remaining,
         artifacts: prev.artifacts.filter((a) => a.categoryId !== id),
         prompts: prev.prompts.filter((p) => p.categoryId !== id),
         outputs: prev.outputs.filter((o) => o.categoryId !== id),
-        activeCategoryId: firstInWorkspace?.id ?? null,
+        activeCategoryId:
+          prev.activeCategoryId === id
+            ? (firstInWorkspace?.id ?? null)
+            : prev.activeCategoryId,
       };
     });
   }, []);
@@ -418,7 +468,7 @@ export function useWorkspaceStore() {
 
   const savePanelSizes = useCallback((sizes: Partial<PanelSizes>) => {
     setPanelSizesState((prev) => {
-      const next = { ...prev, ...sizes };
+      const next = normalizePanelSizes({ ...prev, ...sizes });
       persistPanelSizes(next);
       return next;
     });
