@@ -16,24 +16,42 @@ export function useAIAssistant() {
   useEffect(() => {
     const savedSettings = localStorage.getItem(STORAGE_KEY);
     const savedMessages = localStorage.getItem(MESSAGES_STORAGE_KEY);
-    
+
     if (savedSettings) {
-      const parsed = JSON.parse(savedSettings);
-      setSettings(parsed);
-      
-      // Check if API key is valid
-      if (parsed.apiKey && validateApiKey(parsed.provider, parsed.apiKey)) {
-        setIsConfigured(true);
-        setAIService(new AIService(parsed));
+      try {
+        const parsed = JSON.parse(savedSettings);
+        setSettings(parsed);
+
+        // Check if API key is valid
+        if (parsed.apiKey && validateApiKey(parsed.provider, parsed.apiKey)) {
+          setIsConfigured(true);
+          setAIService(new AIService(parsed));
+        }
+      } catch (error) {
+        console.warn(
+          'Failed to parse saved AI settings, resetting to defaults:',
+          error
+        );
+        localStorage.removeItem(STORAGE_KEY);
       }
     }
 
     if (savedMessages) {
-      const parsed = JSON.parse(savedMessages);
-      setMessages(parsed.map((m: any) => ({
-        ...m,
-        timestamp: new Date(m.timestamp)
-      })));
+      try {
+        const parsed = JSON.parse(savedMessages);
+        setMessages(
+          parsed.map((m: any) => ({
+            ...m,
+            timestamp: new Date(m.timestamp),
+          }))
+        );
+      } catch (error) {
+        console.warn(
+          'Failed to parse saved AI messages, resetting to defaults:',
+          error
+        );
+        localStorage.removeItem(MESSAGES_STORAGE_KEY);
+      }
     }
   }, []);
 
@@ -41,8 +59,11 @@ export function useAIAssistant() {
   const saveSettings = useCallback((newSettings: AISettings) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
     setSettings(newSettings);
-    
-    if (newSettings.apiKey && validateApiKey(newSettings.provider, newSettings.apiKey)) {
+
+    if (
+      newSettings.apiKey &&
+      validateApiKey(newSettings.provider, newSettings.apiKey)
+    ) {
       setIsConfigured(true);
       setAIService(new AIService(newSettings));
     } else {
@@ -58,26 +79,32 @@ export function useAIAssistant() {
   }, []);
 
   // Send message to AI
-  const sendMessage = useCallback(async (content: string, context?: { files: any[], selectedFile: string, appSettings: any }) => {
-    if (!aiService || !isConfigured) {
-      throw new Error('AI service not configured. Please set up your API key.');
-    }
+  const sendMessage = useCallback(
+    async (
+      content: string,
+      context?: { files: any[]; selectedFile: string; appSettings: any }
+    ) => {
+      if (!aiService || !isConfigured) {
+        throw new Error(
+          'AI service not configured. Please set up your API key.'
+        );
+      }
 
-    setIsLoading(true);
+      setIsLoading(true);
 
-    try {
-      // Create user message
-      const userMessage: AIMessage = {
-        id: Date.now().toString(),
-        role: 'user',
-        content,
-        timestamp: new Date()
-      };
+      try {
+        // Create user message
+        const userMessage: AIMessage = {
+          id: Date.now().toString(),
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
 
-      // Add context if provided
-      let contextualContent = content;
-      if (context) {
-        contextualContent = `${content}
+        // Add context if provided
+        let contextualContent = content;
+        if (context) {
+          contextualContent = `${content}
 
 CURRENT CONTEXT:
 - Current file: ${context.selectedFile}
@@ -88,27 +115,28 @@ Current file content:
 \`\`\`${context.files.find(f => f.name === context.selectedFile)?.type || 'text'}
 ${context.files.find(f => f.name === context.selectedFile)?.content || ''}
 \`\`\``;
-        
-        userMessage.content = contextualContent;
+
+          userMessage.content = contextualContent;
+        }
+
+        const updatedMessages = [...messages, userMessage];
+        saveMessages(updatedMessages);
+
+        // Send to AI service
+        const response = await aiService.sendMessage(updatedMessages);
+        const finalMessages = [...updatedMessages, response];
+
+        saveMessages(finalMessages);
+        return response;
+      } catch (error) {
+        console.error('AI service error:', error);
+        throw error;
+      } finally {
+        setIsLoading(false);
       }
-
-      const updatedMessages = [...messages, userMessage];
-      saveMessages(updatedMessages);
-
-      // Send to AI service
-      const response = await aiService.sendMessage(updatedMessages);
-      const finalMessages = [...updatedMessages, response];
-      
-      saveMessages(finalMessages);
-      return response;
-      
-    } catch (error) {
-      console.error('AI service error:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [aiService, isConfigured, messages, saveMessages]);
+    },
+    [aiService, isConfigured, messages, saveMessages]
+  );
 
   // Clear conversation
   const clearMessages = useCallback(() => {
@@ -117,23 +145,27 @@ ${context.files.find(f => f.name === context.selectedFile)?.content || ''}
   }, []);
 
   // Test API connection
-  const testConnection = useCallback(async (testSettings: AISettings): Promise<boolean> => {
-    try {
-      const testService = new AIService(testSettings);
-      const testMessage: AIMessage = {
-        id: 'test',
-        role: 'user',
-        content: 'Hello, please respond with "Connection successful" to test the API.',
-        timestamp: new Date()
-      };
-      
-      await testService.sendMessage([testMessage]);
-      return true;
-    } catch (error) {
-      console.error('Connection test failed:', error);
-      return false;
-    }
-  }, []);
+  const testConnection = useCallback(
+    async (testSettings: AISettings): Promise<boolean> => {
+      try {
+        const testService = new AIService(testSettings);
+        const testMessage: AIMessage = {
+          id: 'test',
+          role: 'user',
+          content:
+            'Hello, please respond with "Connection successful" to test the API.',
+          timestamp: new Date(),
+        };
+
+        await testService.sendMessage([testMessage]);
+        return true;
+      } catch (error) {
+        console.error('Connection test failed:', error);
+        return false;
+      }
+    },
+    []
+  );
 
   return {
     settings,
@@ -143,6 +175,6 @@ ${context.files.find(f => f.name === context.selectedFile)?.content || ''}
     saveSettings,
     sendMessage,
     clearMessages,
-    testConnection
+    testConnection,
   };
 }
