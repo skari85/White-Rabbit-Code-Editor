@@ -401,6 +401,95 @@ data.forEach((v, i) => {
       },
     ],
   },
+  {
+    id: 'pomodoro',
+    name: 'Pomodoro Timer',
+    tagline: 'Focus timer with sessions',
+    icon: '⏱️',
+    files: [
+      {
+        name: 'index.html',
+        type: 'html',
+        content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pomodoro</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <p id="mode">Focus</p>
+    <h1 id="clock">25:00</h1>
+    <div class="controls">
+      <button id="toggle">Start</button>
+      <button id="reset">Reset</button>
+    </div>
+    <p class="sessions">Sessions done: <span id="count">0</span></p>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>`,
+      },
+      {
+        name: 'style.css',
+        type: 'css',
+        content: `body { display: grid; place-items: center; min-height: 100vh; margin: 0; background: #0d0d0d; color: #eaeaea; font-family: system-ui, sans-serif; }
+main { text-align: center; }
+#mode { color: #00ffe1; letter-spacing: .2em; text-transform: uppercase; font-size: .8rem; }
+#clock { font-size: 5rem; margin: .5rem 0 1.5rem; font-variant-numeric: tabular-nums; }
+.controls { display: flex; gap: .75rem; justify-content: center; }
+button { border: none; border-radius: 999px; padding: .6rem 1.8rem; font-size: 1rem; cursor: pointer; }
+#toggle { background: #6c2fff; color: white; }
+#toggle:hover { background: #5a1fe0; }
+#reset { background: #161616; color: #7a7a7a; border: 1px solid #262626; }
+.sessions { color: #7a7a7a; margin-top: 2rem; font-size: .85rem; }`,
+      },
+      {
+        name: 'app.js',
+        type: 'js',
+        content: `const FOCUS = 25 * 60, BREAK = 5 * 60;
+let remaining = FOCUS, running = false, onBreak = false, sessions = 0, timer = null;
+
+const clock = document.getElementById('clock');
+const mode = document.getElementById('mode');
+const toggle = document.getElementById('toggle');
+
+function render() {
+  const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+  const s = String(remaining % 60).padStart(2, '0');
+  clock.textContent = m + ':' + s;
+  mode.textContent = onBreak ? 'Break' : 'Focus';
+  toggle.textContent = running ? 'Pause' : 'Start';
+  document.getElementById('count').textContent = sessions;
+}
+
+function tick() {
+  if (--remaining > 0) return render();
+  if (!onBreak) sessions++;
+  onBreak = !onBreak;
+  remaining = onBreak ? BREAK : FOCUS;
+  render();
+}
+
+toggle.addEventListener('click', () => {
+  running = !running;
+  if (running) timer = setInterval(tick, 1000);
+  else clearInterval(timer);
+  render();
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  clearInterval(timer);
+  running = false; onBreak = false; remaining = FOCUS;
+  render();
+});
+
+render();`,
+      },
+    ],
+  },
 ];
 
 export function templateToFiles(template: SpaceTemplate): FileContent[] {

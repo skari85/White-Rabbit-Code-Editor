@@ -15,6 +15,7 @@ import MonacoEditorClient from '@/components/monaco-editor-client';
 import { Button } from '@/components/ui/button';
 import { FileContent } from '@/hooks/use-code-builder';
 import { useAIAssistant } from '@/hooks/use-ai-assistant';
+import { AIService } from '@/lib/ai-service';
 import {
   SPACE_TEMPLATES,
   buildPreviewHtml,
@@ -24,7 +25,16 @@ import {
   templateToFiles,
 } from '@/lib/space-engine';
 import JSZip from 'jszip';
-import { ArrowLeft, Download, Eye, EyeOff, Send, Sparkles } from 'lucide-react';
+import {
+  ArrowLeft,
+  Download,
+  Eye,
+  EyeOff,
+  Plus,
+  Send,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import React, {
   useCallback,
   useEffect,
@@ -69,9 +79,10 @@ export default function CoderSpace() {
   const [hasSaved, setHasSaved] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [status, setStatus] = useState<string>('');
+  const [busy, setBusy] = useState(false);
   const promptRef = useRef<HTMLInputElement>(null);
 
-  const { isConfigured, isLoading, sendMessage } = useAIAssistant();
+  const { isConfigured, settings } = useAIAssistant();
 
   useEffect(() => {
     setHasSaved(loadSavedProject() !== null);
@@ -156,27 +167,43 @@ export default function CoderSpace() {
     []
   );
 
-  const runPrompt = async (text: string) => {
+  const runPrompt = async (text: string, filesOverride?: FileContent[]) => {
     const trimmed = text.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || busy) return;
     if (!isConfigured) {
       setStatus(
         'Add an AI API key in the main editor settings to use prompts — templates work without one.'
       );
       return;
     }
+    setBusy(true);
     setStatus('Thinking…');
     setPrompt('');
     try {
-      const response = await sendMessage(
-        `${trimmed}\n\n${AI_FILE_INSTRUCTION}`,
+      // filesOverride covers the launch flow, where state hasn't settled yet
+      const fileContext = (filesOverride ?? files)
+        .map(
+          f =>
+            `\`\`\`${monacoLanguageFromName(f.name)} // ${f.name}\n${f.content}\n\`\`\``
+        )
+        .join('\n\n');
+      const content = `${trimmed}\n\nCurrent project "${projectName}" files:\n\n${fileContext}\n\n${AI_FILE_INSTRUCTION}`;
+
+      const service = new AIService(settings);
+      let response = '';
+      for await (const chunk of service.sendMessageStream([
         {
-          files,
-          selectedFile,
-          appSettings: { name: projectName },
-        }
-      );
-      const applied = applyAIFiles(parseFilesFromAIResponse(response.content));
+          id: Date.now().toString(),
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        },
+      ])) {
+        response += chunk;
+        setStatus(`Writing code… ${response.length} chars`);
+      }
+
+      const applied = applyAIFiles(parseFilesFromAIResponse(response));
       setStatus(
         applied > 0
           ? `Updated ${applied} file${applied === 1 ? '' : 's'}`
@@ -186,17 +213,43 @@ export default function CoderSpace() {
       setStatus(
         error instanceof Error ? error.message : 'Something went wrong'
       );
+    } finally {
+      setBusy(false);
     }
   };
 
   const launchWithPrompt = () => {
     const trimmed = prompt.trim();
     const blank = SPACE_TEMPLATES.find(t => t.id === 'blank')!;
-    enterWorkspace(templateToFiles(blank), 'untitled-space');
+    const blankFiles = templateToFiles(blank);
+    enterWorkspace(blankFiles, 'untitled-space');
     if (trimmed) {
       // Fire the prompt against the fresh project
-      void runPrompt(trimmed);
+      void runPrompt(trimmed, blankFiles);
     }
+  };
+
+  const addFile = () => {
+    const name = window.prompt('File name', 'notes.md')?.trim();
+    if (!name || files.some(f => f.name === name)) return;
+    setFiles(prev => [
+      ...prev,
+      {
+        name,
+        content: '',
+        type: fileTypeFromName(name),
+        lastModified: new Date(),
+      },
+    ]);
+    setSelectedFile(name);
+  };
+
+  const removeFile = (name: string) => {
+    if (files.length <= 1) return;
+    if (!window.confirm(`Delete ${name}?`)) return;
+    const next = files.filter(f => f.name !== name);
+    setFiles(next);
+    if (name === selectedFile) setSelectedFile(next[0]?.name ?? '');
   };
 
   const exportZip = async () => {
@@ -320,25 +373,49 @@ export default function CoderSpace() {
       </header>
 
       {/* File tabs */}
-      <nav className='flex gap-1 px-3 pt-2 shrink-0 overflow-x-auto'>
+      <nav className='flex items-center gap-1 px-3 pt-2 shrink-0 overflow-x-auto'>
         {files.map(f => (
-          <button
+          <span
             key={f.name}
-            onClick={() => setSelectedFile(f.name)}
-            className={`px-3 py-1.5 rounded-t-lg text-xs font-mono whitespace-nowrap ${
+            className={`flex items-center rounded-t-lg text-xs font-mono whitespace-nowrap ${
               f.name === selectedFile
                 ? 'bg-[#161616] text-[#00ffe1] border border-b-0 border-[#262626]'
                 : 'text-[#7a7a7a] hover:text-[#eaeaea]'
             }`}
           >
-            {f.name}
-          </button>
+            <button
+              onClick={() => setSelectedFile(f.name)}
+              className='px-3 py-1.5'
+            >
+              {f.name}
+            </button>
+            {f.name === selectedFile && files.length > 1 && (
+              <button
+                onClick={() => removeFile(f.name)}
+                className='pr-2 text-[#7a7a7a] hover:text-[#ff3c75]'
+                aria-label={`Delete ${f.name}`}
+              >
+                <X className='w-3 h-3' />
+              </button>
+            )}
+          </span>
         ))}
+        <button
+          onClick={addFile}
+          className='p-1.5 text-[#7a7a7a] hover:text-[#00ffe1]'
+          aria-label='Add file'
+        >
+          <Plus className='w-3.5 h-3.5' />
+        </button>
       </nav>
 
-      {/* Editor + preview */}
+      {/* Editor + preview: side by side on md+, either/or on mobile */}
       <div className='flex-1 min-h-0 flex'>
-        <div className={showPreview ? 'w-1/2 min-w-0' : 'w-full min-w-0'}>
+        <div
+          className={
+            showPreview ? 'hidden md:block md:w-1/2 min-w-0' : 'w-full min-w-0'
+          }
+        >
           {currentFile && (
             <MonacoEditorClient
               value={currentFile.content}
@@ -358,7 +435,7 @@ export default function CoderSpace() {
           )}
         </div>
         {showPreview && (
-          <div className='w-1/2 min-w-0 border-l border-[#262626] bg-white'>
+          <div className='w-full md:w-1/2 min-w-0 md:border-l border-[#262626] bg-white'>
             <iframe
               title='Live preview'
               sandbox='allow-scripts'
@@ -391,7 +468,7 @@ export default function CoderSpace() {
           />
           <Button
             type='submit'
-            disabled={isLoading}
+            disabled={busy}
             className='rounded-xl bg-[#6c2fff] hover:bg-[#5a1fe0]'
             aria-label='Send prompt'
           >
