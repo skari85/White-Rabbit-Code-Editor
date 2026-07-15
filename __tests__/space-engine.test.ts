@@ -90,6 +90,26 @@ describe('buildPreviewHtml', () => {
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('let x = 1;');
   });
+
+  it('injects the console bridge before project scripts in both paths', () => {
+    const withIndex = buildPreviewHtml([
+      {
+        name: 'index.html',
+        content: '<html><head></head><body></body></html>',
+      },
+      { name: 'app.js', content: 'console.log("x");' },
+    ]);
+    const withoutIndex = buildPreviewHtml([
+      { name: 'app.js', content: 'console.log("x");' },
+    ]);
+
+    for (const html of [withIndex, withoutIndex]) {
+      expect(html).toContain('wr-console');
+      expect(html.indexOf('wr-console')).toBeLessThan(
+        html.indexOf('console.log("x")')
+      );
+    }
+  });
 });
 
 describe('templates', () => {

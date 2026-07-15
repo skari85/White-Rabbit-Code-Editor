@@ -120,6 +120,46 @@ export function parseFilesFromAIResponse(response: string): ParsedAIFile[] {
   return Array.from(byName.values());
 }
 
+export interface ConsoleEntry {
+  level: 'log' | 'info' | 'warn' | 'error';
+  text: string;
+}
+
+/**
+ * Injected first into every preview document. Mirrors console calls and
+ * uncaught errors to the parent frame as `wr-console` messages so the
+ * workspace can show them in its console panel.
+ */
+const CONSOLE_BRIDGE = `<script>
+(function () {
+  function send(level, args) {
+    try {
+      parent.postMessage({
+        type: 'wr-console',
+        level: level,
+        text: args.map(function (a) {
+          try { return typeof a === 'object' ? JSON.stringify(a) : String(a); }
+          catch (e) { return String(a); }
+        }).join(' ')
+      }, '*');
+    } catch (e) {}
+  }
+  ['log', 'info', 'warn', 'error'].forEach(function (level) {
+    var orig = console[level];
+    console[level] = function () {
+      send(level, Array.prototype.slice.call(arguments));
+      orig.apply(console, arguments);
+    };
+  });
+  window.addEventListener('error', function (e) {
+    send('error', [e.message + (e.lineno ? ' (line ' + e.lineno + ')' : '')]);
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    send('error', ['Unhandled promise rejection: ' + e.reason]);
+  });
+})();
+</script>`;
+
 /**
  * Combine project files into a single self-contained HTML document for a
  * sandboxed iframe preview. Local stylesheet/script references are replaced
@@ -140,10 +180,15 @@ export function buildPreviewHtml(
     : '';
 
   if (!html) {
-    return `<!DOCTYPE html><html><head><meta charset="utf-8">${styleTag}</head><body>${scriptTag}</body></html>`;
+    return `<!DOCTYPE html><html><head><meta charset="utf-8">${CONSOLE_BRIDGE}${styleTag}</head><body>${scriptTag}</body></html>`;
   }
 
   let doc = html.content;
+
+  // The bridge must run before any project script so early logs are caught.
+  doc = doc.includes('<head>')
+    ? doc.replace('<head>', `<head>\n${CONSOLE_BRIDGE}`)
+    : CONSOLE_BRIDGE + doc;
 
   // Drop references to local files we are about to inline.
   for (const f of [...cssFiles, ...jsFiles]) {

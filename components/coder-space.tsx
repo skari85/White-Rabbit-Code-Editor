@@ -12,11 +12,13 @@
  */
 
 import MonacoEditorClient from '@/components/monaco-editor-client';
+import PublishModal from '@/components/publish-modal';
 import { Button } from '@/components/ui/button';
 import { FileContent } from '@/hooks/use-code-builder';
 import { useAIAssistant } from '@/hooks/use-ai-assistant';
 import { AIService } from '@/lib/ai-service';
 import {
+  ConsoleEntry,
   SPACE_TEMPLATES,
   buildPreviewHtml,
   fileTypeFromName,
@@ -31,8 +33,11 @@ import {
   Eye,
   EyeOff,
   Plus,
+  Rocket,
   Send,
   Sparkles,
+  Terminal,
+  Undo2,
   X,
 } from 'lucide-react';
 import React, {
@@ -80,6 +85,13 @@ export default function CoderSpace() {
   const [prompt, setPrompt] = useState('');
   const [status, setStatus] = useState<string>('');
   const [busy, setBusy] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [consoleOpen, setConsoleOpen] = useState(false);
+  const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([]);
+  const [aiBackup, setAiBackup] = useState<{
+    files: FileContent[];
+    selectedFile: string;
+  } | null>(null);
   const promptRef = useRef<HTMLInputElement>(null);
 
   const { isConfigured, settings } = useAIAssistant();
@@ -110,7 +122,26 @@ export default function CoderSpace() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // Collect console output posted up from the preview iframe's bridge script
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      if (e.data?.type !== 'wr-console') return;
+      setConsoleEntries(prev =>
+        [...prev, { level: e.data.level, text: String(e.data.text) }].slice(
+          -200
+        )
+      );
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
+
   const previewHtml = useMemo(() => buildPreviewHtml(files), [files]);
+
+  // Each preview re-render is a fresh run; stale logs would mislead
+  useEffect(() => {
+    setConsoleEntries([]);
+  }, [previewHtml]);
 
   const currentFile = files.find(f => f.name === selectedFile);
 
@@ -204,6 +235,9 @@ export default function CoderSpace() {
       }
 
       const applied = applyAIFiles(parseFilesFromAIResponse(response));
+      if (applied > 0) {
+        setAiBackup({ files: filesOverride ?? files, selectedFile });
+      }
       setStatus(
         applied > 0
           ? `Updated ${applied} file${applied === 1 ? '' : 's'}`
@@ -250,6 +284,14 @@ export default function CoderSpace() {
     const next = files.filter(f => f.name !== name);
     setFiles(next);
     if (name === selectedFile) setSelectedFile(next[0]?.name ?? '');
+  };
+
+  const undoAIChange = () => {
+    if (!aiBackup) return;
+    setFiles(aiBackup.files);
+    setSelectedFile(aiBackup.selectedFile);
+    setAiBackup(null);
+    setStatus('Reverted last AI change');
   };
 
   const exportZip = async () => {
@@ -364,11 +406,32 @@ export default function CoderSpace() {
           )}
         </button>
         <button
+          onClick={() => setConsoleOpen(o => !o)}
+          className={`relative p-1.5 rounded-lg hover:bg-[#161616] ${
+            consoleOpen
+              ? 'text-[#00ffe1]'
+              : 'text-[#7a7a7a] hover:text-[#eaeaea]'
+          }`}
+          aria-label={consoleOpen ? 'Hide console' : 'Show console'}
+        >
+          <Terminal className='w-4 h-4' />
+          {consoleEntries.some(e => e.level === 'error') && (
+            <span className='absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[#ff3c75]' />
+          )}
+        </button>
+        <button
           onClick={exportZip}
           className='p-1.5 rounded-lg hover:bg-[#161616] text-[#7a7a7a] hover:text-[#eaeaea]'
           aria-label='Export project as ZIP'
         >
           <Download className='w-4 h-4' />
+        </button>
+        <button
+          onClick={() => setPublishOpen(true)}
+          className='p-1.5 rounded-lg hover:bg-[#161616] text-[#7a7a7a] hover:text-[#00ffe1]'
+          aria-label='Deploy project'
+        >
+          <Rocket className='w-4 h-4' />
         </button>
       </header>
 
@@ -446,6 +509,32 @@ export default function CoderSpace() {
         )}
       </div>
 
+      {/* Console panel */}
+      {consoleOpen && (
+        <div className='shrink-0 border-t border-[#262626] bg-[#0a0a0a] max-h-36 overflow-y-auto font-mono text-xs'>
+          {consoleEntries.length === 0 ? (
+            <p className='px-3 py-2 text-[#555]'>
+              Console is empty — logs and errors from the preview appear here.
+            </p>
+          ) : (
+            consoleEntries.map((entry, i) => (
+              <p
+                key={i}
+                className={`px-3 py-0.5 border-b border-[#161616] whitespace-pre-wrap break-all ${
+                  entry.level === 'error'
+                    ? 'text-[#ff3c75]'
+                    : entry.level === 'warn'
+                      ? 'text-yellow-400'
+                      : 'text-[#7a7a7a]'
+                }`}
+              >
+                {entry.text}
+              </p>
+            ))
+          )}
+        </div>
+      )}
+
       {/* AI command bar */}
       <footer className='shrink-0 border-t border-[#262626] p-3 space-y-1.5'>
         <form
@@ -475,12 +564,31 @@ export default function CoderSpace() {
             <Send className='w-4 h-4' />
           </Button>
         </form>
-        {status && (
-          <p className='text-xs text-[#7a7a7a] px-1' role='status'>
-            {status}
-          </p>
+        {(status || aiBackup) && (
+          <div className='flex items-center gap-3 px-1'>
+            {status && (
+              <p className='text-xs text-[#7a7a7a]' role='status'>
+                {status}
+              </p>
+            )}
+            {aiBackup && (
+              <button
+                onClick={undoAIChange}
+                className='inline-flex items-center gap-1 text-xs text-[#00ffe1] hover:underline'
+              >
+                <Undo2 className='w-3 h-3' />
+                Undo AI change
+              </button>
+            )}
+          </div>
         )}
       </footer>
+
+      <PublishModal
+        open={publishOpen}
+        onOpenChange={setPublishOpen}
+        files={files}
+      />
     </div>
   );
 }
