@@ -75,6 +75,74 @@ const AI_FILE_INSTRUCTION =
   'string is the language followed by `// filename` (e.g. ```html // index.html). ' +
   'Include every file that needs to change, in full.';
 
+const HINT_DISMISSED_KEY = 'wr-space-hint-dismissed';
+
+// One-tap prompt ideas per template — the fastest possible next step,
+// so there is never a blank-prompt moment.
+const IDEA_CHIPS: Record<string, string[]> = {
+  blank: [
+    'Make a colorful todo list',
+    'Add a button that does something fun',
+    'Center everything beautifully',
+  ],
+  landing: [
+    'Add a pricing section',
+    'Give it a pastel color scheme',
+    'Add a FAQ with 3 questions',
+  ],
+  game: [
+    'Make the snake rainbow colored',
+    'Speed the game up over time',
+    'Add a proper game-over screen',
+  ],
+  dashboard: [
+    'Animate the bars growing in',
+    'Add a second chart',
+    'Switch to a light theme',
+  ],
+  pomodoro: [
+    'Add a circular progress ring',
+    'Let me set custom session lengths',
+    'Celebrate finished sessions',
+  ],
+  default: [
+    'Make it more colorful',
+    'Improve the layout',
+    'Add a delightful animation',
+  ],
+};
+
+/** Brief sparkle burst for micro-wins. Skipped for reduced-motion users. */
+function Celebration({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <div
+      aria-hidden
+      className='pointer-events-none fixed inset-0 z-50 motion-reduce:hidden'
+    >
+      <style>{`
+        @keyframes wr-sparkle {
+          0% { transform: translateY(0) scale(0.6); opacity: 1; }
+          100% { transform: translateY(-90px) scale(1.2); opacity: 0; }
+        }
+      `}</style>
+      {Array.from({ length: 10 }).map((_, i) => (
+        <span
+          key={i}
+          className='absolute text-xl'
+          style={{
+            left: `${8 + i * 9}%`,
+            top: `${45 + (i % 3) * 12}%`,
+            animation: `wr-sparkle 0.9s ease-out ${i * 0.05}s forwards`,
+          }}
+        >
+          {['✨', '🎉', '⚡'][i % 3]}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function CoderSpace() {
   const [stage, setStage] = useState<'launch' | 'workspace'>('launch');
   const [projectName, setProjectName] = useState('untitled-space');
@@ -92,7 +160,23 @@ export default function CoderSpace() {
     files: FileContent[];
     selectedFile: string;
   } | null>(null);
+  const [templateId, setTemplateId] = useState<string>('default');
+  const [showHint, setShowHint] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
   const promptRef = useRef<HTMLInputElement>(null);
+  const celebrateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerCelebration = useCallback(() => {
+    if (celebrateTimer.current) clearTimeout(celebrateTimer.current);
+    setCelebrate(true);
+    celebrateTimer.current = setTimeout(() => setCelebrate(false), 1200);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (celebrateTimer.current) clearTimeout(celebrateTimer.current);
+    };
+  }, []);
 
   const { isConfigured, settings } = useAIAssistant();
 
@@ -146,23 +230,32 @@ export default function CoderSpace() {
   const currentFile = files.find(f => f.name === selectedFile);
 
   const enterWorkspace = useCallback(
-    (nextFiles: FileContent[], name: string) => {
+    (nextFiles: FileContent[], name: string, fromTemplate = 'default') => {
       setFiles(nextFiles);
       setSelectedFile(nextFiles[0]?.name ?? '');
       setProjectName(name);
+      setTemplateId(fromTemplate);
       setStage('workspace');
       setStatus('');
+      setShowHint(!localStorage.getItem(HINT_DISMISSED_KEY));
+      triggerCelebration();
     },
-    []
+    [triggerCelebration]
   );
 
-  const startFromTemplate = (templateId: string) => {
-    const template = SPACE_TEMPLATES.find(t => t.id === templateId);
+  const startFromTemplate = (id: string) => {
+    const template = SPACE_TEMPLATES.find(t => t.id === id);
     if (!template) return;
     enterWorkspace(
       templateToFiles(template),
-      template.name.toLowerCase().replace(/\s+/g, '-')
+      template.name.toLowerCase().replace(/\s+/g, '-'),
+      template.id
     );
+  };
+
+  const dismissHint = () => {
+    setShowHint(false);
+    localStorage.setItem(HINT_DISMISSED_KEY, '1');
   };
 
   const resumeSaved = () => {
@@ -237,6 +330,7 @@ export default function CoderSpace() {
       const applied = applyAIFiles(parseFilesFromAIResponse(response));
       if (applied > 0) {
         setAiBackup({ files: filesOverride ?? files, selectedFile });
+        triggerCelebration();
       }
       setStatus(
         applied > 0
@@ -472,6 +566,24 @@ export default function CoderSpace() {
         </button>
       </nav>
 
+      {/* One-time orientation hint */}
+      {showHint && (
+        <div className='flex items-center gap-2 mx-3 mt-2 px-3 py-2 rounded-lg bg-[#6c2fff1a] border border-[#6c2fff4d] text-xs text-[#b9a3ff] shrink-0'>
+          <Sparkles className='w-3.5 h-3.5 shrink-0' />
+          <span className='flex-1'>
+            This is your code — change anything and the preview updates
+            instantly. Nothing can break: every AI change has an undo.
+          </span>
+          <button
+            onClick={dismissHint}
+            className='hover:text-white'
+            aria-label='Dismiss hint'
+          >
+            <X className='w-3.5 h-3.5' />
+          </button>
+        </div>
+      )}
+
       {/* Editor + preview: side by side on md+, either/or on mobile */}
       <div className='flex-1 min-h-0 flex'>
         <div
@@ -537,6 +649,27 @@ export default function CoderSpace() {
 
       {/* AI command bar */}
       <footer className='shrink-0 border-t border-[#262626] p-3 space-y-1.5'>
+        {/* One-tap ideas: always a next step, never a blank prompt */}
+        <div className='flex gap-1.5 overflow-x-auto pb-0.5'>
+          {(IDEA_CHIPS[templateId] ?? IDEA_CHIPS.default).map(idea => (
+            <button
+              key={idea}
+              type='button'
+              disabled={busy}
+              onClick={() => {
+                if (isConfigured) {
+                  void runPrompt(idea);
+                } else {
+                  setPrompt(idea);
+                  promptRef.current?.focus();
+                }
+              }}
+              className='shrink-0 rounded-full border border-[#262626] bg-[#161616] px-3 py-1 text-xs text-[#7a7a7a] hover:border-[#00ffe1] hover:text-[#eaeaea] disabled:opacity-40'
+            >
+              {idea}
+            </button>
+          ))}
+        </div>
         <form
           onSubmit={e => {
             e.preventDefault();
@@ -589,6 +722,7 @@ export default function CoderSpace() {
         onOpenChange={setPublishOpen}
         files={files}
       />
+      <Celebration show={celebrate} />
     </div>
   );
 }
