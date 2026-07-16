@@ -1,45 +1,51 @@
-import { HelpProvider } from '@/components/contextual-help'
-import { ErrorTrackingProvider } from '@/components/error-tracking-provider'
-import { CopyrightFooter } from '@/components/license-notice'
-import { ThemeProvider } from '@/components/theme-provider'
-import { NotificationProvider } from '@/components/ui/notification-system'
-import { Analytics } from '@vercel/analytics/next'
-import { SpeedInsights } from '@vercel/speed-insights/next'
-import { GeistMono } from 'geist/font/mono'
-import { GeistSans } from 'geist/font/sans'
-import type { Metadata, Viewport } from 'next'
-import React from 'react'
-import JsonLd from './(components)/JsonLd'
-import './globals.css'
+import { HelpProvider } from '@/components/contextual-help';
+import { ErrorTrackingProvider } from '@/components/error-tracking-provider';
+import { ThemeProvider } from '@/components/theme-provider';
+import { NotificationProvider } from '@/components/ui/notification-system';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { GeistMono } from 'geist/font/mono';
+import { GeistSans } from 'geist/font/sans';
+import type { Metadata, Viewport } from 'next';
+import React from 'react';
+import JsonLd from './(components)/JsonLd';
+import './globals.css';
 
-const base = "https://www.whiterabbit.onl"
+const base = 'https://www.whiterabbit.onl';
 
 export const metadata: Metadata = {
   metadataBase: new URL(base),
   title: {
-    default: "White Rabbit — Minimal, Open-Source Code Editor",
-    template: "%s · White Rabbit",
+    default: 'White Rabbit — Minimal, Open-Source Code Editor',
+    template: '%s · White Rabbit',
   },
   description:
-    "A clean, open code editor built by a visual artist — fast, minimal, and distraction-free.",
+    'A clean, open code editor built by a visual artist — fast, minimal, and distraction-free.',
   alternates: { canonical: base },
   openGraph: {
-    type: "website",
+    type: 'website',
     url: base,
-    siteName: "White Rabbit",
-    title: "White Rabbit — Minimal, Open-Source Code Editor",
+    siteName: 'White Rabbit',
+    title: 'White Rabbit — Minimal, Open-Source Code Editor',
     description:
-      "A clean, open code editor built by a visual artist — fast, minimal, and distraction-free.",
-    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "White Rabbit editor preview" }],
+      'A clean, open code editor built by a visual artist — fast, minimal, and distraction-free.',
+    images: [
+      {
+        url: '/og.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'White Rabbit editor preview',
+      },
+    ],
   },
   twitter: {
-    card: "summary_large_image",
-    title: "White Rabbit — Minimal, Open-Source Code Editor",
+    card: 'summary_large_image',
+    title: 'White Rabbit — Minimal, Open-Source Code Editor',
     description:
-      "A clean, open code editor built by a visual artist — fast, minimal, and distraction-free.",
-    images: ["/og.jpg"],
+      'A clean, open code editor built by a visual artist — fast, minimal, and distraction-free.',
+    images: ['/og.jpg'],
   },
-  icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png" },
+  icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' },
   generator: 'White Rabbit',
   manifest: '/manifest.json',
   appleWebApp: {
@@ -53,7 +59,7 @@ export const metadata: Metadata = {
   other: {
     'mobile-web-app-capable': 'yes',
   },
-}
+};
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -61,26 +67,40 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   themeColor: '#6c2fff',
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <html
+      lang='en'
+      suppressHydrationWarning
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
+    >
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
-        <link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-        <meta name="theme-color" content="#6c2fff" />
-        <meta name="background-color" content="#0d0d0d" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="White Rabbit" />
-        <meta name="format-detection" content="telephone=no" />
+        <link rel='icon' href='/favicon.ico' sizes='any' />
+        <link
+          rel='icon'
+          href='/icon-192.png'
+          type='image/png'
+          sizes='192x192'
+        />
+        <link
+          rel='icon'
+          href='/icon-512.png'
+          type='image/png'
+          sizes='512x512'
+        />
+        <link rel='apple-touch-icon' href='/icon-192.png' />
+        <meta name='theme-color' content='#6c2fff' />
+        <meta name='background-color' content='#0d0d0d' />
+        <meta name='mobile-web-app-capable' content='yes' />
+        <meta name='apple-mobile-web-app-status-bar-style' content='default' />
+        <meta name='apple-mobile-web-app-title' content='White Rabbit' />
+        <meta name='format-detection' content='telephone=no' />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -105,22 +125,19 @@ export default function RootLayout({
         <JsonLd />
         <ErrorTrackingProvider>
           <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
+            attribute='class'
+            defaultTheme='dark'
             enableSystem
             disableTransitionOnChange
           >
-              <NotificationProvider>
-                <HelpProvider>
-                  {children}
-                </HelpProvider>
-                <CopyrightFooter />
-                <Analytics />
-                <SpeedInsights />
-              </NotificationProvider>
+            <NotificationProvider>
+              <HelpProvider>{children}</HelpProvider>
+              <Analytics />
+              <SpeedInsights />
+            </NotificationProvider>
           </ThemeProvider>
         </ErrorTrackingProvider>
       </body>
     </html>
-  )
+  );
 }
