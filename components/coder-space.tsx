@@ -11,9 +11,11 @@
  * For commercial licensing, contact: licensing@whiterabbit.dev
  */
 
+import { AISettingsPanel } from '@/components/ai-settings-panel';
 import MonacoEditorClient from '@/components/monaco-editor-client';
 import PublishModal from '@/components/publish-modal';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { FileContent } from '@/hooks/use-code-builder';
 import { useAIAssistant } from '@/hooks/use-ai-assistant';
 import { AIService } from '@/lib/ai-service';
@@ -35,11 +37,13 @@ import {
   Plus,
   Rocket,
   Send,
+  Settings,
   Sparkles,
   Terminal,
   Undo2,
   X,
 } from 'lucide-react';
+import Link from 'next/link';
 import React, {
   useCallback,
   useEffect,
@@ -163,6 +167,7 @@ export default function CoderSpace() {
   const [templateId, setTemplateId] = useState<string>('default');
   const [showHint, setShowHint] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const promptRef = useRef<HTMLInputElement>(null);
   const celebrateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -178,7 +183,8 @@ export default function CoderSpace() {
     };
   }, []);
 
-  const { isConfigured, settings } = useAIAssistant();
+  const { isConfigured, settings, saveSettings, testConnection } =
+    useAIAssistant();
 
   useEffect(() => {
     setHasSaved(loadSavedProject() !== null);
@@ -295,9 +301,9 @@ export default function CoderSpace() {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
     if (!isConfigured) {
-      setStatus(
-        'Add an AI API key in the main editor settings to use prompts — templates work without one.'
-      );
+      setPrompt(trimmed);
+      setSettingsOpen(true);
+      setStatus('Add your AI key, then send that prompt again.');
       return;
     }
     setBusy(true);
@@ -400,9 +406,33 @@ export default function CoderSpace() {
     URL.revokeObjectURL(url);
   };
 
+  const settingsDialog = (
+    <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+      <DialogContent className='max-w-2xl max-h-[85vh] overflow-y-auto'>
+        <DialogTitle className='sr-only'>AI settings</DialogTitle>
+        <AISettingsPanel
+          settings={settings}
+          isConfigured={isConfigured}
+          onTestConnection={testConnection}
+          onSettingsChange={next => {
+            saveSettings(next);
+            setSettingsOpen(false);
+          }}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+
   if (stage === 'launch') {
     return (
-      <div className='min-h-screen bg-[#0d0d0d] text-[#eaeaea] flex flex-col items-center justify-center px-4'>
+      <div className='relative min-h-screen bg-[#0d0d0d] text-[#eaeaea] flex flex-col items-center justify-center px-4'>
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className='absolute top-4 right-4 p-2 rounded-lg hover:bg-[#161616] text-[#7a7a7a] hover:text-[#00ffe1]'
+          aria-label='AI settings'
+        >
+          <Settings className='w-5 h-5' />
+        </button>
         <div className='w-full max-w-2xl space-y-8'>
           <div className='text-center space-y-2'>
             <div className='inline-flex items-center gap-2 text-[#00ffe1] text-sm font-mono'>
@@ -465,7 +495,23 @@ export default function CoderSpace() {
               </button>
             </div>
           )}
+
+          <nav className='flex justify-center gap-5 text-xs font-mono text-[#555]'>
+            <Link href='/enter' className='hover:text-[#eaeaea]'>
+              classic editor
+            </Link>
+            <Link href='/w' className='hover:text-[#eaeaea]'>
+              workspace
+            </Link>
+            <Link href='/visual-tools' className='hover:text-[#eaeaea]'>
+              visual tools
+            </Link>
+            <Link href='/landing' className='hover:text-[#eaeaea]'>
+              about
+            </Link>
+          </nav>
         </div>
+        {settingsDialog}
       </div>
     );
   }
@@ -498,6 +544,13 @@ export default function CoderSpace() {
           ) : (
             <Eye className='w-4 h-4' />
           )}
+        </button>
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className='p-1.5 rounded-lg hover:bg-[#161616] text-[#7a7a7a] hover:text-[#eaeaea]'
+          aria-label='AI settings'
+        >
+          <Settings className='w-4 h-4' />
         </button>
         <button
           onClick={() => setConsoleOpen(o => !o)}
@@ -684,7 +737,7 @@ export default function CoderSpace() {
             placeholder={
               isConfigured
                 ? 'Tell the AI what to change… (⌘K)'
-                : 'Templates are live — add an AI key in editor settings to unlock prompts'
+                : 'Add your AI key (gear icon above) to unlock prompts'
             }
             className='flex-1 rounded-xl bg-[#161616] border border-[#262626] focus:border-[#6c2fff] outline-none px-4 py-2.5 text-sm placeholder:text-[#555]'
           />
@@ -722,6 +775,7 @@ export default function CoderSpace() {
         onOpenChange={setPublishOpen}
         files={files}
       />
+      {settingsDialog}
       <Celebration show={celebrate} />
     </div>
   );
