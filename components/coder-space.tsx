@@ -26,6 +26,7 @@ import {
   fileTypeFromName,
   monacoLanguageFromName,
   parseFilesFromAIResponse,
+  parseStreamingAIResponse,
   templateToFiles,
 } from '@/lib/space-engine';
 import JSZip from 'jszip';
@@ -319,8 +320,10 @@ export default function CoderSpace() {
         .join('\n\n');
       const content = `${trimmed}\n\nCurrent project "${projectName}" files:\n\n${fileContext}\n\n${AI_FILE_INSTRUCTION}`;
 
+      const backupFiles = filesOverride ?? files;
       const service = new AIService(settings);
       let response = '';
+      let watchingEditor = false;
       for await (const chunk of service.sendMessageStream([
         {
           id: Date.now().toString(),
@@ -330,13 +333,42 @@ export default function CoderSpace() {
         },
       ])) {
         response += chunk;
-        setStatus(`Writing code… ${response.length} chars`);
+        const { streaming } = parseStreamingAIResponse(response);
+        if (streaming) {
+          // Show the code being typed into the editor, live
+          if (!watchingEditor) {
+            watchingEditor = true;
+            setShowPreview(false);
+          }
+          const live = streaming;
+          setFiles(prev => {
+            const existing = prev.findIndex(f => f.name === live.filename);
+            const file: FileContent = {
+              name: live.filename,
+              content: live.code,
+              type: fileTypeFromName(live.filename),
+              lastModified: new Date(),
+            };
+            if (existing >= 0) {
+              const next = [...prev];
+              next[existing] = file;
+              return next;
+            }
+            return [...prev, file];
+          });
+          setSelectedFile(live.filename);
+          setStatus(`Writing ${live.filename}…`);
+        } else {
+          setStatus(`Thinking… ${response.length} chars`);
+        }
       }
 
       const applied = applyAIFiles(parseFilesFromAIResponse(response));
       if (applied > 0) {
-        setAiBackup({ files: filesOverride ?? files, selectedFile });
+        setAiBackup({ files: backupFiles, selectedFile });
         triggerCelebration();
+        // Writing is done — flip back to the running result
+        if (watchingEditor) setShowPreview(true);
       }
       setStatus(
         applied > 0
@@ -704,6 +736,25 @@ export default function CoderSpace() {
       <footer className='shrink-0 border-t border-[#262626] p-3 space-y-1.5'>
         {/* One-tap ideas: always a next step, never a blank prompt */}
         <div className='flex gap-1.5 overflow-x-auto pb-0.5'>
+          {consoleEntries.some(e => e.level === 'error') && (
+            <button
+              type='button'
+              disabled={busy}
+              onClick={() => {
+                const errors = consoleEntries
+                  .filter(e => e.level === 'error')
+                  .slice(-3)
+                  .map(e => e.text)
+                  .join('\n');
+                void runPrompt(
+                  `The preview console shows these errors — fix them:\n${errors}`
+                );
+              }}
+              className='shrink-0 rounded-full border border-[#ff3c75] bg-[#ff3c751a] px-3 py-1 text-xs text-[#ff3c75] hover:bg-[#ff3c7533] disabled:opacity-40'
+            >
+              🔧 Fix the errors
+            </button>
+          )}
           {(IDEA_CHIPS[templateId] ?? IDEA_CHIPS.default).map(idea => (
             <button
               key={idea}
