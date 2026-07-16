@@ -125,6 +125,101 @@ export interface ConsoleEntry {
   text: string;
 }
 
+export interface SpaceProject {
+  id: string;
+  name: string;
+  updatedAt: number;
+  files: Array<Pick<FileContent, 'name' | 'content' | 'type'>>;
+}
+
+export const MAX_PROJECTS = 12;
+
+/** Insert or update a project, newest first, capped at MAX_PROJECTS. */
+export function upsertProject(
+  projects: SpaceProject[],
+  project: SpaceProject,
+  cap = MAX_PROJECTS
+): SpaceProject[] {
+  const rest = projects.filter(p => p.id !== project.id);
+  return [project, ...rest]
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, cap);
+}
+
+function bytesToBase64Url(bytes: Uint8Array): string {
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+function base64UrlToBytes(encoded: string): Uint8Array {
+  const b64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+  const binary = atob(b64);
+  return Uint8Array.from(binary, c => c.charCodeAt(0));
+}
+
+async function pipeThrough(
+  bytes: Uint8Array,
+  stream: CompressionStream | DecompressionStream
+): Promise<Uint8Array> {
+  const source = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(bytes);
+      controller.close();
+    },
+  });
+  // CompressionStream's lib typing (BufferSource) doesn't line up with
+  // pipeThrough's generics, but the shapes are compatible at runtime.
+  const readable = source.pipeThrough(
+    stream as unknown as ReadableWritablePair<Uint8Array, Uint8Array>
+  );
+  return new Uint8Array(await new Response(readable).arrayBuffer());
+}
+
+/**
+ * Encode a project into a URL-safe string (gzip + base64url when the
+ * browser supports CompressionStream, plain base64url otherwise). The
+ * `1.`/`0.` prefix records which so any encoding can be decoded anywhere.
+ */
+export async function encodeProjectToHash(
+  name: string,
+  files: Array<Pick<FileContent, 'name' | 'content' | 'type'>>
+): Promise<string> {
+  const json = new TextEncoder().encode(JSON.stringify({ name, files }));
+  if (typeof CompressionStream !== 'undefined') {
+    const compressed = await pipeThrough(json, new CompressionStream('gzip'));
+    return `1.${bytesToBase64Url(compressed)}`;
+  }
+  return `0.${bytesToBase64Url(json)}`;
+}
+
+/** Reverse of encodeProjectToHash. Returns null for anything malformed. */
+export async function decodeProjectFromHash(encoded: string): Promise<{
+  name: string;
+  files: Array<Pick<FileContent, 'name' | 'content' | 'type'>>;
+} | null> {
+  try {
+    const [version, payload] = encoded.split('.', 2);
+    if (!payload) return null;
+    let bytes = base64UrlToBytes(payload);
+    if (version === '1') {
+      bytes = await pipeThrough(bytes, new DecompressionStream('gzip'));
+    } else if (version !== '0') {
+      return null;
+    }
+    const parsed = JSON.parse(new TextDecoder().decode(bytes));
+    if (!parsed?.name || !Array.isArray(parsed.files) || !parsed.files.length) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * System prompt for the Coder Space AI. Overrides the chat-oriented default
  * prompt, which encourages step-by-step narration — here the model's entire
@@ -392,7 +487,7 @@ body { font-family: system-ui, sans-serif; color: #eaeaea; background: #0d0d0d; 
 <body>
   <main>
     <h1>Snake</h1>
-    <p>Arrow keys to move · <span id="score">0</span> points</p>
+    <p>Arrow keys or swipe · <span id="score">0</span> points</p>
     <canvas id="game" width="300" height="300"></canvas>
   </main>
   <script src="app.js"></script>
@@ -416,10 +511,29 @@ const ctx = canvas.getContext('2d');
 const CELL = 15, SIZE = 20;
 let snake = [{ x: 10, y: 10 }], dir = { x: 1, y: 0 }, food = { x: 5, y: 5 }, score = 0;
 
+function turn(t) {
+  if (t.x !== -dir.x || t.y !== -dir.y) dir = t;
+}
+
 document.addEventListener('keydown', e => {
   const turns = { ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 }, ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 } };
-  const t = turns[e.key];
-  if (t && (t.x !== -dir.x || t.y !== -dir.y)) dir = t;
+  if (turns[e.key]) { e.preventDefault(); turn(turns[e.key]); }
+});
+
+// Swipe to steer on touch screens
+let touchStart = null;
+canvas.addEventListener('touchstart', e => {
+  touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+}, { passive: true });
+canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+canvas.addEventListener('touchend', e => {
+  if (!touchStart) return;
+  const dx = e.changedTouches[0].clientX - touchStart.x;
+  const dy = e.changedTouches[0].clientY - touchStart.y;
+  touchStart = null;
+  if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
+  if (Math.abs(dx) > Math.abs(dy)) turn({ x: dx > 0 ? 1 : -1, y: 0 });
+  else turn({ x: 0, y: dy > 0 ? 1 : -1 });
 });
 
 function tick() {

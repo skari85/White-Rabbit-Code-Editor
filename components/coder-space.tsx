@@ -23,12 +23,16 @@ import {
   ConsoleEntry,
   SPACE_SYSTEM_PROMPT,
   SPACE_TEMPLATES,
+  SpaceProject,
   buildPreviewHtml,
+  decodeProjectFromHash,
+  encodeProjectToHash,
   fileTypeFromName,
   monacoLanguageFromName,
   parseFilesFromAIResponse,
   parseStreamingAIResponse,
   templateToFiles,
+  upsertProject,
 } from '@/lib/space-engine';
 import JSZip from 'jszip';
 import {
@@ -40,40 +44,66 @@ import {
   Rocket,
   Send,
   Settings,
+  Share2,
   Sparkles,
+  Square,
   Terminal,
   Undo2,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-const PROJECT_STORAGE_KEY = 'wr-space-project';
+const PROJECTS_STORAGE_KEY = 'wr-space-projects';
+const LEGACY_PROJECT_KEY = 'wr-space-project';
 
-interface SavedProject {
-  name: string;
-  files: Array<Pick<FileContent, 'name' | 'content' | 'type'>>;
+function newProjectId(): string {
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 }
 
-function loadSavedProject(): SavedProject | null {
-  if (typeof window === 'undefined') return null;
-  const raw = localStorage.getItem(PROJECT_STORAGE_KEY);
-  if (!raw) return null;
+/** Read the project list, migrating the old single-project slot once. */
+function loadProjects(): SpaceProject[] {
+  if (typeof window === 'undefined') return [];
+  let projects: SpaceProject[] = [];
   try {
-    const parsed = JSON.parse(raw);
-    if (parsed?.name && Array.isArray(parsed.files) && parsed.files.length) {
-      return parsed;
+    const parsed = JSON.parse(
+      localStorage.getItem(PROJECTS_STORAGE_KEY) || '[]'
+    );
+    if (Array.isArray(parsed)) {
+      projects = parsed.filter(
+        p => p?.id && p?.name && Array.isArray(p.files) && p.files.length
+      );
     }
   } catch {
-    localStorage.removeItem(PROJECT_STORAGE_KEY);
+    localStorage.removeItem(PROJECTS_STORAGE_KEY);
   }
-  return null;
+  try {
+    const legacyRaw = localStorage.getItem(LEGACY_PROJECT_KEY);
+    if (legacyRaw) {
+      const legacy = JSON.parse(legacyRaw);
+      if (legacy?.name && Array.isArray(legacy.files) && legacy.files.length) {
+        projects = upsertProject(projects, {
+          id: newProjectId(),
+          name: legacy.name,
+          updatedAt: Date.now(),
+          files: legacy.files,
+        });
+        localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
+      }
+      localStorage.removeItem(LEGACY_PROJECT_KEY);
+    }
+  } catch {
+    localStorage.removeItem(LEGACY_PROJECT_KEY);
+  }
+  return projects.sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+function timeAgo(timestamp: number): string {
+  const mins = Math.max(1, Math.round((Date.now() - timestamp) / 60000));
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
 }
 
 const AI_FILE_INSTRUCTION =
@@ -151,11 +181,12 @@ function Celebration({ show }: { show: boolean }) {
 
 export default function CoderSpace() {
   const [stage, setStage] = useState<'launch' | 'workspace'>('launch');
+  const [projectId, setProjectId] = useState<string>('');
   const [projectName, setProjectName] = useState('untitled-space');
   const [files, setFiles] = useState<FileContent[]>([]);
   const [selectedFile, setSelectedFile] = useState<string>('');
   const [showPreview, setShowPreview] = useState(true);
-  const [hasSaved, setHasSaved] = useState(false);
+  const [projects, setProjects] = useState<SpaceProject[]>([]);
   const [prompt, setPrompt] = useState('');
   const [status, setStatus] = useState<string>('');
   const [busy, setBusy] = useState(false);
@@ -172,6 +203,7 @@ export default function CoderSpace() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const promptRef = useRef<HTMLInputElement>(null);
   const celebrateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelRef = useRef(false);
 
   const triggerCelebration = useCallback(() => {
     if (celebrateTimer.current) clearTimeout(celebrateTimer.current);
@@ -189,18 +221,27 @@ export default function CoderSpace() {
     useAIAssistant();
 
   useEffect(() => {
-    setHasSaved(loadSavedProject() !== null);
+    setProjects(loadProjects());
   }, []);
 
-  // Autosave while in the workspace
+  // Autosave the current project into the project list
   useEffect(() => {
-    if (stage !== 'workspace' || files.length === 0) return;
-    const saved: SavedProject = {
-      name: projectName,
-      files: files.map(({ name, content, type }) => ({ name, content, type })),
-    };
-    localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(saved));
-  }, [stage, files, projectName]);
+    if (stage !== 'workspace' || files.length === 0 || !projectId) return;
+    setProjects(prev => {
+      const next = upsertProject(prev, {
+        id: projectId,
+        name: projectName,
+        updatedAt: Date.now(),
+        files: files.map(({ name, content, type }) => ({
+          name,
+          content,
+          type,
+        })),
+      });
+      localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, [stage, files, projectName, projectId]);
 
   // Cmd/Ctrl+K focuses the prompt from anywhere
   useEffect(() => {
@@ -228,7 +269,22 @@ export default function CoderSpace() {
     return () => window.removeEventListener('message', onMessage);
   }, []);
 
-  const previewHtml = useMemo(() => buildPreviewHtml(files), [files]);
+  // Debounce preview rebuilds so typing doesn't restart the running app on
+  // every keystroke; the first build after entering a project is immediate.
+  const [previewHtml, setPreviewHtml] = useState('');
+  useEffect(() => {
+    if (files.length === 0) return;
+    if (!previewHtml) {
+      setPreviewHtml(buildPreviewHtml(files));
+      return;
+    }
+    const timer = setTimeout(
+      () => setPreviewHtml(buildPreviewHtml(files)),
+      500
+    );
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files]);
 
   // Each preview re-render is a fresh run; stale logs would mislead
   useEffect(() => {
@@ -238,18 +294,39 @@ export default function CoderSpace() {
   const currentFile = files.find(f => f.name === selectedFile);
 
   const enterWorkspace = useCallback(
-    (nextFiles: FileContent[], name: string, fromTemplate = 'default') => {
+    (
+      nextFiles: FileContent[],
+      name: string,
+      fromTemplate = 'default',
+      existingId?: string
+    ) => {
+      setProjectId(existingId ?? newProjectId());
       setFiles(nextFiles);
       setSelectedFile(nextFiles[0]?.name ?? '');
       setProjectName(name);
       setTemplateId(fromTemplate);
       setStage('workspace');
       setStatus('');
+      setPreviewHtml('');
       setShowHint(!localStorage.getItem(HINT_DISMISSED_KEY));
       triggerCelebration();
     },
     [triggerCelebration]
   );
+
+  // A shared project link (#p=…) opens straight into the workspace
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash.startsWith('#p=')) return;
+    void decodeProjectFromHash(hash.slice(3)).then(shared => {
+      if (!shared) return;
+      window.history.replaceState(null, '', window.location.pathname);
+      enterWorkspace(
+        shared.files.map(f => ({ ...f, lastModified: new Date() })),
+        shared.name
+      );
+    });
+  }, [enterWorkspace]);
 
   const startFromTemplate = (id: string) => {
     const template = SPACE_TEMPLATES.find(t => t.id === id);
@@ -266,13 +343,40 @@ export default function CoderSpace() {
     localStorage.setItem(HINT_DISMISSED_KEY, '1');
   };
 
-  const resumeSaved = () => {
-    const saved = loadSavedProject();
-    if (!saved) return;
+  const openProject = (project: SpaceProject) => {
     enterWorkspace(
-      saved.files.map(f => ({ ...f, lastModified: new Date() })),
-      saved.name
+      project.files.map(f => ({ ...f, lastModified: new Date() })),
+      project.name,
+      'default',
+      project.id
     );
+  };
+
+  const deleteProject = (id: string) => {
+    if (!window.confirm('Delete this project?')) return;
+    setProjects(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const shareProject = async () => {
+    const encoded = await encodeProjectToHash(
+      projectName,
+      files.map(({ name, content, type }) => ({ name, content, type }))
+    );
+    if (encoded.length > 24000) {
+      setStatus('Project too big for a share link — use the ZIP export.');
+      return;
+    }
+    const url = `${window.location.origin}/#p=${encoded}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setStatus('Share link copied — anyone can open this project with it.');
+    } catch {
+      window.prompt('Copy your share link:', url);
+    }
   };
 
   const applyAIFiles = useCallback(
@@ -309,6 +413,7 @@ export default function CoderSpace() {
       return;
     }
     setBusy(true);
+    cancelRef.current = false;
     setStatus('Thinking…');
     setPrompt('');
     try {
@@ -338,6 +443,7 @@ export default function CoderSpace() {
           timestamp: new Date(),
         },
       ])) {
+        if (cancelRef.current) break;
         response += chunk;
         const { streaming } = parseStreamingAIResponse(response);
         if (streaming) {
@@ -523,14 +629,34 @@ export default function CoderSpace() {
             ))}
           </div>
 
-          {hasSaved && (
-            <div className='text-center'>
-              <button
-                onClick={resumeSaved}
-                className='text-sm text-[#00ffe1] hover:underline'
-              >
-                Resume your last project →
-              </button>
+          {projects.length > 0 && (
+            <div className='space-y-2'>
+              <p className='text-xs font-mono text-[#555] uppercase tracking-wider'>
+                Your projects
+              </p>
+              {projects.slice(0, 5).map(p => (
+                <div
+                  key={p.id}
+                  className='flex items-center gap-2 rounded-xl bg-[#161616] border border-[#262626] hover:border-[#6c2fff] px-4 py-2.5'
+                >
+                  <button
+                    onClick={() => openProject(p)}
+                    className='flex-1 flex items-center justify-between text-left min-w-0'
+                  >
+                    <span className='text-sm truncate'>{p.name}</span>
+                    <span className='text-xs text-[#555] font-mono shrink-0 ml-3'>
+                      {timeAgo(p.updatedAt)}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => deleteProject(p.id)}
+                    className='text-[#555] hover:text-[#ff3c75] shrink-0'
+                    aria-label={`Delete ${p.name}`}
+                  >
+                    <X className='w-3.5 h-3.5' />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
 
@@ -603,6 +729,13 @@ export default function CoderSpace() {
           {consoleEntries.some(e => e.level === 'error') && (
             <span className='absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[#ff3c75]' />
           )}
+        </button>
+        <button
+          onClick={() => void shareProject()}
+          className='p-1.5 rounded-lg hover:bg-[#161616] text-[#7a7a7a] hover:text-[#00ffe1]'
+          aria-label='Copy share link'
+        >
+          <Share2 className='w-4 h-4' />
         </button>
         <button
           onClick={exportZip}
@@ -715,6 +848,15 @@ export default function CoderSpace() {
       {/* Console panel */}
       {consoleOpen && (
         <div className='shrink-0 border-t border-[#262626] bg-[#0a0a0a] max-h-36 overflow-y-auto font-mono text-xs'>
+          <div className='flex items-center justify-between px-3 py-1 border-b border-[#161616] text-[#555]'>
+            <span>console</span>
+            <button
+              onClick={() => setConsoleEntries([])}
+              className='hover:text-[#eaeaea]'
+            >
+              clear
+            </button>
+          </div>
           {consoleEntries.length === 0 ? (
             <p className='px-3 py-2 text-[#555]'>
               Console is empty — logs and errors from the preview appear here.
@@ -798,14 +940,27 @@ export default function CoderSpace() {
             }
             className='flex-1 rounded-xl bg-[#161616] border border-[#262626] focus:border-[#6c2fff] outline-none px-4 py-2.5 text-sm placeholder:text-[#555]'
           />
-          <Button
-            type='submit'
-            disabled={busy}
-            className='rounded-xl bg-[#6c2fff] hover:bg-[#5a1fe0]'
-            aria-label='Send prompt'
-          >
-            <Send className='w-4 h-4' />
-          </Button>
+          {busy ? (
+            <Button
+              type='button'
+              onClick={() => {
+                cancelRef.current = true;
+                setStatus('Stopping…');
+              }}
+              className='rounded-xl bg-[#ff3c75] hover:bg-[#e02a60]'
+              aria-label='Stop generating'
+            >
+              <Square className='w-4 h-4' />
+            </Button>
+          ) : (
+            <Button
+              type='submit'
+              className='rounded-xl bg-[#6c2fff] hover:bg-[#5a1fe0]'
+              aria-label='Send prompt'
+            >
+              <Send className='w-4 h-4' />
+            </Button>
+          )}
         </form>
         {(status || aiBackup) && (
           <div className='flex items-center gap-3 px-1'>
