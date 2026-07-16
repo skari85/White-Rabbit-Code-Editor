@@ -126,6 +126,42 @@ export interface ConsoleEntry {
 }
 
 /**
+ * Parse a still-streaming AI response: complete fenced blocks plus the one
+ * block that is currently open (its fence not yet closed), so the editor can
+ * show code being written live.
+ */
+export function parseStreamingAIResponse(response: string): {
+  files: ParsedAIFile[];
+  streaming: ParsedAIFile | null;
+} {
+  const files = parseFilesFromAIResponse(response);
+
+  // An even number of segments after splitting on ``` means the final fence
+  // is still open — its tail is the block being written right now.
+  const parts = response.split('```');
+  if (parts.length % 2 === 0) {
+    const inside = parts[parts.length - 1];
+    const header = inside.match(/^(\w+)?\s*(?:\/\/\s*(.+?)\s*)?\n([\s\S]*)$/);
+    if (header) {
+      const language = (header[1] || 'text').toLowerCase();
+      const explicitName = header[2]?.trim();
+      const filename =
+        explicitName && explicitName.includes('.')
+          ? explicitName
+          : DEFAULT_FILENAMES[language];
+      if (filename) {
+        return {
+          files,
+          streaming: { filename, language, code: header[3] },
+        };
+      }
+    }
+  }
+
+  return { files, streaming: null };
+}
+
+/**
  * Injected first into every preview document. Mirrors console calls and
  * uncaught errors to the parent frame as `wr-console` messages so the
  * workspace can show them in its console panel.

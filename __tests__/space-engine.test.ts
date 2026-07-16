@@ -8,6 +8,7 @@ import {
   buildPreviewHtml,
   fileTypeFromName,
   parseFilesFromAIResponse,
+  parseStreamingAIResponse,
   templateToFiles,
 } from '../lib/space-engine';
 
@@ -62,6 +63,49 @@ describe('parseFilesFromAIResponse', () => {
     const response = '```ruby\nputs 1\n```\n```html // a.html\n\n```';
 
     expect(parseFilesFromAIResponse(response)).toHaveLength(0);
+  });
+});
+
+describe('parseStreamingAIResponse', () => {
+  it('exposes the currently open block as streaming', () => {
+    const partial = 'Sure!\n```js // app.js\nconst a = 1;\nconst b';
+
+    const { files, streaming } = parseStreamingAIResponse(partial);
+
+    expect(files).toHaveLength(0);
+    expect(streaming).toMatchObject({
+      filename: 'app.js',
+      code: 'const a = 1;\nconst b',
+    });
+  });
+
+  it('moves a block to files once its fence closes', () => {
+    const closed = '```js // app.js\nconst a = 1;\n```\nNext up:';
+
+    const { files, streaming } = parseStreamingAIResponse(closed);
+
+    expect(files).toHaveLength(1);
+    expect(files[0].filename).toBe('app.js');
+    expect(streaming).toBeNull();
+  });
+
+  it('handles a second block opening after a completed one', () => {
+    const midSecond =
+      '```html // index.html\n<h1>Hi</h1>\n```\n```css // style.css\nh1 {';
+
+    const { files, streaming } = parseStreamingAIResponse(midSecond);
+
+    expect(files.map(f => f.filename)).toEqual(['index.html']);
+    expect(streaming?.filename).toBe('style.css');
+  });
+
+  it('returns no streaming block for prose without fences', () => {
+    const { files, streaming } = parseStreamingAIResponse(
+      'Let me think about that…'
+    );
+
+    expect(files).toHaveLength(0);
+    expect(streaming).toBeNull();
   });
 });
 
