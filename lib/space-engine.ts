@@ -710,6 +710,132 @@ render();`,
       },
     ],
   },
+  {
+    id: 'canvas',
+    name: 'Code Canvas',
+    tagline: 'Paint with your code',
+    icon: '🖌️',
+    files: [
+      {
+        name: 'index.html',
+        type: 'html',
+        content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Code Canvas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div class="toolbar">
+    <button id="clear">Clear</button>
+    <label>Brush <input id="size" type="range" min="2" max="60" value="18"></label>
+    <label><input id="rainbow" type="checkbox" checked> Rainbow</label>
+  </div>
+  <p class="hint">Draw with your mouse or finger. Tell the AI how the brush should feel.</p>
+  <script src="app.js"></script>
+</body>
+</html>`,
+      },
+      {
+        name: 'style.css',
+        type: 'css',
+        content: `* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: #0d0d0d; }
+#canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+.toolbar { position: fixed; top: 12px; left: 12px; display: flex; align-items: center; gap: 14px; background: #161616cc; backdrop-filter: blur(6px); border: 1px solid #262626; border-radius: 999px; padding: 8px 16px; font-family: system-ui, sans-serif; font-size: 13px; color: #eaeaea; }
+.toolbar button { background: #6c2fff; color: white; border: none; border-radius: 999px; padding: 6px 14px; cursor: pointer; font-size: 13px; }
+.toolbar button:hover { background: #5a1fe0; }
+.toolbar label { display: flex; align-items: center; gap: 6px; color: #7a7a7a; }
+.hint { position: fixed; bottom: 12px; left: 12px; right: 12px; margin: 0; text-align: center; color: #555; font-family: system-ui, sans-serif; font-size: 12px; pointer-events: none; }`,
+      },
+      {
+        name: 'app.js',
+        type: 'js',
+        content: `// --- Brush settings: edit these to change how painting feels ---
+let brushSize = 18;      // stroke width in pixels
+let rainbow = true;       // cycle hue while painting
+let hue = 190;            // starting hue when rainbow is off
+const HUE_SPEED = 2;      // how fast the rainbow shifts per point drawn
+const SMOOTHING = 0.35;   // 0 = jittery line, 1 = very smooth/laggy
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+let last = null;
+let smoothed = null;
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+function pointFromEvent(e) {
+  return { x: e.clientX, y: e.clientY, pressure: e.pressure || 0.5 };
+}
+
+function startStroke(e) {
+  drawing = true;
+  last = pointFromEvent(e);
+  smoothed = { ...last };
+}
+
+function draw(e) {
+  if (!drawing) return;
+  const point = pointFromEvent(e);
+
+  // Smooth the line so fast strokes don't look jagged
+  smoothed.x += (point.x - smoothed.x) * (1 - SMOOTHING);
+  smoothed.y += (point.y - smoothed.y) * (1 - SMOOTHING);
+
+  const dx = smoothed.x - last.x;
+  const dy = smoothed.y - last.y;
+  const speed = Math.hypot(dx, dy);
+  const width = Math.max(2, brushSize - speed * 0.3);
+
+  if (rainbow) hue = (hue + HUE_SPEED) % 360;
+  ctx.strokeStyle = 'hsl(' + hue + ', 90%, 60%)';
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowBlur = width * 0.6;
+  ctx.shadowColor = ctx.strokeStyle;
+
+  ctx.beginPath();
+  ctx.moveTo(last.x, last.y);
+  ctx.lineTo(smoothed.x, smoothed.y);
+  ctx.stroke();
+
+  last = { x: smoothed.x, y: smoothed.y };
+}
+
+function endStroke() {
+  drawing = false;
+  last = null;
+  smoothed = null;
+}
+
+canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); startStroke(e); });
+canvas.addEventListener('pointermove', draw);
+canvas.addEventListener('pointerup', endStroke);
+canvas.addEventListener('pointercancel', endStroke);
+
+document.getElementById('clear').addEventListener('click', () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+});
+document.getElementById('size').addEventListener('input', e => {
+  brushSize = Number(e.target.value);
+});
+document.getElementById('rainbow').addEventListener('change', e => {
+  rainbow = e.target.checked;
+});`,
+      },
+    ],
+  },
 ];
 
 export function templateToFiles(template: SpaceTemplate): FileContent[] {
