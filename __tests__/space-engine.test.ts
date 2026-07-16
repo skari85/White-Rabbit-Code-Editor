@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  SPACE_SYSTEM_PROMPT,
   SPACE_TEMPLATES,
   buildPreviewHtml,
   fileTypeFromName,
@@ -11,6 +12,15 @@ import {
   parseStreamingAIResponse,
   templateToFiles,
 } from '../lib/space-engine';
+
+describe('SPACE_SYSTEM_PROMPT', () => {
+  it('pins the output contract the parser depends on', () => {
+    expect(SPACE_SYSTEM_PROMPT).toContain('// index.html');
+    expect(SPACE_SYSTEM_PROMPT).toMatch(/COMPLETE/);
+    expect(SPACE_SYSTEM_PROMPT).toMatch(/diffs/i);
+    expect(SPACE_SYSTEM_PROMPT).toMatch(/module imports/i);
+  });
+});
 
 describe('parseFilesFromAIResponse', () => {
   it('extracts files with explicit // filename info strings', () => {

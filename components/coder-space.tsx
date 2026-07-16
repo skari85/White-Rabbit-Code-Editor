@@ -21,6 +21,7 @@ import { useAIAssistant } from '@/hooks/use-ai-assistant';
 import { AIService } from '@/lib/ai-service';
 import {
   ConsoleEntry,
+  SPACE_SYSTEM_PROMPT,
   SPACE_TEMPLATES,
   buildPreviewHtml,
   fileTypeFromName,
@@ -321,7 +322,12 @@ export default function CoderSpace() {
       const content = `${trimmed}\n\nCurrent project "${projectName}" files:\n\n${fileContext}\n\n${AI_FILE_INSTRUCTION}`;
 
       const backupFiles = filesOverride ?? files;
-      const service = new AIService(settings);
+      // The Space has its own system prompt; the user's stored chat prompt
+      // (with its step-by-step narration style) stays untouched.
+      const service = new AIService({
+        ...settings,
+        systemPrompt: SPACE_SYSTEM_PROMPT,
+      });
       let response = '';
       let watchingEditor = false;
       for await (const chunk of service.sendMessageStream([
