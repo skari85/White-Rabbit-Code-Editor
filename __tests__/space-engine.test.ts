@@ -4,14 +4,80 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_PROJECTS,
   SPACE_SYSTEM_PROMPT,
   SPACE_TEMPLATES,
+  SpaceProject,
   buildPreviewHtml,
+  decodeProjectFromHash,
+  encodeProjectToHash,
   fileTypeFromName,
   parseFilesFromAIResponse,
   parseStreamingAIResponse,
   templateToFiles,
+  upsertProject,
 } from '../lib/space-engine';
+
+function makeProject(id: string, updatedAt: number): SpaceProject {
+  return {
+    id,
+    name: `project-${id}`,
+    updatedAt,
+    files: [{ name: 'index.html', content: '<h1>x</h1>', type: 'html' }],
+  };
+}
+
+describe('upsertProject', () => {
+  it('inserts new projects newest-first and updates existing in place', () => {
+    let list = upsertProject([], makeProject('a', 100));
+    list = upsertProject(list, makeProject('b', 200));
+    expect(list.map(p => p.id)).toEqual(['b', 'a']);
+
+    list = upsertProject(list, makeProject('a', 300));
+    expect(list.map(p => p.id)).toEqual(['a', 'b']);
+    expect(list).toHaveLength(2);
+  });
+
+  it('caps the list at MAX_PROJECTS, dropping the oldest', () => {
+    let list: SpaceProject[] = [];
+    for (let i = 0; i < MAX_PROJECTS + 3; i++) {
+      list = upsertProject(list, makeProject(`p${i}`, i));
+    }
+    expect(list).toHaveLength(MAX_PROJECTS);
+    expect(list[0].id).toBe(`p${MAX_PROJECTS + 2}`);
+    expect(list.some(p => p.id === 'p0')).toBe(false);
+  });
+});
+
+describe('share link encoding', () => {
+  it('round-trips a project including unicode content', async () => {
+    const files = [
+      {
+        name: 'index.html',
+        content: '<h1>héllo 🎉</h1>',
+        type: 'html' as const,
+      },
+      {
+        name: 'app.js',
+        content: 'console.log("π ≈ 3.14");',
+        type: 'js' as const,
+      },
+    ];
+
+    const encoded = await encodeProjectToHash('my ünïcode app', files);
+    const decoded = await decodeProjectFromHash(encoded);
+
+    expect(decoded).not.toBeNull();
+    expect(decoded?.name).toBe('my ünïcode app');
+    expect(decoded?.files).toEqual(files);
+  });
+
+  it('returns null for malformed input', async () => {
+    expect(await decodeProjectFromHash('garbage')).toBeNull();
+    expect(await decodeProjectFromHash('9.notreal')).toBeNull();
+    expect(await decodeProjectFromHash('')).toBeNull();
+  });
+});
 
 describe('SPACE_SYSTEM_PROMPT', () => {
   it('pins the output contract the parser depends on', () => {
