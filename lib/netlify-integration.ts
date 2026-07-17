@@ -63,7 +63,11 @@ export class NetlifyIntegration {
   private async buildZip(files: FileContent[]): Promise<Blob> {
     const zip = new JSZip();
     for (const file of files) {
-      zip.file(file.name, file.content);
+      zip.file(
+        file.name,
+        file.content,
+        file.encoding === 'base64' ? { base64: true } : undefined
+      );
     }
     return zip.generateAsync({ type: 'blob' });
   }

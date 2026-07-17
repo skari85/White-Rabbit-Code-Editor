@@ -40,7 +40,7 @@ export class VercelIntegration {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
       headers: {
-        'Authorization': `Bearer ${this.apiToken}`,
+        Authorization: `Bearer ${this.apiToken}`,
         'Content-Type': 'application/json',
         ...options.headers,
       },
@@ -62,9 +62,12 @@ export class VercelIntegration {
     return this.makeRequest('/v9/projects');
   }
 
-  async createProject(name: string, gitRepository?: { type: 'github'; repo: string }) {
+  async createProject(
+    name: string,
+    gitRepository?: { type: 'github'; repo: string }
+  ) {
     const body: any = { name };
-    
+
     if (gitRepository) {
       body.gitRepository = gitRepository;
     }
@@ -76,15 +79,15 @@ export class VercelIntegration {
   }
 
   async deployProject(
-    projectName: string, 
-    files: FileContent[], 
+    projectName: string,
+    files: FileContent[],
     target: 'production' | 'preview' = 'production'
   ): Promise<VercelDeployment> {
     // Convert files to Vercel format
     const vercelFiles: VercelDeploymentFile[] = files.map(file => ({
       file: file.name,
       data: file.content,
-      encoding: 'utf8'
+      encoding: file.encoding ?? 'utf8',
     }));
 
     // Add package.json if not present
@@ -92,20 +95,24 @@ export class VercelIntegration {
     if (!hasPackageJson) {
       vercelFiles.push({
         file: 'package.json',
-        data: JSON.stringify({
-          name: projectName.toLowerCase().replace(/\s+/g, '-'),
-          version: '1.0.0',
-          description: 'PWA created with Hex & Kex',
-          main: 'index.html',
-          scripts: {
-            start: 'serve -s .',
-            build: 'echo "No build step required"'
+        data: JSON.stringify(
+          {
+            name: projectName.toLowerCase().replace(/\s+/g, '-'),
+            version: '1.0.0',
+            description: 'PWA created with Hex & Kex',
+            main: 'index.html',
+            scripts: {
+              start: 'serve -s .',
+              build: 'echo "No build step required"',
+            },
+            devDependencies: {
+              serve: '^14.0.0',
+            },
           },
-          devDependencies: {
-            serve: '^14.0.0'
-          }
-        }, null, 2),
-        encoding: 'utf8'
+          null,
+          2
+        ),
+        encoding: 'utf8',
       });
     }
 
@@ -114,37 +121,41 @@ export class VercelIntegration {
     if (!hasVercelJson) {
       vercelFiles.push({
         file: 'vercel.json',
-        data: JSON.stringify({
-          version: 2,
-          public: true,
-          headers: [
-            {
-              source: '/service-worker.js',
-              headers: [
-                {
-                  key: 'Cache-Control',
-                  value: 'public, max-age=0, must-revalidate'
-                }
-              ]
-            },
-            {
-              source: '/manifest.json',
-              headers: [
-                {
-                  key: 'Content-Type',
-                  value: 'application/manifest+json'
-                }
-              ]
-            }
-          ],
-          rewrites: [
-            {
-              source: '/(.*)',
-              destination: '/index.html'
-            }
-          ]
-        }, null, 2),
-        encoding: 'utf8'
+        data: JSON.stringify(
+          {
+            version: 2,
+            public: true,
+            headers: [
+              {
+                source: '/service-worker.js',
+                headers: [
+                  {
+                    key: 'Cache-Control',
+                    value: 'public, max-age=0, must-revalidate',
+                  },
+                ],
+              },
+              {
+                source: '/manifest.json',
+                headers: [
+                  {
+                    key: 'Content-Type',
+                    value: 'application/manifest+json',
+                  },
+                ],
+              },
+            ],
+            rewrites: [
+              {
+                source: '/(.*)',
+                destination: '/index.html',
+              },
+            ],
+          },
+          null,
+          2
+        ),
+        encoding: 'utf8',
       });
     }
 
@@ -156,13 +167,13 @@ export class VercelIntegration {
         buildCommand: null,
         outputDirectory: null,
         installCommand: null,
-        devCommand: null
+        devCommand: null,
       },
       target,
       meta: {
         'hex-kex-deployment': 'true',
-        'created-with': 'Hex & Kex PWA Builder'
-      }
+        'created-with': 'Hex & Kex PWA Builder',
+      },
     };
 
     return this.makeRequest('/v13/deployments', {
@@ -176,8 +187,8 @@ export class VercelIntegration {
   }
 
   async getDeployments(projectId?: string) {
-    const endpoint = projectId 
-      ? `/v6/deployments?projectId=${projectId}` 
+    const endpoint = projectId
+      ? `/v6/deployments?projectId=${projectId}`
       : '/v6/deployments';
     return this.makeRequest(endpoint);
   }
@@ -238,7 +249,7 @@ export const DEFAULT_PWA_CONFIG = {
   buildCommand: null,
   outputDirectory: null,
   installCommand: 'npm install',
-  devCommand: 'npm start'
+  devCommand: 'npm start',
 };
 
 // Common Vercel regions
@@ -250,5 +261,5 @@ export const VERCEL_REGIONS = [
   { id: 'sin1', name: 'Singapore' },
   { id: 'syd1', name: 'Sydney, Australia' },
   { id: 'hnd1', name: 'Tokyo, Japan' },
-  { id: 'gru1', name: 'São Paulo, Brazil' }
+  { id: 'gru1', name: 'São Paulo, Brazil' },
 ];
