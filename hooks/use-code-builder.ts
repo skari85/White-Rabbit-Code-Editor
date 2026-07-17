@@ -9,6 +9,9 @@ export interface FileContent {
   content: string;
   type: 'html' | 'css' | 'js' | 'json' | 'md' | 'tsx' | 'ts' | 'py' | 'txt';
   lastModified: Date;
+  // How `content` is encoded. Defaults to 'utf8' when omitted — only set to
+  // 'base64' for binary assets (e.g. icons) bundled at deploy time.
+  encoding?: 'utf8' | 'base64';
 }
 
 export interface ProjectData {
@@ -22,21 +25,27 @@ export interface ProjectData {
 export function useCodeBuilder() {
   const [files, setFiles] = useState<FileContent[]>([]);
   const [selectedFile, setSelectedFile] = useState('index.html');
-  const [currentProject, setCurrentProject] = useState<ProjectData | null>(null);
+  const [currentProject, setCurrentProject] = useState<ProjectData | null>(
+    null
+  );
 
   // Save project to localStorage
   const saveProject = useCallback((project: ProjectData) => {
     localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(project));
-    
+
     // Update projects list
-    const projectsList = JSON.parse(localStorage.getItem(PROJECTS_LIST_KEY) || '[]');
-    const existingIndex = projectsList.findIndex((p: any) => p.id === project.id);
-    
+    const projectsList = JSON.parse(
+      localStorage.getItem(PROJECTS_LIST_KEY) || '[]'
+    );
+    const existingIndex = projectsList.findIndex(
+      (p: any) => p.id === project.id
+    );
+
     const projectSummary = {
       id: project.id,
       name: project.name,
       lastModified: project.lastModified,
-      fileCount: project.files.length
+      fileCount: project.files.length,
     };
 
     if (existingIndex >= 0) {
@@ -44,7 +53,7 @@ export function useCodeBuilder() {
     } else {
       projectsList.push(projectSummary);
     }
-    
+
     localStorage.setItem(PROJECTS_LIST_KEY, JSON.stringify(projectsList));
   }, []);
 
@@ -124,7 +133,7 @@ export function useCodeBuilder() {
 </body>
 </html>`,
         type: 'html',
-        lastModified: new Date()
+        lastModified: new Date(),
       },
       {
         name: 'style.css',
@@ -349,7 +358,7 @@ body {
   }
 }`,
         type: 'css',
-        lastModified: new Date()
+        lastModified: new Date(),
       },
       {
         name: 'app.js',
@@ -546,8 +555,8 @@ document.addEventListener('mousemove', function(e) {
   document.body.style.backgroundPosition = \`\${50 + x * 5}% \${50 + y * 5}%\`;
 });`,
         type: 'js',
-        lastModified: new Date()
-      }
+        lastModified: new Date(),
+      },
     ];
 
     const project: ProjectData = {
@@ -555,7 +564,7 @@ document.addEventListener('mousemove', function(e) {
       name: 'My Project',
       files: defaultFiles,
       lastModified: new Date(),
-      selectedFile: 'index.html'
+      selectedFile: 'index.html',
     };
 
     setFiles(defaultFiles);
@@ -572,10 +581,10 @@ document.addEventListener('mousemove', function(e) {
         // Convert date strings back to Date objects
         project.files = project.files.map(file => ({
           ...file,
-          lastModified: new Date(file.lastModified)
+          lastModified: new Date(file.lastModified),
         }));
         project.lastModified = new Date(project.lastModified);
-        
+
         setFiles(project.files);
         setSelectedFile(project.selectedFile);
         setCurrentProject(project);
@@ -596,9 +605,9 @@ document.addEventListener('mousemove', function(e) {
         ...currentProject,
         files,
         selectedFile,
-        lastModified: new Date()
+        lastModified: new Date(),
       };
-      
+
       // Debounce save to avoid too frequent saves
       const timeoutId = setTimeout(() => {
         setCurrentProject(updatedProject);
@@ -610,29 +619,34 @@ document.addEventListener('mousemove', function(e) {
   }, [files, selectedFile, saveProject]);
 
   const updateFileContent = useCallback((fileName: string, content: string) => {
-    setFiles(prev => prev.map(file => 
-      file.name === fileName ? { ...file, content, lastModified: new Date() } : file
-    ));
+    setFiles(prev =>
+      prev.map(file =>
+        file.name === fileName
+          ? { ...file, content, lastModified: new Date() }
+          : file
+      )
+    );
   }, []);
 
-  const addNewFile = useCallback((name: string, type: FileContent['type'] = 'html') => {
-    try {
-      // Validate inputs
-      if (!name || typeof name !== 'string') {
-        console.warn('addNewFile: Invalid filename provided:', name);
-        return;
-      }
+  const addNewFile = useCallback(
+    (name: string, type: FileContent['type'] = 'html') => {
+      try {
+        // Validate inputs
+        if (!name || typeof name !== 'string') {
+          console.warn('addNewFile: Invalid filename provided:', name);
+          return;
+        }
 
-      // Check if file already exists
-      const existingFile = files.find(f => f.name === name);
-      if (existingFile) {
-        // File already exists, just select it
-        setSelectedFile(name);
-        return;
-      }
+        // Check if file already exists
+        const existingFile = files.find(f => f.name === name);
+        if (existingFile) {
+          // File already exists, just select it
+          setSelectedFile(name);
+          return;
+        }
 
-    const defaultContent = {
-      html: `<!DOCTYPE html>
+        const defaultContent = {
+          html: `<!DOCTYPE html>
 <html>
 <head>
   <title>New File</title>
@@ -641,9 +655,9 @@ document.addEventListener('mousemove', function(e) {
 
 </body>
 </html>`,
-      css: '/* CSS styles */',
-      js: '// JavaScript code',
-      tsx: `import React from 'react';
+          css: '/* CSS styles */',
+          js: '// JavaScript code',
+          tsx: `import React from 'react';
 
 export default function Component() {
   return (
@@ -652,26 +666,28 @@ export default function Component() {
     </div>
   );
 }`,
-      ts: '// TypeScript code',
-      py: '# Python code',
-      json: '{}',
-      md: '# New File',
-      txt: 'New text file'
-    };
+          ts: '// TypeScript code',
+          py: '# Python code',
+          json: '{}',
+          md: '# New File',
+          txt: 'New text file',
+        };
 
-    const newFile: FileContent = {
-      name,
-      content: defaultContent[type] || '',
-      type,
-      lastModified: new Date()
-    };
+        const newFile: FileContent = {
+          name,
+          content: defaultContent[type] || '',
+          type,
+          lastModified: new Date(),
+        };
 
-    setFiles(prev => [...prev, newFile]);
-    setSelectedFile(name);
-    } catch (error) {
-      console.error('Error in addNewFile:', error);
-    }
-  }, [files]);
+        setFiles(prev => [...prev, newFile]);
+        setSelectedFile(name);
+      } catch (error) {
+        console.error('Error in addNewFile:', error);
+      }
+    },
+    [files]
+  );
 
   // Remove duplicate files
   const removeDuplicateFiles = useCallback(() => {
@@ -696,74 +712,113 @@ export default function Component() {
     }
   }, [files, removeDuplicateFiles]);
 
-  const deleteFile = useCallback((fileName: string) => {
-    setFiles(prev => prev.filter(file => file.name !== fileName));
-    if (selectedFile === fileName) {
-      setSelectedFile(files[0]?.name || 'index.html');
-    }
-  }, [selectedFile, files]);
+  const deleteFile = useCallback(
+    (fileName: string) => {
+      setFiles(prev => prev.filter(file => file.name !== fileName));
+      if (selectedFile === fileName) {
+        setSelectedFile(files[0]?.name || 'index.html');
+      }
+    },
+    [selectedFile, files]
+  );
 
   // AI Integration: Create or update file from AI response
-  const createOrUpdateFileFromAI = useCallback((fileName: string, content: string, type: FileContent['type']) => {
-    const existingFile = files.find(f => f.name === fileName);
-    
-    if (existingFile) {
-      // Update existing file
-      updateFileContent(fileName, content);
-    } else {
-      // Create new file
-      const newFile: FileContent = {
-        name: fileName,
-        content,
-        type,
-        lastModified: new Date()
-      };
-      setFiles(prev => [...prev, newFile]);
-    }
-    
-    // Switch to the updated/created file
-    setSelectedFile(fileName);
-  }, [files, updateFileContent]);
+  const createOrUpdateFileFromAI = useCallback(
+    (fileName: string, content: string, type: FileContent['type']) => {
+      const existingFile = files.find(f => f.name === fileName);
+
+      if (existingFile) {
+        // Update existing file
+        updateFileContent(fileName, content);
+      } else {
+        // Create new file
+        const newFile: FileContent = {
+          name: fileName,
+          content,
+          type,
+          lastModified: new Date(),
+        };
+        setFiles(prev => [...prev, newFile]);
+      }
+
+      // Switch to the updated/created file
+      setSelectedFile(fileName);
+    },
+    [files, updateFileContent]
+  );
 
   // AI Integration: Apply multiple file changes from AI response
-  const applyAIChanges = useCallback((changes: Array<{fileName: string, content: string, type: FileContent['type']}>) => {
-    changes.forEach(change => {
-      createOrUpdateFileFromAI(change.fileName, change.content, change.type);
-    });
-  }, [createOrUpdateFileFromAI]);
+  const applyAIChanges = useCallback(
+    (
+      changes: Array<{
+        fileName: string;
+        content: string;
+        type: FileContent['type'];
+      }>
+    ) => {
+      changes.forEach(change => {
+        createOrUpdateFileFromAI(change.fileName, change.content, change.type);
+      });
+    },
+    [createOrUpdateFileFromAI]
+  );
 
   // Parse AI response for code blocks and apply them
-  const parseAndApplyAIResponse = useCallback((aiResponse: string) => {
-    const codeBlockRegex = /```(\w+)?\s*(?:\/\/\s*(.+\.(?:html|css|js|json|md|tsx|ts|py|txt)))?\n([\s\S]*?)```/g;
-    const changes: Array<{fileName: string, content: string, type: FileContent['type']}> = [];
-    let match;
+  const parseAndApplyAIResponse = useCallback(
+    (aiResponse: string) => {
+      const codeBlockRegex =
+        /```(\w+)?\s*(?:\/\/\s*(.+\.(?:html|css|js|json|md|tsx|ts|py|txt)))?\n([\s\S]*?)```/g;
+      const changes: Array<{
+        fileName: string;
+        content: string;
+        type: FileContent['type'];
+      }> = [];
+      let match;
 
-    while ((match = codeBlockRegex.exec(aiResponse)) !== null) {
-      const language = match[1]?.toLowerCase() || '';
-      const fileName = match[2] || `generated.${language}`;
-      const content = match[3].trim();
-      
-      // Determine file type from language or extension
-      let type: FileContent['type'] = 'html';
-      if (language === 'css' || fileName.endsWith('.css')) type = 'css';
-      else if (language === 'javascript' || language === 'js' || fileName.endsWith('.js')) type = 'js';
-      else if (language === 'json' || fileName.endsWith('.json')) type = 'json';
-      else if (language === 'typescript' || language === 'ts' || fileName.endsWith('.ts')) type = 'ts';
-      else if (language === 'tsx' || fileName.endsWith('.tsx')) type = 'tsx';
-      else if (language === 'python' || language === 'py' || fileName.endsWith('.py')) type = 'py';
-      else if (fileName.endsWith('.md')) type = 'md';
-      else if (fileName.endsWith('.txt')) type = 'txt';
-      
-      changes.push({ fileName, content, type });
-    }
+      while ((match = codeBlockRegex.exec(aiResponse)) !== null) {
+        const language = match[1]?.toLowerCase() || '';
+        const fileName = match[2] || `generated.${language}`;
+        const content = match[3].trim();
 
-    if (changes.length > 0) {
-      applyAIChanges(changes);
-      return changes.length;
-    }
-    
-    return 0;
-  }, [applyAIChanges]);
+        // Determine file type from language or extension
+        let type: FileContent['type'] = 'html';
+        if (language === 'css' || fileName.endsWith('.css')) type = 'css';
+        else if (
+          language === 'javascript' ||
+          language === 'js' ||
+          fileName.endsWith('.js')
+        )
+          type = 'js';
+        else if (language === 'json' || fileName.endsWith('.json'))
+          type = 'json';
+        else if (
+          language === 'typescript' ||
+          language === 'ts' ||
+          fileName.endsWith('.ts')
+        )
+          type = 'ts';
+        else if (language === 'tsx' || fileName.endsWith('.tsx')) type = 'tsx';
+        else if (
+          language === 'python' ||
+          language === 'py' ||
+          fileName.endsWith('.py')
+        )
+          type = 'py';
+        else if (fileName.endsWith('.md')) type = 'md';
+        else if (fileName.endsWith('.txt')) type = 'txt';
+
+        changes.push({ fileName, content, type });
+      }
+
+      if (changes.length > 0) {
+        applyAIChanges(changes);
+        return changes.length;
+      }
+
+      return 0;
+    },
+    [applyAIChanges]
+  );
 
   const getSelectedFileContent = useCallback(() => {
     return files.find(file => file.name === selectedFile)?.content || '';
@@ -781,7 +836,7 @@ export default function Component() {
       fileNames: files.map(f => f.name),
       dependencies: [] as string[],
       frameworks: [] as string[],
-      patterns: [] as string[]
+      patterns: [] as string[],
     };
 
     // Analyze files for dependencies and frameworks
@@ -789,42 +844,63 @@ export default function Component() {
       const content = file.content.toLowerCase();
 
       // Detect frameworks
-      if (content.includes('react') || content.includes('jsx') || content.includes('usestate')) {
-        if (!context.frameworks.includes('React')) context.frameworks.push('React');
+      if (
+        content.includes('react') ||
+        content.includes('jsx') ||
+        content.includes('usestate')
+      ) {
+        if (!context.frameworks.includes('React'))
+          context.frameworks.push('React');
       }
       if (content.includes('vue') || content.includes('v-')) {
         if (!context.frameworks.includes('Vue')) context.frameworks.push('Vue');
       }
       if (content.includes('angular') || content.includes('@component')) {
-        if (!context.frameworks.includes('Angular')) context.frameworks.push('Angular');
+        if (!context.frameworks.includes('Angular'))
+          context.frameworks.push('Angular');
       }
       if (content.includes('tailwind') || content.includes('tw-')) {
-        if (!context.frameworks.includes('Tailwind')) context.frameworks.push('Tailwind');
+        if (!context.frameworks.includes('Tailwind'))
+          context.frameworks.push('Tailwind');
       }
       if (content.includes('bootstrap') || content.includes('btn-')) {
-        if (!context.frameworks.includes('Bootstrap')) context.frameworks.push('Bootstrap');
+        if (!context.frameworks.includes('Bootstrap'))
+          context.frameworks.push('Bootstrap');
       }
 
       // Detect common patterns
       if (content.includes('async') && content.includes('await')) {
-        if (!context.patterns.includes('async/await')) context.patterns.push('async/await');
+        if (!context.patterns.includes('async/await'))
+          context.patterns.push('async/await');
       }
       if (content.includes('fetch(') || content.includes('axios')) {
-        if (!context.patterns.includes('API calls')) context.patterns.push('API calls');
+        if (!context.patterns.includes('API calls'))
+          context.patterns.push('API calls');
       }
-      if (content.includes('localstorage') || content.includes('sessionstorage')) {
-        if (!context.patterns.includes('Local storage')) context.patterns.push('Local storage');
+      if (
+        content.includes('localstorage') ||
+        content.includes('sessionstorage')
+      ) {
+        if (!context.patterns.includes('Local storage'))
+          context.patterns.push('Local storage');
       }
       if (content.includes('eventlistener') || content.includes('onclick')) {
-        if (!context.patterns.includes('Event handling')) context.patterns.push('Event handling');
+        if (!context.patterns.includes('Event handling'))
+          context.patterns.push('Event handling');
       }
 
       // Extract import statements for dependencies
-      const importMatches = file.content.match(/import.*from\s+['"]([^'"]+)['"]/g);
+      const importMatches = file.content.match(
+        /import.*from\s+['"]([^'"]+)['"]/g
+      );
       if (importMatches) {
         importMatches.forEach(match => {
           const dep = match.match(/from\s+['"]([^'"]+)['"]/)?.[1];
-          if (dep && !dep.startsWith('.') && !context.dependencies.includes(dep)) {
+          if (
+            dep &&
+            !dep.startsWith('.') &&
+            !context.dependencies.includes(dep)
+          ) {
             context.dependencies.push(dep);
           }
         });
@@ -835,92 +911,116 @@ export default function Component() {
   }, [files]);
 
   // Get related files for context
-  const getRelatedFiles = useCallback((currentFile: string, maxFiles: number = 5) => {
-    if (!currentFile) return [];
+  const getRelatedFiles = useCallback(
+    (currentFile: string, maxFiles: number = 5) => {
+      if (!currentFile) return [];
 
-    const currentFileExt = currentFile.split('.').pop()?.toLowerCase();
-    const currentFileBase = currentFile.replace(/\.[^/.]+$/, '');
+      const currentFileExt = currentFile.split('.').pop()?.toLowerCase();
+      const currentFileBase = currentFile.replace(/\.[^/.]+$/, '');
 
-    return files
-      .filter(file => file.name !== currentFile)
-      .sort((a, b) => {
-        let scoreA = 0;
-        let scoreB = 0;
+      return files
+        .filter(file => file.name !== currentFile)
+        .sort((a, b) => {
+          let scoreA = 0;
+          let scoreB = 0;
 
-        // Same extension gets higher score
-        if (a.name.endsWith(`.${currentFileExt}`)) scoreA += 3;
-        if (b.name.endsWith(`.${currentFileExt}`)) scoreB += 3;
+          // Same extension gets higher score
+          if (a.name.endsWith(`.${currentFileExt}`)) scoreA += 3;
+          if (b.name.endsWith(`.${currentFileExt}`)) scoreB += 3;
 
-        // Similar base name gets higher score
-        if (a.name.includes(currentFileBase) || currentFileBase.includes(a.name.replace(/\.[^/.]+$/, ''))) {
-          scoreA += 5;
-        }
-        if (b.name.includes(currentFileBase) || currentFileBase.includes(b.name.replace(/\.[^/.]+$/, ''))) {
-          scoreB += 5;
-        }
+          // Similar base name gets higher score
+          if (
+            a.name.includes(currentFileBase) ||
+            currentFileBase.includes(a.name.replace(/\.[^/.]+$/, ''))
+          ) {
+            scoreA += 5;
+          }
+          if (
+            b.name.includes(currentFileBase) ||
+            currentFileBase.includes(b.name.replace(/\.[^/.]+$/, ''))
+          ) {
+            scoreB += 5;
+          }
 
-        // Files with imports/references get higher score
-        const currentContent = files.find(f => f.name === currentFile)?.content || '';
-        if (currentContent.includes(a.name) || a.content.includes(currentFile)) scoreA += 2;
-        if (currentContent.includes(b.name) || b.content.includes(currentFile)) scoreB += 2;
+          // Files with imports/references get higher score
+          const currentContent =
+            files.find(f => f.name === currentFile)?.content || '';
+          if (
+            currentContent.includes(a.name) ||
+            a.content.includes(currentFile)
+          )
+            scoreA += 2;
+          if (
+            currentContent.includes(b.name) ||
+            b.content.includes(currentFile)
+          )
+            scoreB += 2;
 
-        return scoreB - scoreA;
-      })
-      .slice(0, maxFiles);
-  }, [files]);
+          return scoreB - scoreA;
+        })
+        .slice(0, maxFiles);
+    },
+    [files]
+  );
 
   // Extract symbols from file for completion context
-  const extractFileSymbols = useCallback((fileName: string) => {
-    const file = files.find(f => f.name === fileName);
-    if (!file) return { functions: [], variables: [], classes: [], exports: [] };
+  const extractFileSymbols = useCallback(
+    (fileName: string) => {
+      const file = files.find(f => f.name === fileName);
+      if (!file)
+        return { functions: [], variables: [], classes: [], exports: [] };
 
-    const content = file.content;
-    const symbols = {
-      functions: [] as string[],
-      variables: [] as string[],
-      classes: [] as string[],
-      exports: [] as string[]
-    };
+      const content = file.content;
+      const symbols = {
+        functions: [] as string[],
+        variables: [] as string[],
+        classes: [] as string[],
+        exports: [] as string[],
+      };
 
-    // Extract functions
-    const functionRegex = /(?:function\s+([a-zA-Z_$][a-zA-Z0-9_$]*)|const\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*(?:async\s+)?\([^)]*\)\s*=>|([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:\s*(?:async\s+)?\([^)]*\)\s*=>)/g;
-    let match;
-    while ((match = functionRegex.exec(content)) !== null) {
-      const funcName = match[1] || match[2] || match[3];
-      if (funcName && !symbols.functions.includes(funcName)) {
-        symbols.functions.push(funcName);
+      // Extract functions
+      const functionRegex =
+        /(?:function\s+([a-zA-Z_$][a-zA-Z0-9_$]*)|const\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*(?:async\s+)?\([^)]*\)\s*=>|([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:\s*(?:async\s+)?\([^)]*\)\s*=>)/g;
+      let match;
+      while ((match = functionRegex.exec(content)) !== null) {
+        const funcName = match[1] || match[2] || match[3];
+        if (funcName && !symbols.functions.includes(funcName)) {
+          symbols.functions.push(funcName);
+        }
       }
-    }
 
-    // Extract variables
-    const variableRegex = /(?:const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
-    while ((match = variableRegex.exec(content)) !== null) {
-      const varName = match[1];
-      if (varName && !symbols.variables.includes(varName)) {
-        symbols.variables.push(varName);
+      // Extract variables
+      const variableRegex = /(?:const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
+      while ((match = variableRegex.exec(content)) !== null) {
+        const varName = match[1];
+        if (varName && !symbols.variables.includes(varName)) {
+          symbols.variables.push(varName);
+        }
       }
-    }
 
-    // Extract classes
-    const classRegex = /class\s+([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
-    while ((match = classRegex.exec(content)) !== null) {
-      const className = match[1];
-      if (className && !symbols.classes.includes(className)) {
-        symbols.classes.push(className);
+      // Extract classes
+      const classRegex = /class\s+([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
+      while ((match = classRegex.exec(content)) !== null) {
+        const className = match[1];
+        if (className && !symbols.classes.includes(className)) {
+          symbols.classes.push(className);
+        }
       }
-    }
 
-    // Extract exports
-    const exportRegex = /export\s+(?:default\s+)?(?:const|let|var|function|class)?\s*([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
-    while ((match = exportRegex.exec(content)) !== null) {
-      const exportName = match[1];
-      if (exportName && !symbols.exports.includes(exportName)) {
-        symbols.exports.push(exportName);
+      // Extract exports
+      const exportRegex =
+        /export\s+(?:default\s+)?(?:const|let|var|function|class)?\s*([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
+      while ((match = exportRegex.exec(content)) !== null) {
+        const exportName = match[1];
+        if (exportName && !symbols.exports.includes(exportName)) {
+          symbols.exports.push(exportName);
+        }
       }
-    }
 
-    return symbols;
-  }, [files]);
+      return symbols;
+    },
+    [files]
+  );
 
   return {
     files,
@@ -943,39 +1043,49 @@ export default function Component() {
     // Context analysis methods
     getProjectContext,
     getRelatedFiles,
-    extractFileSymbols
+    extractFileSymbols,
   };
 }
 
 export function useCodeExport() {
-  const exportAsZip = useCallback(async (files: FileContent[], appName: string) => {
-    try {
-      const zip = new JSZip();
-      
-      // Add all files to the zip
-      files.forEach(file => {
-        zip.file(file.name, file.content);
-      });
-      
-      // Generate the zip file
-      const content = await zip.generateAsync({ type: 'blob' });
-      
-      // Download the zip
-      const url = URL.createObjectURL(content);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${appName.toLowerCase().replace(/\s+/g, '-')}-project.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error creating zip file:', error);
-    }
-  }, []);
+  const exportAsZip = useCallback(
+    async (files: FileContent[], appName: string) => {
+      try {
+        const zip = new JSZip();
+
+        // Add all files to the zip
+        files.forEach(file => {
+          zip.file(file.name, file.content);
+        });
+
+        // Generate the zip file
+        const content = await zip.generateAsync({ type: 'blob' });
+
+        // Download the zip
+        const url = URL.createObjectURL(content);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${appName.toLowerCase().replace(/\s+/g, '-')}-project.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Error creating zip file:', error);
+      }
+    },
+    []
+  );
 
   const previewInNewTab = useCallback((files: FileContent[]) => {
-    console.log('Preview called with files:', files.map(f => ({ name: f.name, type: f.type, contentLength: f.content.length })));
+    console.log(
+      'Preview called with files:',
+      files.map(f => ({
+        name: f.name,
+        type: f.type,
+        contentLength: f.content.length,
+      }))
+    );
 
     // Try to find an HTML file to preview
     let htmlFile = files.find(f => f.name === 'index.html');
@@ -983,7 +1093,16 @@ export function useCodeExport() {
       htmlFile = files.find(f => f.type === 'html');
     }
 
-    console.log('Found HTML file:', htmlFile ? { name: htmlFile.name, type: htmlFile.type, contentPreview: htmlFile.content.substring(0, 200) + '...' } : null);
+    console.log(
+      'Found HTML file:',
+      htmlFile
+        ? {
+            name: htmlFile.name,
+            type: htmlFile.type,
+            contentPreview: htmlFile.content.substring(0, 200) + '...',
+          }
+        : null
+    );
 
     if (!htmlFile) {
       // If no HTML file, create a simple preview with the first file
@@ -1045,15 +1164,23 @@ export function useCodeExport() {
     // Find and embed CSS files
     const cssFiles = files.filter(f => f.type === 'css');
     cssFiles.forEach(cssFile => {
-      const linkRegex = new RegExp(`<link[^>]*href=["']${cssFile.name}["'][^>]*>`, 'gi');
+      const linkRegex = new RegExp(
+        `<link[^>]*href=["']${cssFile.name}["'][^>]*>`,
+        'gi'
+      );
       const styleTag = `<style>\n${cssFile.content}\n</style>`;
       completeHtml = completeHtml.replace(linkRegex, styleTag);
     });
 
     // Find and embed JavaScript files
-    const jsFiles = files.filter(f => f.type === 'js' || f.type === 'tsx' || f.type === 'ts');
+    const jsFiles = files.filter(
+      f => f.type === 'js' || f.type === 'tsx' || f.type === 'ts'
+    );
     jsFiles.forEach(jsFile => {
-      const scriptRegex = new RegExp(`<script[^>]*src=["']${jsFile.name}["'][^>]*></script>`, 'gi');
+      const scriptRegex = new RegExp(
+        `<script[^>]*src=["']${jsFile.name}["'][^>]*></script>`,
+        'gi'
+      );
       let jsContent = jsFile.content;
 
       // Handle TypeScript/JSX files - convert to plain JavaScript for preview
@@ -1092,7 +1219,10 @@ export function useCodeExport() {
       });
     </script>`;
 
-    completeHtml = completeHtml.replace('</head>', errorHandlingScript + '</head>');
+    completeHtml = completeHtml.replace(
+      '</head>',
+      errorHandlingScript + '</head>'
+    );
 
     const blob = new Blob([completeHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
@@ -1102,6 +1232,6 @@ export function useCodeExport() {
 
   return {
     exportAsZip,
-    previewInNewTab
+    previewInNewTab,
   };
 }

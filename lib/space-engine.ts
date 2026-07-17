@@ -377,6 +377,135 @@ export function buildPreviewHtml(
   return doc;
 }
 
+const PWA_ICONS = [
+  { src: '/icon-192.png', name: 'icon-192.png', sizes: '192x192' },
+  { src: '/icon-512.png', name: 'icon-512.png', sizes: '512x512' },
+] as const;
+const APPLE_ICON = {
+  src: '/apple-touch-icon.png',
+  name: 'apple-touch-icon.png',
+};
+
+async function fetchAsBase64(url: string): Promise<string> {
+  const res = await fetch(url);
+  const buffer = await res.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+/**
+ * Turns a project's raw files into a deployable, installable PWA bundle:
+ * fetches the app's own generic icons, adds a manifest + minimal service
+ * worker, and wires both into index.html. Only used on the Deploy path —
+ * the sandboxed srcdoc preview iframe (buildPreviewHtml) can never register
+ * a real service worker or trigger an install prompt, so there's no point
+ * PWA-ifying it.
+ */
+export async function buildDeployableFiles(
+  files: FileContent[],
+  projectName: string
+): Promise<FileContent[]> {
+  const now = new Date();
+  const shortName = projectName.slice(0, 20) || 'My App';
+
+  const manifest = {
+    name: projectName || 'My App',
+    short_name: shortName,
+    start_url: '.',
+    display: 'standalone',
+    background_color: '#0d0d0d',
+    theme_color: '#6c2fff',
+    icons: PWA_ICONS.map(icon => ({
+      src: icon.name,
+      sizes: icon.sizes,
+      type: 'image/png',
+      purpose: 'any maskable',
+    })),
+  };
+
+  const cacheList = [
+    '.',
+    ...files.map(f => f.name),
+    'manifest.json',
+    ...PWA_ICONS.map(i => i.name),
+    APPLE_ICON.name,
+  ];
+  const swContent = `const CACHE_NAME = 'wr-app-${Date.now()}';
+const urlsToCache = ${JSON.stringify(cacheList)};
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+  );
+});
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => response || fetch(event.request))
+  );
+});
+`;
+
+  const iconFiles: FileContent[] = await Promise.all(
+    [...PWA_ICONS, APPLE_ICON].map(async icon => ({
+      name: icon.name,
+      content: await fetchAsBase64(icon.src),
+      type: 'txt' as const,
+      lastModified: now,
+      encoding: 'base64' as const,
+    }))
+  );
+
+  const pwaTags = [
+    '<link rel="manifest" href="manifest.json">',
+    '<meta name="theme-color" content="#6c2fff">',
+    `<link rel="apple-touch-icon" href="${APPLE_ICON.name}">`,
+    '<meta name="apple-mobile-web-app-capable" content="yes">',
+    `<meta name="apple-mobile-web-app-title" content="${shortName}">`,
+  ].join('\n');
+  const swRegisterScript = `<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>`;
+
+  const outFiles = files.map(f => ({ ...f }));
+  const htmlIndex = outFiles.findIndex(
+    f => f.name.toLowerCase() === 'index.html'
+  );
+  if (htmlIndex !== -1) {
+    let doc = outFiles[htmlIndex].content;
+    doc = doc.includes('<head>')
+      ? doc.replace('<head>', `<head>\n${pwaTags}`)
+      : pwaTags + doc;
+    doc = doc.includes('</body>')
+      ? doc.replace('</body>', `${swRegisterScript}\n</body>`)
+      : doc + swRegisterScript;
+    outFiles[htmlIndex] = { ...outFiles[htmlIndex], content: doc };
+  }
+
+  return [
+    ...outFiles,
+    {
+      name: 'manifest.json',
+      content: JSON.stringify(manifest, null, 2),
+      type: 'json',
+      lastModified: now,
+    },
+    {
+      name: 'sw.js',
+      content: swContent,
+      type: 'js',
+      lastModified: now,
+    },
+    ...iconFiles,
+  ];
+}
+
 export const SPACE_TEMPLATES: SpaceTemplate[] = [
   {
     id: 'blank',

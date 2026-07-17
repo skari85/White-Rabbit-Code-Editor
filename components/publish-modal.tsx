@@ -14,6 +14,7 @@ import { ExternalLink, Globe2, LinkIcon } from 'lucide-react';
 import { FileContent } from '@/hooks/use-code-builder';
 import { VercelIntegration } from '@/lib/vercel-integration';
 import { NetlifyIntegration } from '@/lib/netlify-integration';
+import { buildDeployableFiles } from '@/lib/space-engine';
 
 type Platform = 'vercel' | 'netlify';
 
@@ -52,18 +53,23 @@ export default function PublishModal({
   const [error, setError] = useState<string | null>(null);
 
   const handleDeployVercel = async () => {
+    const deployableFiles = await buildDeployableFiles(files, projectName);
     const vercel = new VercelIntegration(apiToken);
     const deployment = await vercel.deployProject(
       projectName,
-      files,
+      deployableFiles,
       'production'
     );
     setDeployUrl(`https://${deployment.url}`);
   };
 
   const handleDeployNetlify = async () => {
+    const deployableFiles = await buildDeployableFiles(files, projectName);
     const netlify = new NetlifyIntegration(apiToken);
-    const deployment = await netlify.deployProject(projectName, files);
+    const deployment = await netlify.deployProject(
+      projectName,
+      deployableFiles
+    );
     setDeployUrl(`https://${NetlifyIntegration.getDeploymentUrl(deployment)}`);
   };
 
@@ -180,6 +186,12 @@ export default function PublishModal({
                 You can connect a custom domain later in{' '}
                 {PLATFORM_COPY[platform].label}. A shareable preview URL is
                 available immediately.
+              </div>
+              <div className='text-xs text-muted-foreground'>
+                Open this link on your phone and tap{' '}
+                <strong>Add to Home Screen</strong> (iPhone) or{' '}
+                <strong>Install app</strong> (Android) to add it like a real
+                app.
               </div>
             </div>
           )}

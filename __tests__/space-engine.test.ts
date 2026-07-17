@@ -2,12 +2,13 @@
  * Coder Space engine tests
  */
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   MAX_PROJECTS,
   SPACE_SYSTEM_PROMPT,
   SPACE_TEMPLATES,
   SpaceProject,
+  buildDeployableFiles,
   buildPreviewHtml,
   decodeProjectFromHash,
   encodeProjectToHash,
@@ -246,5 +247,65 @@ describe('templates', () => {
     expect(fileTypeFromName('index.html')).toBe('html');
     expect(fileTypeFromName('style.css')).toBe('css');
     expect(fileTypeFromName('app.js')).toBe('js');
+  });
+});
+
+describe('buildDeployableFiles', () => {
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    global.fetch = vi.fn(async () => ({
+      arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
+    })) as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('adds a manifest, service worker, and bundled icons, and wires them into index.html', async () => {
+    const files = [
+      {
+        name: 'index.html',
+        content:
+          '<html><head></head><body><script src="app.js"></script></body></html>',
+        type: 'html' as const,
+        lastModified: new Date(),
+      },
+      {
+        name: 'app.js',
+        content: 'console.log("hi");',
+        type: 'js' as const,
+        lastModified: new Date(),
+      },
+    ];
+
+    const out = await buildDeployableFiles(files, 'My Test App');
+    const names = out.map(f => f.name);
+
+    expect(names).toEqual(
+      expect.arrayContaining([
+        'index.html',
+        'app.js',
+        'manifest.json',
+        'sw.js',
+        'icon-192.png',
+        'icon-512.png',
+        'apple-touch-icon.png',
+      ])
+    );
+
+    const manifest = JSON.parse(
+      out.find(f => f.name === 'manifest.json')!.content
+    );
+    expect(manifest.name).toBe('My Test App');
+    expect(manifest.icons).toHaveLength(2);
+
+    const html = out.find(f => f.name === 'index.html')!.content;
+    expect(html).toContain('<link rel="manifest" href="manifest.json">');
+    expect(html).toContain("navigator.serviceWorker.register('sw.js')");
+
+    const icon = out.find(f => f.name === 'icon-192.png')!;
+    expect(icon.encoding).toBe('base64');
   });
 });
