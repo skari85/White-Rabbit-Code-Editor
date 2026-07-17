@@ -128,3 +128,8 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Monaco Editor's static AMD build, mirrored from node_modules on postinstall
+# (see scripts/copy-monaco.cjs) so it can be self-hosted instead of fetched
+# from a CDN — always regenerated, never hand-edited.
+public/monaco-vs/

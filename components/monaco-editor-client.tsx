@@ -2,28 +2,57 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { loader } from '@monaco-editor/react';
 import { setupSimpleMonacoEnvironment } from '@/lib/monaco-setup';
 
 // Setup Monaco Environment before importing
 if (typeof window !== 'undefined') {
   setupSimpleMonacoEnvironment();
+  // Point @monaco-editor/react at our own copy of Monaco's static AMD
+  // build (public/monaco-vs, populated by scripts/copy-monaco.cjs on
+  // install) instead of its default CDN loader (jsdelivr) — self-hosted,
+  // works offline, and can't be blocked by an ad-blocker or restrictive
+  // network. This keeps Monaco's own CSS out of our webpack/Tailwind
+  // pipeline entirely, unlike bundling the npm package directly.
+  const vsBase = `${window.location.origin}/monaco-vs/vs`;
+  loader.config({ paths: { vs: vsBase } });
+
+  // The classic AMD loader spins up language workers via a same-origin
+  // Worker whose default script is itself served from a blob: URL — inside
+  // that worker, root-relative URLs like "/monaco-vs/vs/..." can't be
+  // resolved (a blob: URL has no path to resolve against), so every worker
+  // fetch throws "Failed to parse URL". Overriding getWorkerUrl to hand back
+  // a blob that importScripts() the worker's *absolute* URL fixes this —
+  // the standard approach for self-hosting Monaco outside webpack (see
+  // monaco-editor's own samples/browser-amd-monaco example).
+  (
+    window as unknown as { MonacoEnvironment: Record<string, unknown> }
+  ).MonacoEnvironment = {
+    getWorkerUrl: (_moduleId: string, _label: string) =>
+      URL.createObjectURL(
+        new Blob(
+          [
+            `self.MonacoEnvironment = { baseUrl: '${window.location.origin}/monaco-vs/' };\n` +
+              `importScripts('${vsBase}/base/worker/workerMain.js');`,
+          ],
+          { type: 'text/javascript' }
+        )
+      ),
+  };
 }
 
 // Dynamically import Monaco Editor with no SSR
-const Editor = dynamic(
-  () => import('@monaco-editor/react'),
-  { 
-    ssr: false,
-    loading: () => (
-      <div className="min-h-[400px] bg-gray-900 border border-gray-700 rounded flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading Monaco Editor...</p>
-        </div>
+const Editor = dynamic(() => import('@monaco-editor/react'), {
+  ssr: false,
+  loading: () => (
+    <div className='min-h-[400px] bg-gray-900 border border-gray-700 rounded flex items-center justify-center'>
+      <div className='text-center'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto mb-4'></div>
+        <p className='text-gray-400'>Loading Monaco Editor...</p>
       </div>
-    )
-  }
-);
+    </div>
+  ),
+});
 
 export interface MonacoEditorClientProps {
   value: string;
@@ -42,7 +71,7 @@ export default function MonacoEditorClient({
   onCursorPositionChange,
   className,
   height = '400px',
-  width = '100%'
+  width = '100%',
 }: MonacoEditorClientProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -52,10 +81,12 @@ export default function MonacoEditorClient({
 
   if (!mounted) {
     return (
-      <div className={`min-h-[400px] bg-gray-900 border border-gray-700 rounded flex items-center justify-center ${className}`}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading Editor...</p>
+      <div
+        className={`min-h-[400px] bg-gray-900 border border-gray-700 rounded flex items-center justify-center ${className}`}
+      >
+        <div className='text-center'>
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto mb-4'></div>
+          <p className='text-gray-400'>Loading Editor...</p>
         </div>
       </div>
     );
@@ -69,7 +100,7 @@ export default function MonacoEditorClient({
         language={language}
         value={value}
         onChange={onChange}
-        theme="vs-dark"
+        theme='vs-dark'
         options={{
           minimap: { enabled: false },
           scrollBeyondLastLine: false,
@@ -109,10 +140,10 @@ export default function MonacoEditorClient({
         onMount={(editor, monaco) => {
           // Set up cursor position tracking
           if (onCursorPositionChange) {
-            editor.onDidChangeCursorPosition((e) => {
+            editor.onDidChangeCursorPosition(e => {
               onCursorPositionChange({
                 line: e.position.lineNumber,
-                column: e.position.column
+                column: e.position.column,
               });
             });
           }

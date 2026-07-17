@@ -141,6 +141,11 @@ const IDEA_CHIPS: Record<string, string[]> = {
     'Let me set custom session lengths',
     'Celebrate finished sessions',
   ],
+  canvas: [
+    'Make the brush leave sparkles',
+    'Turn it into fireworks on click',
+    'Add a color picker instead of rainbow',
+  ],
   default: [
     'Make it more colorful',
     'Improve the layout',

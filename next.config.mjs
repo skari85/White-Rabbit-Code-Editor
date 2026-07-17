@@ -12,7 +12,7 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['@monaco-editor/react', 'lucide-react'],
   },
-  webpack: (config, { dev, isServer }) => {
+  webpack: (config, { isServer }) => {
     // Basic Monaco Editor support
     if (!isServer) {
       config.resolve.fallback = {
