@@ -1,6 +1,21 @@
 import { useState, useCallback, useEffect } from 'react';
-import { AISettings, AIMessage, DEFAULT_AI_SETTINGS } from '@/lib/ai-config';
-import { AIService, validateApiKey } from '@/lib/ai-service';
+import {
+  AISettings,
+  AIMessage,
+  AI_PROVIDERS,
+  DEFAULT_AI_SETTINGS,
+} from '@/lib/ai-config';
+import { AIService } from '@/lib/ai-service';
+
+// A provider is usable once a key has been entered when it requires one —
+// format-guessing (e.g. "starts with sk-") rejects valid keys whose format
+// doesn't match the guess (or has since changed), so it isn't used here.
+// The real validator is testConnection, which calls the actual provider API.
+function hasValidConfig(settings: AISettings): boolean {
+  const provider = AI_PROVIDERS.find(p => p.id === settings.provider);
+  if (!provider) return false;
+  return !provider.requiresApiKey || Boolean(settings.apiKey?.trim());
+}
 
 const STORAGE_KEY = 'hex-kex-ai-settings';
 const MESSAGES_STORAGE_KEY = 'hex-kex-ai-messages';
@@ -22,8 +37,8 @@ export function useAIAssistant() {
         const parsed = JSON.parse(savedSettings);
         setSettings(parsed);
 
-        // Check if API key is valid
-        if (parsed.apiKey && validateApiKey(parsed.provider, parsed.apiKey)) {
+        // Check if the provider is usable (key present when required)
+        if (hasValidConfig(parsed)) {
           setIsConfigured(true);
           setAIService(new AIService(parsed));
         }
@@ -60,10 +75,7 @@ export function useAIAssistant() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
     setSettings(newSettings);
 
-    if (
-      newSettings.apiKey &&
-      validateApiKey(newSettings.provider, newSettings.apiKey)
-    ) {
+    if (hasValidConfig(newSettings)) {
       setIsConfigured(true);
       setAIService(new AIService(newSettings));
     } else {
