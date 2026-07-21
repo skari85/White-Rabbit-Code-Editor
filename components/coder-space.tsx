@@ -146,6 +146,11 @@ const IDEA_CHIPS: Record<string, string[]> = {
     'Turn it into fireworks on click',
     'Add a color picker instead of rainbow',
   ],
+  'modular-board': [
+    'Add a weather widget',
+    'Add a quick-links widget',
+    'Add a dark/light theme toggle',
+  ],
   default: [
     'Make it more colorful',
     'Improve the layout',

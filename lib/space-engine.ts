@@ -965,6 +965,443 @@ document.getElementById('rainbow').addEventListener('change', e => {
       },
     ],
   },
+  {
+    id: 'modular-board',
+    name: 'Widget Board',
+    tagline: 'Snap-grid mini apps',
+    icon: '🧩',
+    files: [
+      {
+        name: 'index.html',
+        type: 'html',
+        content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Widget Board</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="topbar">
+    <h1>🧩 Widget Board</h1>
+    <div class="add-wrap">
+      <button id="addBtn">+ Add Widget</button>
+      <div id="addMenu" class="add-menu hidden"></div>
+    </div>
+  </div>
+  <div id="board" class="board"></div>
+  <script src="app.js"></script>
+</body>
+</html>`,
+      },
+      {
+        name: 'style.css',
+        type: 'css',
+        content: `* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: #0d0d0d; color: #eaeaea; font-family: system-ui, sans-serif; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid #262626; }
+.topbar h1 { font-size: 1.1rem; margin: 0; }
+.add-wrap { position: relative; }
+#addBtn { background: #6c2fff; color: white; border: none; border-radius: 999px; padding: .5rem 1.1rem; font-size: .85rem; cursor: pointer; }
+#addBtn:hover { background: #5a1fe0; }
+.add-menu { position: absolute; right: 0; top: calc(100% + 8px); background: #161616; border: 1px solid #262626; border-radius: 10px; padding: .4rem; min-width: 160px; box-shadow: 0 8px 24px rgba(0,0,0,.4); z-index: 20; }
+.add-menu.hidden { display: none; }
+.add-menu button { display: flex; align-items: center; gap: .5rem; width: 100%; background: none; border: none; color: #eaeaea; text-align: left; padding: .5rem .6rem; border-radius: 6px; font-size: .85rem; cursor: pointer; }
+.add-menu button:hover { background: #262626; }
+.board { position: relative; display: grid; grid-template-columns: repeat(12, 1fr); grid-auto-rows: 48px; gap: 10px; padding: 1rem; }
+.widget { position: relative; background: #161616; border: 1px solid #262626; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
+.widget.dragging { opacity: .85; box-shadow: 0 12px 32px rgba(0,0,0,.5); z-index: 50; }
+.widget-header { display: flex; align-items: center; justify-content: space-between; padding: .5rem .7rem; background: #1c1c1c; border-bottom: 1px solid #262626; cursor: grab; touch-action: none; font-size: .8rem; color: #7a7a7a; }
+.widget-header:active { cursor: grabbing; }
+.widget-close { background: none; border: none; color: #7a7a7a; cursor: pointer; font-size: .9rem; line-height: 1; padding: 2px 4px; }
+.widget-close:hover { color: #ff3c75; }
+.widget-body { flex: 1; padding: .7rem; overflow: auto; font-size: .85rem; }
+.widget-resize { position: absolute; right: 2px; bottom: 2px; width: 14px; height: 14px; cursor: nwse-resize; touch-action: none; opacity: .5; }
+.widget-resize:hover { opacity: 1; }
+
+.todo-row { display: flex; gap: .4rem; margin-bottom: .5rem; }
+.todo-row input[type="text"] { flex: 1; background: #0d0d0d; border: 1px solid #262626; border-radius: 6px; padding: .4rem .5rem; color: #eaeaea; font-size: .8rem; }
+.todo-row button { background: #6c2fff; color: white; border: none; border-radius: 6px; padding: .4rem .7rem; font-size: .8rem; cursor: pointer; }
+.todo-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .3rem; }
+.todo-list li { display: flex; align-items: center; gap: .4rem; }
+.todo-list li.done span { text-decoration: line-through; color: #555; }
+.todo-list li span { flex: 1; word-break: break-word; }
+.todo-list li button { background: none; border: none; color: #7a7a7a; cursor: pointer; }
+.todo-list li button:hover { color: #ff3c75; }
+
+.notes-area { width: 100%; height: 100%; min-height: 80px; resize: none; background: #0d0d0d; border: 1px solid #262626; border-radius: 6px; color: #eaeaea; padding: .5rem; font-family: inherit; font-size: .8rem; }
+
+.timer-display { font-size: 1.8rem; text-align: center; font-variant-numeric: tabular-nums; margin-bottom: .5rem; color: #00ffe1; }
+.timer-controls { display: flex; gap: .4rem; justify-content: center; }
+.timer-controls button { flex: 1; background: #161616; border: 1px solid #262626; color: #eaeaea; border-radius: 6px; padding: .4rem; font-size: .75rem; cursor: pointer; }
+.timer-controls button:hover { border-color: #6c2fff; }
+
+.counter-display { font-size: 2.2rem; text-align: center; margin-bottom: .5rem; }
+.counter-controls { display: flex; gap: .5rem; justify-content: center; }
+.counter-controls button { width: 40px; height: 40px; border-radius: 999px; border: none; background: #6c2fff; color: white; font-size: 1.1rem; cursor: pointer; }
+.counter-controls button:hover { background: #5a1fe0; }`,
+      },
+      {
+        name: 'app.js',
+        type: 'js',
+        content: `const COLUMNS = 12;
+const ROW_HEIGHT = 48;
+const GAP = 10;
+const STORAGE_KEY = 'wr-widget-board';
+
+const board = document.getElementById('board');
+const addBtn = document.getElementById('addBtn');
+const addMenu = document.getElementById('addMenu');
+
+let widgets = [];
+let nextId = 1;
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+const WIDGET_TYPES = {
+  todo: {
+    label: 'To-Do List',
+    icon: '✅',
+    defaultData: () => ({ items: [] }),
+    mount(body, widget) {
+      body.innerHTML =
+        '<div class="todo-row">' +
+        '<input type="text" placeholder="New task…" />' +
+        '<button>Add</button>' +
+        '</div>' +
+        '<ul class="todo-list"></ul>';
+
+      const input = body.querySelector('input');
+      const addTaskBtn = body.querySelector('.todo-row button');
+      const list = body.querySelector('.todo-list');
+
+      const render = () => {
+        list.innerHTML = '';
+        widget.data.items.forEach(item => {
+          const li = document.createElement('li');
+          li.className = item.done ? 'done' : '';
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.checked = item.done;
+          checkbox.addEventListener('change', () => {
+            item.done = !item.done;
+            saveState();
+            render();
+          });
+
+          const span = document.createElement('span');
+          span.textContent = item.text;
+
+          const del = document.createElement('button');
+          del.textContent = '✕';
+          del.setAttribute('aria-label', 'Delete task');
+          del.addEventListener('click', () => {
+            widget.data.items = widget.data.items.filter(i => i.id !== item.id);
+            saveState();
+            render();
+          });
+
+          li.appendChild(checkbox);
+          li.appendChild(span);
+          li.appendChild(del);
+          list.appendChild(li);
+        });
+      };
+
+      const addTask = () => {
+        const text = input.value.trim();
+        if (!text) return;
+        widget.data.items.push({ id: Date.now(), text: text, done: false });
+        input.value = '';
+        saveState();
+        render();
+      };
+
+      addTaskBtn.addEventListener('click', addTask);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+      render();
+    }
+  },
+  notes: {
+    label: 'Notes',
+    icon: '📝',
+    defaultData: () => ({ text: '' }),
+    mount(body, widget) {
+      body.innerHTML = '<textarea class="notes-area" placeholder="Jot something down…"></textarea>';
+      const area = body.querySelector('textarea');
+      area.value = widget.data.text;
+      area.addEventListener('input', () => {
+        widget.data.text = area.value;
+        saveState();
+      });
+    }
+  },
+  timer: {
+    label: 'Timer',
+    icon: '⏱️',
+    defaultData: () => ({ seconds: 0 }),
+    mount(body, widget) {
+      body.innerHTML =
+        '<div class="timer-display">00:00</div>' +
+        '<div class="timer-controls">' +
+        '<button data-action="toggle">Start</button>' +
+        '<button data-action="reset">Reset</button>' +
+        '</div>';
+
+      const display = body.querySelector('.timer-display');
+      const toggleBtn = body.querySelector('[data-action="toggle"]');
+      let seconds = widget.data.seconds || 0;
+      let running = false;
+      let interval = null;
+
+      const render = () => {
+        display.textContent = pad(Math.floor(seconds / 60)) + ':' + pad(seconds % 60);
+        toggleBtn.textContent = running ? 'Pause' : 'Start';
+      };
+
+      toggleBtn.addEventListener('click', () => {
+        running = !running;
+        if (running) {
+          interval = setInterval(() => {
+            seconds++;
+            widget.data.seconds = seconds;
+            render();
+          }, 1000);
+        } else {
+          clearInterval(interval);
+          saveState();
+        }
+        render();
+      });
+
+      body.querySelector('[data-action="reset"]').addEventListener('click', () => {
+        clearInterval(interval);
+        running = false;
+        seconds = 0;
+        widget.data.seconds = 0;
+        saveState();
+        render();
+      });
+
+      render();
+    }
+  },
+  counter: {
+    label: 'Counter',
+    icon: '🔢',
+    defaultData: () => ({ count: 0 }),
+    mount(body, widget) {
+      body.innerHTML =
+        '<div class="counter-display">0</div>' +
+        '<div class="counter-controls">' +
+        '<button data-action="dec">−</button>' +
+        '<button data-action="inc">+</button>' +
+        '</div>';
+      const display = body.querySelector('.counter-display');
+      const render = () => { display.textContent = widget.data.count; };
+      body.querySelector('[data-action="inc"]').addEventListener('click', () => {
+        widget.data.count++; saveState(); render();
+      });
+      body.querySelector('[data-action="dec"]').addEventListener('click', () => {
+        widget.data.count--; saveState(); render();
+      });
+      render();
+    }
+  }
+};
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ nextId: nextId, widgets: widgets }));
+  } catch (e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed.widgets)) return false;
+    widgets = parsed.widgets;
+    nextId = parsed.nextId || widgets.length + 1;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function nextFreeSlot() {
+  let maxRow = 1;
+  widgets.forEach(w => { maxRow = Math.max(maxRow, w.row + w.rowSpan); });
+  return { col: 1, row: maxRow };
+}
+
+function addWidget(type) {
+  const def = WIDGET_TYPES[type];
+  if (!def) return;
+  const colSpan = 4, rowSpan = 4;
+  const slot = nextFreeSlot();
+  const widget = { id: nextId++, type: type, col: slot.col, row: slot.row, colSpan: colSpan, rowSpan: rowSpan, data: def.defaultData() };
+  widgets.push(widget);
+  saveState();
+  renderWidget(widget);
+  closeMenu();
+}
+
+function removeWidget(id) {
+  widgets = widgets.filter(w => w.id !== id);
+  const el = board.querySelector('[data-widget-id="' + id + '"]');
+  if (el) el.remove();
+  saveState();
+}
+
+function applyGridPosition(el, widget) {
+  el.style.gridColumn = widget.col + ' / span ' + widget.colSpan;
+  el.style.gridRow = widget.row + ' / span ' + widget.rowSpan;
+}
+
+function renderWidget(widget) {
+  const def = WIDGET_TYPES[widget.type];
+  if (!def) return;
+
+  const el = document.createElement('div');
+  el.className = 'widget';
+  el.dataset.widgetId = widget.id;
+  applyGridPosition(el, widget);
+
+  el.innerHTML =
+    '<div class="widget-header">' +
+    '<span>' + def.icon + ' ' + def.label + '</span>' +
+    '<button class="widget-close" aria-label="Close widget">✕</button>' +
+    '</div>' +
+    '<div class="widget-body"></div>' +
+    '<div class="widget-resize"></div>';
+
+  el.querySelector('.widget-close').addEventListener('click', () => removeWidget(widget.id));
+
+  const header = el.querySelector('.widget-header');
+  header.addEventListener('pointerdown', e => startDrag(e, widget, el));
+
+  const resizeHandle = el.querySelector('.widget-resize');
+  resizeHandle.addEventListener('pointerdown', e => startResize(e, widget, el));
+
+  board.appendChild(el);
+  def.mount(el.querySelector('.widget-body'), widget);
+}
+
+function trackPitch() {
+  const rect = board.getBoundingClientRect();
+  const trackWidth = (rect.width - GAP * (COLUMNS - 1)) / COLUMNS;
+  return { rect: rect, colPitch: trackWidth + GAP, rowPitch: ROW_HEIGHT + GAP };
+}
+
+function clamp(n, min, max) { return Math.min(Math.max(n, min), max); }
+
+function startDrag(e, widget, el) {
+  e.preventDefault();
+  const pitch = trackPitch();
+  const rect = pitch.rect, colPitch = pitch.colPitch, rowPitch = pitch.rowPitch;
+  const startX = e.clientX, startY = e.clientY;
+  const startLeft = el.offsetLeft, startTop = el.offsetTop;
+  const startWidth = el.offsetWidth, startHeight = el.offsetHeight;
+
+  el.classList.add('dragging');
+  el.style.position = 'absolute';
+  el.style.left = startLeft + 'px';
+  el.style.top = startTop + 'px';
+  el.style.width = startWidth + 'px';
+  el.style.height = startHeight + 'px';
+  el.style.gridColumn = '';
+  el.style.gridRow = '';
+
+  let targetCol = widget.col, targetRow = widget.row;
+
+  const onMove = ev => {
+    const dx = ev.clientX - startX, dy = ev.clientY - startY;
+    el.style.left = (startLeft + dx) + 'px';
+    el.style.top = (startTop + dy) + 'px';
+
+    const pointerBoardX = ev.clientX - rect.left;
+    const pointerBoardY = ev.clientY - rect.top;
+    targetCol = clamp(Math.round(pointerBoardX / colPitch) + 1, 1, COLUMNS - widget.colSpan + 1);
+    targetRow = clamp(Math.round(pointerBoardY / rowPitch) + 1, 1, 999);
+  };
+
+  const onUp = () => {
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    el.classList.remove('dragging');
+    el.style.position = '';
+    el.style.left = '';
+    el.style.top = '';
+    el.style.width = '';
+    el.style.height = '';
+    widget.col = targetCol;
+    widget.row = targetRow;
+    applyGridPosition(el, widget);
+    saveState();
+  };
+
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp);
+}
+
+function startResize(e, widget, el) {
+  e.preventDefault();
+  e.stopPropagation();
+  const pitch = trackPitch();
+  const colPitch = pitch.colPitch, rowPitch = pitch.rowPitch;
+  const startX = e.clientX, startY = e.clientY;
+  const startColSpan = widget.colSpan, startRowSpan = widget.rowSpan;
+
+  const onMove = ev => {
+    const dx = ev.clientX - startX, dy = ev.clientY - startY;
+    widget.colSpan = clamp(startColSpan + Math.round(dx / colPitch), 2, COLUMNS - widget.col + 1);
+    widget.rowSpan = clamp(startRowSpan + Math.round(dy / rowPitch), 2, 999);
+    applyGridPosition(el, widget);
+  };
+
+  const onUp = () => {
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    saveState();
+  };
+
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp);
+}
+
+function buildAddMenu() {
+  addMenu.innerHTML = '';
+  Object.keys(WIDGET_TYPES).forEach(type => {
+    const def = WIDGET_TYPES[type];
+    const btn = document.createElement('button');
+    btn.textContent = def.icon + ' ' + def.label;
+    btn.addEventListener('click', () => addWidget(type));
+    addMenu.appendChild(btn);
+  });
+}
+
+function closeMenu() { addMenu.classList.add('hidden'); }
+function toggleMenu() { addMenu.classList.toggle('hidden'); }
+
+addBtn.addEventListener('click', e => { e.stopPropagation(); toggleMenu(); });
+document.addEventListener('click', closeMenu);
+addMenu.addEventListener('click', e => e.stopPropagation());
+
+buildAddMenu();
+
+if (loadState()) {
+  widgets.forEach(renderWidget);
+} else {
+  addWidget('todo');
+  addWidget('notes');
+}`,
+      },
+    ],
+  },
 ];
 
 export function templateToFiles(template: SpaceTemplate): FileContent[] {

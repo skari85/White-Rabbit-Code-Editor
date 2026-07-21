@@ -248,6 +248,23 @@ describe('templates', () => {
     expect(fileTypeFromName('style.css')).toBe('css');
     expect(fileTypeFromName('app.js')).toBe('js');
   });
+
+  it('ships a modular widget board template with the three standard files', () => {
+    const template = SPACE_TEMPLATES.find(t => t.id === 'modular-board');
+    expect(template).toBeDefined();
+
+    const files = templateToFiles(template!);
+    expect(files.map(f => f.name).sort()).toEqual([
+      'app.js',
+      'index.html',
+      'style.css',
+    ]);
+
+    const appJs = files.find(f => f.name === 'app.js')!.content;
+    expect(appJs).toContain('WIDGET_TYPES');
+    expect(appJs).toContain('todo');
+    expect(appJs).toContain('addWidget');
+  });
 });
 
 describe('buildDeployableFiles', () => {
