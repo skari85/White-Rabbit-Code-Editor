@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import Editor from '@monaco-editor/react';
 import { Maximize2, Minimize2, Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import '../styles/monaco-editor-fixes.css';
 
 interface SimpleCodeEditorProps {
   value: string;
@@ -58,7 +57,7 @@ export default function SimpleCodeEditor({
   language = 'javascript',
   theme = 'vs-dark',
   height = '400px',
-  width = '100%'
+  width = '100%',
 }: SimpleCodeEditorProps) {
   const [currentTheme, setCurrentTheme] = useState(theme);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -93,8 +92,8 @@ export default function SimpleCodeEditor({
       position: 'fixed' as const,
       top: 0,
       left: 0,
-      zIndex: 50
-    })
+      zIndex: 50,
+    }),
   };
 
   const toolbarStyle = {
@@ -104,13 +103,14 @@ export default function SimpleCodeEditor({
     padding: '8px 12px',
     borderBottom: '1px solid #e5e7eb',
     backgroundColor: isDark ? '#2d2d30' : '#f8f9fa',
-    borderBottomColor: isDark ? '#3e3e42' : '#e5e7eb'
+    borderBottomColor: isDark ? '#3e3e42' : '#e5e7eb',
   };
 
   const editorOptions = {
     // Core editor options
     fontSize: 14,
-    fontFamily: '"Fira Code", "JetBrains Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace',
+    fontFamily:
+      '"Fira Code", "JetBrains Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace',
     fontLigatures: true,
     lineHeight: 1.6,
 
@@ -231,68 +231,89 @@ export default function SimpleCodeEditor({
       {/* Enhanced toolbar */}
       <div style={toolbarStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{
-            fontSize: '12px',
-            color: isDark ? '#cccccc' : '#6b7280',
-            fontWeight: '500'
-          }}>
+          <span
+            style={{
+              fontSize: '12px',
+              color: isDark ? '#cccccc' : '#6b7280',
+              fontWeight: '500',
+            }}
+          >
             {editorLanguage.toUpperCase()}
           </span>
-          <div style={{
-            width: '1px',
-            height: '16px',
-            backgroundColor: isDark ? '#3e3e42' : '#e5e7eb'
-          }} />
-          <span style={{
-            fontSize: '11px',
-            color: isDark ? '#969696' : '#9ca3af'
-          }}>
+          <div
+            style={{
+              width: '1px',
+              height: '16px',
+              backgroundColor: isDark ? '#3e3e42' : '#e5e7eb',
+            }}
+          />
+          <span
+            style={{
+              fontSize: '11px',
+              color: isDark ? '#969696' : '#9ca3af',
+            }}
+          >
             Lines: {value.split('\n').length}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <Button
-            variant="ghost"
-            size="sm"
+            variant='ghost'
+            size='sm'
             style={{ height: '28px', width: '28px', padding: 0 }}
             title={`Switch to ${isDark ? 'light' : 'dark'} theme`}
             onClick={toggleTheme}
           >
-            {isDark ? <Sun className="w-3 h-3" /> : <Moon className="w-3 h-3" />}
+            {isDark ? (
+              <Sun className='w-3 h-3' />
+            ) : (
+              <Moon className='w-3 h-3' />
+            )}
           </Button>
           <Button
-            variant="ghost"
-            size="sm"
+            variant='ghost'
+            size='sm'
             style={{ height: '28px', width: '28px', padding: 0 }}
             title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
             onClick={toggleFullscreen}
           >
-            {isFullscreen ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+            {isFullscreen ? (
+              <Minimize2 className='w-3 h-3' />
+            ) : (
+              <Maximize2 className='w-3 h-3' />
+            )}
           </Button>
         </div>
       </div>
 
       {/* Monaco Editor */}
-      <div style={{
-        height: 'calc(100% - 44px)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
+      <div
+        style={{
+          height: 'calc(100% - 44px)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
         <Editor
           value={value}
-          onChange={(newValue) => onChange?.(newValue || '')}
+          onChange={newValue => onChange?.(newValue || '')}
           language={editorLanguage}
           theme={currentTheme}
           options={editorOptions}
           onMount={(editor: any, monaco: any) => {
             let focusDecorationIds: string[] = [];
-            const injectOriginStyle = (className: string, originPercent: number) => {
+            const injectOriginStyle = (
+              className: string,
+              originPercent: number
+            ) => {
               const style = document.createElement('style');
               style.setAttribute('data-wr-focus-style', className);
               style.textContent = `.monaco-editor .${className}::before{transform-origin:${Math.max(0, Math.min(100, originPercent))}% 50% !important;}`;
               document.head.appendChild(style);
               setTimeout(() => {
-                document.querySelectorAll(`style[data-wr-focus-style="${className}"]`).forEach(n => n.remove());
+                document
+                  .querySelectorAll(`style[data-wr-focus-style="${className}"]`)
+                  .forEach(n => n.remove());
               }, 600);
             };
 
@@ -303,11 +324,23 @@ export default function SimpleCodeEditor({
                 const className = `wr-focus-line-${Date.now()}`;
                 let origin = 50;
                 try {
-                  const start = editor.getScrolledVisiblePosition({ lineNumber, column: 1 });
-                  const end = editor.getScrolledVisiblePosition({ lineNumber, column: model.getLineMaxColumn(lineNumber) });
-                  const hit = editor.getScrolledVisiblePosition({ lineNumber, column: Math.max(1, Math.min(model.getLineMaxColumn(lineNumber), column || 1)) });
+                  const start = editor.getScrolledVisiblePosition({
+                    lineNumber,
+                    column: 1,
+                  });
+                  const end = editor.getScrolledVisiblePosition({
+                    lineNumber,
+                    column: model.getLineMaxColumn(lineNumber),
+                  });
+                  const hit = editor.getScrolledVisiblePosition({
+                    lineNumber,
+                    column: Math.max(
+                      1,
+                      Math.min(model.getLineMaxColumn(lineNumber), column || 1)
+                    ),
+                  });
                   if (start && end && hit) {
-                    const span = Math.max(1, (end.left - start.left));
+                    const span = Math.max(1, end.left - start.left);
                     origin = ((hit.left - start.left) / span) * 100;
                   }
                 } catch {}
@@ -317,8 +350,12 @@ export default function SimpleCodeEditor({
                   [
                     {
                       range: new monaco.Range(lineNumber, 1, lineNumber, 1),
-                      options: { isWholeLine: true, className: `wr-focus-line ${className}`, zIndex: 5 }
-                    }
+                      options: {
+                        isWholeLine: true,
+                        className: `wr-focus-line ${className}`,
+                        zIndex: 5,
+                      },
+                    },
                   ]
                 );
               } catch {}
@@ -341,30 +378,20 @@ export default function SimpleCodeEditor({
             });
           }}
           loading={
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
-              color: isDark ? '#cccccc' : '#666666'
-            }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
+                color: isDark ? '#cccccc' : '#666666',
+              }}
+            >
               Loading editor...
             </div>
           }
         />
-        {/* Prevent any blinking elements */}
-        <style>{`
-          .monaco-editor .cursors-layer .cursor {
-            animation: none !important;
-          }
-          .monaco-editor .view-overlays .current-line {
-            animation: none !important;
-          }
-          .monaco-scrollable-element > .scrollbar > .slider {
-            animation: none !important;
-          }
-        `}</style>
       </div>
     </div>
   );

@@ -3,11 +3,13 @@
 import { Button } from '@/components/ui/button';
 import { useAIAssistantEnhanced } from '@/hooks/use-ai-assistant-enhanced';
 import { useCodeBuilder } from '@/hooks/use-code-builder';
-import { AICompletionService, CompletionContext } from '@/lib/ai-completion-service';
+import {
+  AICompletionService,
+  CompletionContext,
+} from '@/lib/ai-completion-service';
 import Editor from '@monaco-editor/react';
 import { Maximize2, Minimize2, Moon, Sun, Zap } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import '../styles/monaco-editor-fixes.css';
 
 interface AIEnhancedMonacoEditorProps {
   value: string;
@@ -28,25 +30,30 @@ export default function AIEnhancedMonacoEditor({
   height = '400px',
   width = '100%',
   readOnly = false,
-  enableAICompletions = true
+  enableAICompletions = true,
 }: AIEnhancedMonacoEditorProps) {
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
   const completionServiceRef = useRef<AICompletionService | null>(null);
-  
+
   const [currentTheme, setCurrentTheme] = useState(theme);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [aiCompletionsEnabled, setAICompletionsEnabled] = useState(enableAICompletions);
-  const [completionStats, setCompletionStats] = useState({ total: 0, aiGenerated: 0 });
+  const [aiCompletionsEnabled, setAICompletionsEnabled] =
+    useState(enableAICompletions);
+  const [completionStats, setCompletionStats] = useState({
+    total: 0,
+    aiGenerated: 0,
+  });
 
   // Hooks
-  const { settings: aiSettings, isConfigured: aiConfigured } = useAIAssistantEnhanced();
-  const { 
-    files, 
-    selectedFile, 
-    getProjectContext, 
-    getRelatedFiles, 
-    extractFileSymbols 
+  const { settings: aiSettings, isConfigured: aiConfigured } =
+    useAIAssistantEnhanced();
+  const {
+    files,
+    selectedFile,
+    getProjectContext,
+    getRelatedFiles,
+    extractFileSymbols,
   } = useCodeBuilder();
 
   // Initialize AI completion service
@@ -65,232 +72,284 @@ export default function AIEnhancedMonacoEditor({
     }
   }, [aiSettings]);
 
-  const handleEditorDidMount = useCallback((editor: any, monaco: any) => {
-    editorRef.current = editor;
-    monacoRef.current = monaco;
-    // Focus Field ripple line highlighting
-    let focusDecorationIds: string[] = [];
-    const injectOriginStyle = (className: string, originPercent: number) => {
-      const style = document.createElement('style');
-      style.setAttribute('data-wr-focus-style', className);
-      style.textContent = `.monaco-editor .${className}::before{transform-origin:${Math.max(0, Math.min(100, originPercent))}% 50% !important;}`;
-      document.head.appendChild(style);
-      setTimeout(() => {
-        document.querySelectorAll(`style[data-wr-focus-style="${className}"]`).forEach(n => n.remove());
-      }, 600);
-    };
+  const handleEditorDidMount = useCallback(
+    (editor: any, monaco: any) => {
+      editorRef.current = editor;
+      monacoRef.current = monaco;
+      // Focus Field ripple line highlighting
+      let focusDecorationIds: string[] = [];
+      const injectOriginStyle = (className: string, originPercent: number) => {
+        const style = document.createElement('style');
+        style.setAttribute('data-wr-focus-style', className);
+        style.textContent = `.monaco-editor .${className}::before{transform-origin:${Math.max(0, Math.min(100, originPercent))}% 50% !important;}`;
+        document.head.appendChild(style);
+        setTimeout(() => {
+          document
+            .querySelectorAll(`style[data-wr-focus-style="${className}"]`)
+            .forEach(n => n.remove());
+        }, 600);
+      };
 
-    const applyFocusRipple = (lineNumber: number, column?: number) => {
-      try {
-        const model = editor.getModel();
-        if (!model) return;
-        const className = `wr-focus-line-${Date.now()}`;
-
-        // Compute origin percent along the line
-        let origin = 50;
+      const applyFocusRipple = (lineNumber: number, column?: number) => {
         try {
-          const start = editor.getScrolledVisiblePosition({ lineNumber, column: 1 });
-          const end = editor.getScrolledVisiblePosition({ lineNumber, column: model.getLineMaxColumn(lineNumber) });
-          const hit = editor.getScrolledVisiblePosition({ lineNumber, column: Math.max(1, Math.min(model.getLineMaxColumn(lineNumber), column || 1)) });
-          if (start && end && hit) {
-            const span = Math.max(1, (end.left - start.left));
-            origin = ((hit.left - start.left) / span) * 100;
-          }
-        } catch (error) {
-          // Ignore positioning errors
-        }
-        injectOriginStyle(className, origin);
+          const model = editor.getModel();
+          if (!model) return;
+          const className = `wr-focus-line-${Date.now()}`;
 
-        focusDecorationIds = editor.deltaDecorations(
-          focusDecorationIds,
-          [
+          // Compute origin percent along the line
+          let origin = 50;
+          try {
+            const start = editor.getScrolledVisiblePosition({
+              lineNumber,
+              column: 1,
+            });
+            const end = editor.getScrolledVisiblePosition({
+              lineNumber,
+              column: model.getLineMaxColumn(lineNumber),
+            });
+            const hit = editor.getScrolledVisiblePosition({
+              lineNumber,
+              column: Math.max(
+                1,
+                Math.min(model.getLineMaxColumn(lineNumber), column || 1)
+              ),
+            });
+            if (start && end && hit) {
+              const span = Math.max(1, end.left - start.left);
+              origin = ((hit.left - start.left) / span) * 100;
+            }
+          } catch (error) {
+            // Ignore positioning errors
+          }
+          injectOriginStyle(className, origin);
+
+          focusDecorationIds = editor.deltaDecorations(focusDecorationIds, [
             {
               range: new monaco.Range(lineNumber, 1, lineNumber, 1),
               options: {
                 isWholeLine: true,
                 className: `wr-focus-line ${className}`,
-                zIndex: 5
-              }
-            }
-          ]
-        );
-      } catch (error) {
-        // Ignore decoration errors
-      }
-    };
-
-    const mouseDownDispose = editor.onMouseDown((e: any) => {
-      if (!e?.target?.position) return;
-      const { lineNumber, column } = e.target.position;
-      applyFocusRipple(lineNumber, column);
-    });
-
-    const cursorDispose = editor.onDidChangeCursorPosition((e: any) => {
-      if (!e?.position) return;
-      // Quick ripple centered for keyboard nav
-      applyFocusRipple(e.position.lineNumber);
-    });
-
-    // Cleanup
-    editor.onDidDispose(() => {
-      mouseDownDispose?.dispose?.();
-      cursorDispose?.dispose?.();
-    });
-
-
-    // Enhance AI capabilities with advanced AI models
-    if (aiCompletionsEnabled && completionServiceRef.current) {
-      // Register AI-powered completion provider with advanced AI models
-      const disposable = monaco.languages.registerCompletionItemProvider(language, {
-        triggerCharacters: ['.', '(', '<', '"', "'", '/', ' '],
-        
-        provideCompletionItems: async (model: any, position: any, context: any) => {
-          if (!completionServiceRef.current || !selectedFile) {
-            return { suggestions: [] };
-          }
-
-          try {
-            // Build completion context
-            const completionContext: CompletionContext = {
-              currentFile: selectedFile,
-              currentCode: model.getValue(),
-              cursorPosition: {
-                lineNumber: position.lineNumber,
-                column: position.column
+                zIndex: 5,
               },
-              projectFiles: getRelatedFiles(selectedFile, 3).map(file => ({
-                name: file.name,
-                content: file.content,
-                type: file.type
-              })),
-              language,
-              triggerCharacter: context.triggerCharacter
-            };
-
-            // Get enhanced AI completions with advanced features
-            const aiCompletions = await completionServiceRef.current.getEnhancedCompletions(completionContext);
-            const monacoCompletions = completionServiceRef.current.toMonacoCompletions(aiCompletions, monaco);
-
-            // Update stats
-            setCompletionStats(prev => ({
-              total: prev.total + monacoCompletions.length,
-              aiGenerated: prev.aiGenerated + aiCompletions.length
-            }));
-
-            return {
-              suggestions: monacoCompletions
-            };
-          } catch (error) {
-            console.warn('AI completion provider error:', error);
-            return { suggestions: [] };
-          }
+            },
+          ]);
+        } catch (error) {
+          // Ignore decoration errors
         }
-      });
-
-      // Register signature help provider
-      const signatureDisposable = monaco.languages.registerSignatureHelpProvider(language, {
-        signatureHelpTriggerCharacters: ['(', ','],
-
-        provideSignatureHelp: async (model: any, position: any) => {
-          if (!completionServiceRef.current || !selectedFile) {
-            return { signatures: [], activeSignature: 0, activeParameter: 0 };
-          }
-
-          try {
-            const completionContext: CompletionContext = {
-              currentFile: selectedFile,
-              currentCode: model.getValue(),
-              cursorPosition: {
-                lineNumber: position.lineNumber,
-                column: position.column
-              },
-              projectFiles: getRelatedFiles(selectedFile, 3).map(file => ({
-                name: file.name,
-                content: file.content,
-                type: file.type
-              })),
-              language
-            };
-
-            const signatures = await completionServiceRef.current.getMethodSignatures(completionContext);
-
-            return {
-              signatures: signatures.map(sig => ({
-                label: sig.label,
-                documentation: sig.documentation,
-                parameters: sig.parameters || []
-              })),
-              activeSignature: 0,
-              activeParameter: 0
-            };
-          } catch (error) {
-            console.warn('Signature help provider error:', error);
-            return { signatures: [], activeSignature: 0, activeParameter: 0 };
-          }
-        }
-      });
-
-      // Register hover provider
-      const hoverDisposable = monaco.languages.registerHoverProvider(language, {
-        provideHover: async (model: any, position: any) => {
-          if (!completionServiceRef.current || !selectedFile) {
-            return null;
-          }
-
-          try {
-            const word = model.getWordAtPosition(position);
-            if (!word) return null;
-
-            const completionContext: CompletionContext = {
-              currentFile: selectedFile,
-              currentCode: model.getValue(),
-              cursorPosition: {
-                lineNumber: position.lineNumber,
-                column: position.column
-              },
-              projectFiles: getRelatedFiles(selectedFile, 3).map(file => ({
-                name: file.name,
-                content: file.content,
-                type: file.type
-              })),
-              language
-            };
-
-            // Get cross-file references for hover info
-            const crossFileRefs = await completionServiceRef.current.getCrossFileReferences(completionContext);
-            const matchingRef = crossFileRefs.find(ref => ref.label === word.word);
-
-            if (matchingRef) {
-              return {
-                range: new monaco.Range(
-                  position.lineNumber,
-                  word.startColumn,
-                  position.lineNumber,
-                  word.endColumn
-                ),
-                contents: [
-                  { value: `**${matchingRef.label}**` },
-                  { value: matchingRef.documentation || matchingRef.detail || 'No documentation available' }
-                ]
-              };
-            }
-
-            return null;
-          } catch (error) {
-            console.warn('Hover provider error:', error);
-            return null;
-          }
-        }
-      });
-
-      // Cleanup on unmount
-      return () => {
-        disposable.dispose();
-        signatureDisposable.dispose();
-        hoverDisposable.dispose();
       };
-    }
-  }, [aiCompletionsEnabled, completionServiceRef, language, selectedFile]);
+
+      const mouseDownDispose = editor.onMouseDown((e: any) => {
+        if (!e?.target?.position) return;
+        const { lineNumber, column } = e.target.position;
+        applyFocusRipple(lineNumber, column);
+      });
+
+      const cursorDispose = editor.onDidChangeCursorPosition((e: any) => {
+        if (!e?.position) return;
+        // Quick ripple centered for keyboard nav
+        applyFocusRipple(e.position.lineNumber);
+      });
+
+      // Cleanup
+      editor.onDidDispose(() => {
+        mouseDownDispose?.dispose?.();
+        cursorDispose?.dispose?.();
+      });
+
+      // Enhance AI capabilities with advanced AI models
+      if (aiCompletionsEnabled && completionServiceRef.current) {
+        // Register AI-powered completion provider with advanced AI models
+        const disposable = monaco.languages.registerCompletionItemProvider(
+          language,
+          {
+            triggerCharacters: ['.', '(', '<', '"', "'", '/', ' '],
+
+            provideCompletionItems: async (
+              model: any,
+              position: any,
+              context: any
+            ) => {
+              if (!completionServiceRef.current || !selectedFile) {
+                return { suggestions: [] };
+              }
+
+              try {
+                // Build completion context
+                const completionContext: CompletionContext = {
+                  currentFile: selectedFile,
+                  currentCode: model.getValue(),
+                  cursorPosition: {
+                    lineNumber: position.lineNumber,
+                    column: position.column,
+                  },
+                  projectFiles: getRelatedFiles(selectedFile, 3).map(file => ({
+                    name: file.name,
+                    content: file.content,
+                    type: file.type,
+                  })),
+                  language,
+                  triggerCharacter: context.triggerCharacter,
+                };
+
+                // Get enhanced AI completions with advanced features
+                const aiCompletions =
+                  await completionServiceRef.current.getEnhancedCompletions(
+                    completionContext
+                  );
+                const monacoCompletions =
+                  completionServiceRef.current.toMonacoCompletions(
+                    aiCompletions,
+                    monaco
+                  );
+
+                // Update stats
+                setCompletionStats(prev => ({
+                  total: prev.total + monacoCompletions.length,
+                  aiGenerated: prev.aiGenerated + aiCompletions.length,
+                }));
+
+                return {
+                  suggestions: monacoCompletions,
+                };
+              } catch (error) {
+                console.warn('AI completion provider error:', error);
+                return { suggestions: [] };
+              }
+            },
+          }
+        );
+
+        // Register signature help provider
+        const signatureDisposable =
+          monaco.languages.registerSignatureHelpProvider(language, {
+            signatureHelpTriggerCharacters: ['(', ','],
+
+            provideSignatureHelp: async (model: any, position: any) => {
+              if (!completionServiceRef.current || !selectedFile) {
+                return {
+                  signatures: [],
+                  activeSignature: 0,
+                  activeParameter: 0,
+                };
+              }
+
+              try {
+                const completionContext: CompletionContext = {
+                  currentFile: selectedFile,
+                  currentCode: model.getValue(),
+                  cursorPosition: {
+                    lineNumber: position.lineNumber,
+                    column: position.column,
+                  },
+                  projectFiles: getRelatedFiles(selectedFile, 3).map(file => ({
+                    name: file.name,
+                    content: file.content,
+                    type: file.type,
+                  })),
+                  language,
+                };
+
+                const signatures =
+                  await completionServiceRef.current.getMethodSignatures(
+                    completionContext
+                  );
+
+                return {
+                  signatures: signatures.map(sig => ({
+                    label: sig.label,
+                    documentation: sig.documentation,
+                    parameters: sig.parameters || [],
+                  })),
+                  activeSignature: 0,
+                  activeParameter: 0,
+                };
+              } catch (error) {
+                console.warn('Signature help provider error:', error);
+                return {
+                  signatures: [],
+                  activeSignature: 0,
+                  activeParameter: 0,
+                };
+              }
+            },
+          });
+
+        // Register hover provider
+        const hoverDisposable = monaco.languages.registerHoverProvider(
+          language,
+          {
+            provideHover: async (model: any, position: any) => {
+              if (!completionServiceRef.current || !selectedFile) {
+                return null;
+              }
+
+              try {
+                const word = model.getWordAtPosition(position);
+                if (!word) return null;
+
+                const completionContext: CompletionContext = {
+                  currentFile: selectedFile,
+                  currentCode: model.getValue(),
+                  cursorPosition: {
+                    lineNumber: position.lineNumber,
+                    column: position.column,
+                  },
+                  projectFiles: getRelatedFiles(selectedFile, 3).map(file => ({
+                    name: file.name,
+                    content: file.content,
+                    type: file.type,
+                  })),
+                  language,
+                };
+
+                // Get cross-file references for hover info
+                const crossFileRefs =
+                  await completionServiceRef.current.getCrossFileReferences(
+                    completionContext
+                  );
+                const matchingRef = crossFileRefs.find(
+                  ref => ref.label === word.word
+                );
+
+                if (matchingRef) {
+                  return {
+                    range: new monaco.Range(
+                      position.lineNumber,
+                      word.startColumn,
+                      position.lineNumber,
+                      word.endColumn
+                    ),
+                    contents: [
+                      { value: `**${matchingRef.label}**` },
+                      {
+                        value:
+                          matchingRef.documentation ||
+                          matchingRef.detail ||
+                          'No documentation available',
+                      },
+                    ],
+                  };
+                }
+
+                return null;
+              } catch (error) {
+                console.warn('Hover provider error:', error);
+                return null;
+              }
+            },
+          }
+        );
+
+        // Cleanup on unmount
+        return () => {
+          disposable.dispose();
+          signatureDisposable.dispose();
+          hoverDisposable.dispose();
+        };
+      }
+    },
+    [aiCompletionsEnabled, completionServiceRef, language, selectedFile]
+  );
 
   const toggleTheme = () => {
     setCurrentTheme(currentTheme === 'vs-dark' ? 'light' : 'vs-dark');
@@ -309,40 +368,43 @@ export default function AIEnhancedMonacoEditor({
 
   const getLanguageFromFileName = (fileName: string): string => {
     if (!fileName) return language;
-    
+
     const ext = fileName.split('.').pop()?.toLowerCase();
     const languageMap: Record<string, string> = {
-      'js': 'javascript',
-      'jsx': 'javascript',
-      'ts': 'typescript',
-      'tsx': 'typescript',
-      'html': 'html',
-      'css': 'css',
-      'scss': 'scss',
-      'json': 'json',
-      'md': 'markdown',
-      'py': 'python',
-      'java': 'java',
-      'cpp': 'cpp',
-      'c': 'c',
-      'php': 'php',
-      'rb': 'ruby',
-      'go': 'go',
-      'rs': 'rust',
-      'swift': 'swift',
-      'kt': 'kotlin'
+      js: 'javascript',
+      jsx: 'javascript',
+      ts: 'typescript',
+      tsx: 'typescript',
+      html: 'html',
+      css: 'css',
+      scss: 'scss',
+      json: 'json',
+      md: 'markdown',
+      py: 'python',
+      java: 'java',
+      cpp: 'cpp',
+      c: 'c',
+      php: 'php',
+      rb: 'ruby',
+      go: 'go',
+      rs: 'rust',
+      swift: 'swift',
+      kt: 'kotlin',
     };
-    
+
     return languageMap[ext || ''] || language;
   };
 
-  const editorLanguage = selectedFile ? getLanguageFromFileName(selectedFile) : language;
+  const editorLanguage = selectedFile
+    ? getLanguageFromFileName(selectedFile)
+    : language;
   const isDark = currentTheme === 'vs-dark';
 
   const editorOptions = {
     // Core editor options
     fontSize: 14,
-    fontFamily: '"Fira Code", "JetBrains Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace',
+    fontFamily:
+      '"Fira Code", "JetBrains Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace',
     fontLigatures: true,
     lineHeight: 1.6,
     readOnly,
@@ -443,7 +505,7 @@ export default function AIEnhancedMonacoEditor({
       localityBonus: true,
       shareSuggestSelections: true,
       showInlineDetails: true,
-      showStatusBar: true
+      showStatusBar: true,
     },
 
     // Hover and parameter hints
@@ -466,7 +528,7 @@ export default function AIEnhancedMonacoEditor({
 
     // Context menu
     contextmenu: true,
-    
+
     // Performance
     renderWhitespace: 'selection' as const,
     renderControlCharacters: false,
@@ -480,98 +542,114 @@ export default function AIEnhancedMonacoEditor({
   };
 
   return (
-    <div 
+    <div
       className={`relative border border-gray-300 rounded-lg overflow-hidden ${
         isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''
       }`}
       style={{
         height: isFullscreen ? '100vh' : height,
-        width: isFullscreen ? '100vw' : width
+        width: isFullscreen ? '100vw' : width,
       }}
     >
       {/* Editor Toolbar */}
-      <div className={`flex items-center justify-between px-3 py-2 border-b ${
-        isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'
-      }`}>
-        <div className="flex items-center gap-2">
-          <span className={`text-sm font-medium ${
-            isDark ? 'text-gray-200' : 'text-gray-700'
-          }`}>
+      <div
+        className={`flex items-center justify-between px-3 py-2 border-b ${
+          isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'
+        }`}
+      >
+        <div className='flex items-center gap-2'>
+          <span
+            className={`text-sm font-medium ${
+              isDark ? 'text-gray-200' : 'text-gray-700'
+            }`}
+          >
             {selectedFile || 'Code Editor'}
           </span>
           {aiCompletionsEnabled && aiConfigured && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-              <Zap className="w-3 h-3" />
+            <div className='flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs'>
+              <Zap className='w-3 h-3' />
               AI Enhanced
             </div>
           )}
         </div>
-        
-        <div className="flex items-center gap-1">
+
+        <div className='flex items-center gap-1'>
           {/* AI Completions Toggle */}
           {aiConfigured && (
             <Button
-              variant="ghost"
-              size="sm"
+              variant='ghost'
+              size='sm'
               onClick={toggleAICompletions}
               className={`h-7 px-2 text-xs ${
-                aiCompletionsEnabled 
-                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
+                aiCompletionsEnabled
+                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                   : 'hover:bg-gray-200'
               }`}
               title={`${aiCompletionsEnabled ? 'Disable' : 'Enable'} AI completions`}
             >
-              <Zap className="w-3 h-3 mr-1" />
+              <Zap className='w-3 h-3 mr-1' />
               AI
             </Button>
           )}
-          
+
           {/* Theme Toggle */}
           <Button
-            variant="ghost"
-            size="sm"
+            variant='ghost'
+            size='sm'
             onClick={toggleTheme}
-            className="h-7 px-2"
-            title="Toggle theme"
+            className='h-7 px-2'
+            title='Toggle theme'
           >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {isDark ? (
+              <Sun className='w-4 h-4' />
+            ) : (
+              <Moon className='w-4 h-4' />
+            )}
           </Button>
-          
+
           {/* Fullscreen Toggle */}
           <Button
-            variant="ghost"
-            size="sm"
+            variant='ghost'
+            size='sm'
             onClick={toggleFullscreen}
-            className="h-7 px-2"
-            title="Toggle fullscreen"
+            className='h-7 px-2'
+            title='Toggle fullscreen'
           >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            {isFullscreen ? (
+              <Minimize2 className='w-4 h-4' />
+            ) : (
+              <Maximize2 className='w-4 h-4' />
+            )}
           </Button>
         </div>
       </div>
 
       {/* Monaco Editor */}
-      <div style={{
-        height: 'calc(100% - 44px)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
+      <div
+        style={{
+          height: 'calc(100% - 44px)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
         <Editor
           value={value}
-          onChange={(newValue) => onChange?.(newValue || '')}
+          onChange={newValue => onChange?.(newValue || '')}
           language={editorLanguage}
           theme={currentTheme}
           options={editorOptions}
           onMount={handleEditorDidMount}
           loading={
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
-              color: isDark ? '#cccccc' : '#666666'
-            }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
+                color: isDark ? '#cccccc' : '#666666',
+              }}
+            >
               Loading AI-enhanced editor...
             </div>
           }
@@ -580,7 +658,7 @@ export default function AIEnhancedMonacoEditor({
 
       {/* Completion Stats (Debug) */}
       {process.env.NODE_ENV === 'development' && completionStats.total > 0 && (
-        <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+        <div className='absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded'>
           Completions: {completionStats.aiGenerated}/{completionStats.total} AI
         </div>
       )}
