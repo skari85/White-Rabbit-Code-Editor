@@ -21,6 +21,7 @@ import { useAIAssistant } from '@/hooks/use-ai-assistant';
 import { AIService } from '@/lib/ai-service';
 import {
   ConsoleEntry,
+  PROMPT_OPTIMIZER_SYSTEM_PROMPT,
   SPACE_SYSTEM_PROMPT,
   SPACE_TEMPLATES,
   SpaceProject,
@@ -49,6 +50,7 @@ import {
   Square,
   Terminal,
   Undo2,
+  Wand2,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -200,6 +202,7 @@ export default function CoderSpace() {
   const [prompt, setPrompt] = useState('');
   const [status, setStatus] = useState<string>('');
   const [busy, setBusy] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
   const [consoleOpen, setConsoleOpen] = useState(false);
   const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([]);
@@ -503,6 +506,45 @@ export default function CoderSpace() {
       );
     } finally {
       setBusy(false);
+    }
+  };
+
+  // Rewrites the draft prompt into a sharper one before it's sent to the
+  // coder. Reuses the same configured AI connection (provider/key/model) as
+  // everything else in Coder Space — just a one-off system prompt override,
+  // the same pattern runPrompt above uses for SPACE_SYSTEM_PROMPT.
+  const optimizePrompt = async () => {
+    const trimmed = prompt.trim();
+    if (!trimmed || busy || optimizing) return;
+    if (!isConfigured) {
+      setSettingsOpen(true);
+      setStatus('Add your AI key, then optimize that prompt again.');
+      return;
+    }
+    setOptimizing(true);
+    try {
+      const optimizer = new AIService({
+        ...settings,
+        systemPrompt: PROMPT_OPTIMIZER_SYSTEM_PROMPT,
+      });
+      const response = await optimizer.sendMessage([
+        {
+          id: Date.now().toString(),
+          role: 'user',
+          content: trimmed,
+          timestamp: new Date(),
+        },
+      ]);
+      setPrompt(response.content.trim());
+      promptRef.current?.focus();
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? `Optimize failed: ${error.message}`
+          : 'Optimize failed'
+      );
+    } finally {
+      setOptimizing(false);
     }
   };
 
@@ -950,6 +992,21 @@ export default function CoderSpace() {
             }
             className='flex-1 rounded-xl bg-[#161616] border border-[#262626] focus:border-[#6c2fff] outline-none px-4 py-2.5 text-sm placeholder:text-[#555]'
           />
+          <Button
+            type='button'
+            variant='outline'
+            disabled={!prompt.trim() || busy || optimizing}
+            onClick={() => void optimizePrompt()}
+            className='rounded-xl border-[#262626] bg-[#161616] hover:border-[#00ffe1] hover:text-[#00ffe1] disabled:opacity-40'
+            aria-label='Optimize prompt for the AI'
+            title='Rewrite this into a sharper prompt'
+          >
+            {optimizing ? (
+              <div className='w-4 h-4 animate-spin rounded-full border-2 border-[#7a7a7a] border-t-[#00ffe1]' />
+            ) : (
+              <Wand2 className='w-4 h-4' />
+            )}
+          </Button>
           {busy ? (
             <Button
               type='button'

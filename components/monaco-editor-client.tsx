@@ -83,6 +83,7 @@ export default function MonacoEditorClient({
     return (
       <div
         className={`min-h-[400px] bg-gray-900 border border-gray-700 rounded flex items-center justify-center ${className}`}
+        style={{ height, width }}
       >
         <div className='text-center'>
           <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto mb-4'></div>
@@ -93,7 +94,7 @@ export default function MonacoEditorClient({
   }
 
   return (
-    <div className={className}>
+    <div className={className} style={{ height, width }}>
       <Editor
         height={height}
         width={width}

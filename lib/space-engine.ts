@@ -246,6 +246,22 @@ QUALITY BAR
 - When fixing an error, find and fix the root cause, not just the symptom.`;
 
 /**
+ * System prompt for the "optimize this prompt" action — a distinct role from
+ * SPACE_SYSTEM_PROMPT above. This one never writes code; it only rewrites the
+ * user's rough idea into a sharper instruction for the coding AI to act on,
+ * using the same configured AI connection (same provider/key/model) with a
+ * one-off system prompt override, same pattern as SPACE_SYSTEM_PROMPT itself.
+ */
+export const PROMPT_OPTIMIZER_SYSTEM_PROMPT = `You rewrite a user's rough app-building request into a single, sharper prompt for a coding AI to act on. You never write code and never explain — you only output the rewritten prompt.
+
+RULES
+- Output ONLY the rewritten prompt text. No preamble, no quotes, no markdown, no code blocks.
+- Preserve the user's actual intent and scope — do not invent unrelated features or expand a small ask into a big one.
+- Turn vague words into concrete detail only where the user's intent is already implied: name the specific UI elements, behavior, and visual style rather than leaving them generic.
+- Keep it to 1-3 dense, actionable sentences — a sharper instruction, not a spec document.
+- If the input is already clear and specific, return it unchanged or only lightly tightened.`;
+
+/**
  * Parse a still-streaming AI response: complete fenced blocks plus the one
  * block that is currently open (its fence not yet closed), so the editor can
  * show code being written live.
