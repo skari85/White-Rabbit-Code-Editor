@@ -28,7 +28,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "prepare": "husky install",
+    "prepare": "husky",
     "postinstall": "node scripts/copy-monaco.cjs",
     "commit": "git-cz",
     "start": "next start",
