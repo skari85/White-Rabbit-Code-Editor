@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import Image from 'next/image';
 import {
   ChevronDown,
   ClipboardList,
@@ -33,9 +34,9 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 };
 
 function CategoryIcon({ icon }: { icon?: string }) {
-  if (!icon) return <Code2 className="w-4 h-4 text-zinc-500" />;
+  if (!icon) return <Code2 className="w-4 h-4 text-foreground/45" />;
   return (
-    <span className="text-zinc-400">
+    <span className="text-foreground/60">
       {ICON_MAP[icon] ?? <Code2 className="w-4 h-4" />}
     </span>
   );
@@ -74,7 +75,7 @@ export default function WorkspaceSidebar({
 
   onSelectWorkspace,
   onCreateWorkspace,
-  onRenameWorkspace,
+  onRenameWorkspace: _onRenameWorkspace,
   onDeleteWorkspace,
 
   onSelectCategory,
@@ -121,17 +122,19 @@ export default function WorkspaceSidebar({
   };
 
   return (
-    <div className="flex flex-col h-full bg-zinc-900 border-r border-zinc-800 text-zinc-200 select-none">
+    <div className="ios-glass-surface flex flex-col h-full border-r border-white/15 text-foreground/90 select-none">
       {/* ------- Header ------- */}
-      <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2">
-        <div className="w-7 h-7 rounded bg-white flex items-center justify-center p-0.5 shrink-0">
-          <img
+      <div className="ios-glass-panel-header px-4 py-3 flex items-center gap-2">
+        <div className="w-7 h-7 rounded-lg border border-white/40 bg-white/80 dark:border-white/20 dark:bg-white/10 flex items-center justify-center p-0.5 shrink-0 shadow-sm backdrop-blur-sm">
+          <Image
             src="/whiterabbitlogo.png"
             alt="White Rabbit"
+            width={24}
+            height={24}
             className="w-full h-full object-contain"
           />
         </div>
-        <span className="font-semibold text-sm tracking-wide truncate">
+        <span className="font-semibold text-sm tracking-wide truncate text-foreground">
           White Rabbit
         </span>
       </div>
@@ -141,7 +144,7 @@ export default function WorkspaceSidebar({
         <div className="px-2 pt-3">
           <button
             type="button"
-            className="flex items-center justify-between w-full px-2 py-1 text-xs font-medium uppercase tracking-wider text-zinc-500 hover:text-zinc-300"
+            className="flex items-center justify-between w-full px-2 py-1 text-xs font-medium uppercase tracking-wider text-foreground/55 hover:text-foreground/80"
             onClick={() => setWsOpen((v) => !v)}
           >
             Workspaces
@@ -157,17 +160,17 @@ export default function WorkspaceSidebar({
                   key={ws.id}
                   type="button"
                   onClick={() => onSelectWorkspace(ws.id)}
-                  className={`group flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-sm transition-colors ${
+                  className={`ios-glass-list-item group flex items-center gap-2 w-full px-2 py-1.5 text-sm ${
                     activeWorkspace?.id === ws.id
-                      ? 'bg-zinc-800 text-white'
-                      : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200'
+                      ? 'ios-glass-list-item-active text-foreground'
+                      : 'text-foreground/65 hover:text-foreground'
                   }`}
                 >
                   <FolderPlus className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate flex-1 text-left">{ws.name}</span>
                   {workspaces.length > 1 && (
                     <Trash2
-                      className="w-3 h-3 opacity-0 group-hover:opacity-60 hover:!opacity-100 shrink-0"
+                      className="w-3 h-3 opacity-0 group-hover:opacity-60 hover:!opacity-100 shrink-0 text-foreground/60"
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteWorkspace(ws.id);
@@ -189,12 +192,12 @@ export default function WorkspaceSidebar({
                       if (e.key === 'Escape') setAddingWs(false);
                     }}
                     placeholder="Workspace name"
-                    className="h-7 text-xs bg-zinc-800 border-zinc-700"
+                    className="ios-glass-input h-7 text-xs"
                   />
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-7 w-7 p-0"
+                    className="h-7 w-7 p-0 text-foreground/65 hover:text-foreground"
                     onClick={handleCreateWs}
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -202,7 +205,7 @@ export default function WorkspaceSidebar({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-7 w-7 p-0"
+                    className="h-7 w-7 p-0 text-foreground/65 hover:text-foreground"
                     onClick={() => setAddingWs(false)}
                   >
                     <X className="w-3.5 h-3.5" />
@@ -212,7 +215,7 @@ export default function WorkspaceSidebar({
                 <button
                   type="button"
                   onClick={() => setAddingWs(true)}
-                  className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/40 transition-colors"
+                  className="ios-glass-list-item flex items-center gap-2 w-full px-2 py-1.5 text-xs text-foreground/55 hover:text-foreground transition-colors"
                 >
                   <Plus className="w-3 h-3" />
                   New workspace
@@ -222,18 +225,18 @@ export default function WorkspaceSidebar({
           )}
         </div>
 
-        <Separator className="my-3 bg-zinc-800" />
+        <Separator className="my-3 bg-white/15 dark:bg-white/10" />
 
         {/* ------- Categories ------- */}
         <div className="px-2">
           <div className="flex items-center justify-between px-2 py-1">
-            <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+            <span className="text-xs font-medium uppercase tracking-wider text-foreground/55">
               Categories
             </span>
             <Button
               size="sm"
               variant="ghost"
-              className="h-5 w-5 p-0 text-zinc-500 hover:text-zinc-300"
+              className="h-5 w-5 p-0 text-foreground/55 hover:text-foreground"
               onClick={() => setAddingCat(true)}
             >
               <Plus className="w-3.5 h-3.5" />
@@ -257,7 +260,7 @@ export default function WorkspaceSidebar({
                         if (e.key === 'Escape') setEditingCatId(null);
                       }}
                       onBlur={() => handleRenameCat(cat.id)}
-                      className="h-7 text-xs bg-zinc-800 border-zinc-700"
+                      className="ios-glass-input h-7 text-xs"
                     />
                   </div>
                 );
@@ -268,17 +271,17 @@ export default function WorkspaceSidebar({
                   key={cat.id}
                   type="button"
                   onClick={() => onSelectCategory(cat.id)}
-                  className={`group flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-sm transition-colors ${
+                  className={`ios-glass-list-item group flex items-center gap-2 w-full px-2 py-1.5 text-sm ${
                     isActive
-                      ? 'bg-purple-600/20 text-purple-300 font-medium'
-                      : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200'
+                      ? 'ios-glass-list-item-active text-foreground font-medium'
+                      : 'text-foreground/65 hover:text-foreground'
                   }`}
                 >
                   <CategoryIcon icon={cat.icon} />
                   <span className="truncate flex-1 text-left">{cat.name}</span>
-                  <span className="flex items-center gap-0.5 opacity-0 group-hover:opacity-60">
+                  <span className="flex items-center gap-0.5 opacity-0 group-hover:opacity-70">
                     <Pencil
-                      className="w-3 h-3 hover:!opacity-100 cursor-pointer"
+                      className="w-3 h-3 hover:!opacity-100 cursor-pointer text-foreground/65"
                       onClick={(e) => {
                         e.stopPropagation();
                         setEditingCatId(cat.id);
@@ -286,7 +289,7 @@ export default function WorkspaceSidebar({
                       }}
                     />
                     <Trash2
-                      className="w-3 h-3 hover:!opacity-100 cursor-pointer"
+                      className="w-3 h-3 hover:!opacity-100 cursor-pointer text-foreground/65"
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteCategory(cat.id);
@@ -309,12 +312,12 @@ export default function WorkspaceSidebar({
                     if (e.key === 'Escape') setAddingCat(false);
                   }}
                   placeholder="Category name"
-                  className="h-7 text-xs bg-zinc-800 border-zinc-700"
+                  className="ios-glass-input h-7 text-xs"
                 />
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 w-7 p-0"
+                  className="h-7 w-7 p-0 text-foreground/65 hover:text-foreground"
                   onClick={handleCreateCat}
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -322,7 +325,7 @@ export default function WorkspaceSidebar({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 w-7 p-0"
+                  className="h-7 w-7 p-0 text-foreground/65 hover:text-foreground"
                   onClick={() => setAddingCat(false)}
                 >
                   <X className="w-3.5 h-3.5" />
@@ -334,7 +337,7 @@ export default function WorkspaceSidebar({
       </ScrollArea>
 
       {/* ------- Footer ------- */}
-      <div className="px-4 py-2 border-t border-zinc-800 text-[10px] text-zinc-600">
+      <div className="px-4 py-2 border-t border-white/15 text-[10px] text-foreground/45">
         {activeWorkspace?.name ?? 'No workspace'}
         {activeCategory ? ` / ${activeCategory.name}` : ''}
       </div>

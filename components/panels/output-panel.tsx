@@ -31,14 +31,14 @@ export default function OutputPanel({
   }, [outputs, streamingContent]);
 
   return (
-    <div className={`flex flex-col h-full bg-zinc-950 ${className}`}>
+    <div className={`ios-glass-surface flex flex-col h-full ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-900 border-b border-zinc-800">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-400">
+      <div className="ios-glass-panel-header flex items-center justify-between px-3 py-1.5">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-foreground/70">
           <Terminal className="w-3.5 h-3.5" />
           <span>Output</span>
           {isStreaming && (
-            <span className="flex items-center gap-1 text-purple-400 animate-pulse">
+            <span className="flex items-center gap-1 text-primary animate-pulse">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
               streaming
             </span>
@@ -48,7 +48,7 @@ export default function OutputPanel({
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 w-6 p-0 text-zinc-500 hover:text-zinc-300"
+            className="h-7 w-7 p-0 text-foreground/55 hover:text-foreground"
             onClick={onClear}
             title="Clear output"
           >
@@ -61,7 +61,7 @@ export default function OutputPanel({
       <ScrollArea className="flex-1">
         <div className="px-3 py-2 font-mono text-xs leading-relaxed space-y-2">
           {outputs.length === 0 && !streamingContent && (
-            <p className="text-zinc-600 italic">
+            <p className="text-foreground/45 italic">
               No output yet. Run a task to see results here.
             </p>
           )}
@@ -79,7 +79,7 @@ export default function OutputPanel({
                   }`}
                 />
                 <div className="flex-1 min-w-0">
-                  <pre className="whitespace-pre-wrap break-words text-zinc-300">
+                  <pre className="whitespace-pre-wrap break-words text-foreground/88">
                     {entry.content}
                   </pre>
                 </div>
@@ -87,7 +87,7 @@ export default function OutputPanel({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-5 w-5 p-0 shrink-0 opacity-0 group-hover:opacity-60 hover:!opacity-100 text-zinc-400"
+                    className="h-5 w-5 p-0 shrink-0 opacity-0 group-hover:opacity-70 hover:!opacity-100 text-foreground/60"
                     onClick={() => onSaveAsArtifact(entry.content)}
                     title="Save as artifact"
                   >
@@ -102,7 +102,7 @@ export default function OutputPanel({
           {streamingContent && (
             <div className="flex items-start gap-2">
               <span className="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-              <pre className="whitespace-pre-wrap break-words text-zinc-400 flex-1">
+              <pre className="whitespace-pre-wrap break-words text-foreground/65 flex-1">
                 {streamingContent}
                 <span className="animate-pulse">▍</span>
               </pre>
