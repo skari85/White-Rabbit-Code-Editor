@@ -145,7 +145,7 @@ export function AIChat({
       onSettingsChange({
         ...settings,
         provider: providerId,
-        model: provider.models[0] || 'gpt-3.5-turbo'
+        model: provider.models[0] || 'gpt-4o-mini'
       });
       setShowProviderConfig(provider.requiresApiKey && !settings.apiKey);
     }

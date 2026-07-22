@@ -46,7 +46,7 @@ export default function AISettingsSidebar({
       onSettingsChange({
         ...settings,
         provider: providerId,
-        model: provider.models[0] || 'gpt-3.5-turbo',
+        model: provider.models[0] || 'gpt-4o-mini',
         apiKey: settings?.apiKey || ''
       });
     }

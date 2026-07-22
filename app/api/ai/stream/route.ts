@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       provider = 'openai';
       apiKey = openaiApiKey;
       endpoint = 'https://api.openai.com/v1/chat/completions';
-      model = 'gpt-3.5-turbo'; // Fast model
+      model = 'gpt-4o-mini'; // Fast model
     }
 
     if (!apiKey) {

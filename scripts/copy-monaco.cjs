@@ -21,4 +21,28 @@ if (!fs.existsSync(src)) {
 
 fs.rmSync(dest, { recursive: true, force: true });
 fs.cpSync(src, dest, { recursive: true });
-console.log(`✅ Copied Monaco Editor static build to ${path.relative(process.cwd(), dest)}`);
+
+// The "min" build's .js files reference maps under a sibling "min-maps"
+// directory we don't copy (it's tens of MB and only useful for debugging
+// Monaco's own source, not our app). Left in place, browsers request those
+// .map URLs and get 404s in the console. Strip the trailing
+// `//# sourceMappingURL=...` comment so nothing is requested.
+const sourceMapCommentRe = /\n\/\/# sourceMappingURL=.*\.map\s*$/;
+let strippedCount = 0;
+(function stripSourceMaps(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const entryPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      stripSourceMaps(entryPath);
+    } else if (entry.isFile() && entry.name.endsWith('.js')) {
+      const contents = fs.readFileSync(entryPath, 'utf8');
+      const stripped = contents.replace(sourceMapCommentRe, '');
+      if (stripped !== contents) {
+        fs.writeFileSync(entryPath, stripped);
+        strippedCount++;
+      }
+    }
+  }
+})(dest);
+
+console.log(`✅ Copied Monaco Editor static build to ${path.relative(process.cwd(), dest)} (stripped sourceMappingURL from ${strippedCount} files)`);

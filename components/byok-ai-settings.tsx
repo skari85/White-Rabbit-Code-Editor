@@ -73,7 +73,7 @@ export default function BYOKAISettings({
             'anthropic-version': '2023-06-01'
           };
           testBody = {
-            model: 'claude-3-haiku-20240307',
+            model: 'claude-haiku-4-5-20251001',
             max_tokens: 10,
             messages: [{ role: 'user', content: 'test' }]
           };
@@ -112,21 +112,21 @@ export default function BYOKAISettings({
       case 'openai':
         return {
           name: 'OpenAI',
-          description: 'GPT-4, GPT-3.5-turbo models',
+          description: 'GPT-4o and GPT-4.1 models',
           keyFormat: 'sk-...',
           website: 'https://platform.openai.com/api-keys'
         };
       case 'anthropic':
         return {
           name: 'Anthropic',
-          description: 'Claude 3 models (Opus, Sonnet, Haiku)',
+          description: 'Claude models (Sonnet 5, Opus 4.8, Haiku 4.5)',
           keyFormat: 'sk-ant-...',
           website: 'https://console.anthropic.com/'
         };
       case 'groq':
         return {
           name: 'Groq',
-          description: 'Fast inference for Llama, Mixtral models',
+          description: 'Fast inference for Llama and GPT-OSS models',
           keyFormat: 'gsk_...',
           website: 'https://console.groq.com/keys'
         };
@@ -174,8 +174,8 @@ export default function BYOKAISettings({
                 <SelectValue placeholder="Select AI provider" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="openai">OpenAI (GPT-4, GPT-3.5)</SelectItem>
-                <SelectItem value="anthropic">Anthropic (Claude 3)</SelectItem>
+                <SelectItem value="openai">OpenAI (GPT-4o, GPT-4.1)</SelectItem>
+                <SelectItem value="anthropic">Anthropic (Claude 5/4.8)</SelectItem>
                 <SelectItem value="groq">Groq (Fast Inference)</SelectItem>
               </SelectContent>
             </Select>
@@ -239,26 +239,23 @@ export default function BYOKAISettings({
                   <>
                     <SelectItem value="gpt-4o">GPT-4o (Latest)</SelectItem>
                     <SelectItem value="gpt-4o-mini">GPT-4o Mini (Fast)</SelectItem>
-                    <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                    <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                    <SelectItem value="gpt-4.1">GPT-4.1</SelectItem>
+                    <SelectItem value="gpt-4.1-mini">GPT-4.1 Mini</SelectItem>
                   </>
                 )}
                 {settings.provider === 'anthropic' && (
                   <>
-                    <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Latest)</SelectItem>
-                    <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
-                    <SelectItem value="claude-3-sonnet-20240229">Claude 3 Sonnet</SelectItem>
-                    <SelectItem value="claude-3-haiku-20240307">Claude 3 Haiku</SelectItem>
+                    <SelectItem value="claude-sonnet-5">Claude Sonnet 5 (Latest)</SelectItem>
+                    <SelectItem value="claude-opus-4-8">Claude Opus 4.8</SelectItem>
+                    <SelectItem value="claude-haiku-4-5-20251001">Claude Haiku 4.5</SelectItem>
                   </>
                 )}
                 {settings.provider === 'groq' && (
                   <>
-                    <SelectItem value="llama-3.1-405b-reasoning">Llama 3.1 405B (Best)</SelectItem>
                     <SelectItem value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</SelectItem>
-                    <SelectItem value="llama-3.2-90b-text-preview">Llama 3.2 90B (Preview)</SelectItem>
-                    <SelectItem value="mixtral-8x7b-32768">Mixtral 8x7B</SelectItem>
-                    <SelectItem value="gemma2-9b-it">Gemma 2 9B</SelectItem>
-                    <SelectItem value="mistral-7b-instruct">Mistral 7B</SelectItem>
+                    <SelectItem value="llama-3.3-70b-versatile">Llama 3.3 70B</SelectItem>
+                    <SelectItem value="openai/gpt-oss-120b">GPT-OSS 120B</SelectItem>
+                    <SelectItem value="openai/gpt-oss-20b">GPT-OSS 20B</SelectItem>
                   </>
                 )}
               </SelectContent>

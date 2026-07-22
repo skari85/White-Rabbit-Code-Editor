@@ -164,7 +164,7 @@ export function AIChat({
       onSettingsChange({
         ...settings,
         provider: providerId,
-        model: provider.models[0] || 'gpt-3.5-turbo'
+        model: provider.models[0] || 'gpt-4o-mini'
       });
       setShowProviderConfig(provider.requiresApiKey && !settings?.apiKey);
     }
@@ -498,7 +498,7 @@ export function AIChat({
               onClick={() => setShowModelDropdown(!showModelDropdown)}
               className="bg-gray-800 border-gray-600 hover:bg-gray-700 text-xs gap-1"
             >
-              <span className="max-w-24 truncate">{settings?.model || 'gpt-3.5-turbo'}</span>
+              <span className="max-w-24 truncate">{settings?.model || 'gpt-4o-mini'}</span>
               <ChevronDown className="w-3 h-3" />
             </Button>
             
