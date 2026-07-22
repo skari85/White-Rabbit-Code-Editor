@@ -26,14 +26,14 @@ export const AI_PROVIDERS: AIProvider[] = [
     name: "OpenAI",
     id: "openai",
     requiresApiKey: true,
-    models: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
+    models: ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini"],
     endpoint: "https://api.openai.com/v1/chat/completions"
   },
   {
     name: "Anthropic Claude",
-    id: "anthropic", 
+    id: "anthropic",
     requiresApiKey: true,
-    models: ["claude-3-5-sonnet", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku"],
+    models: ["claude-sonnet-5", "claude-opus-4-8", "claude-haiku-4-5-20251001"],
     endpoint: "https://api.anthropic.com/v1/messages"
   },
   {
@@ -41,13 +41,10 @@ export const AI_PROVIDERS: AIProvider[] = [
     id: "groq",
     requiresApiKey: true,
     models: [
-      "llama-3.1-405b-reasoning",  // Llama 3.1 405B - Best reasoning
-      "llama-3.1-8b-instant",      // Llama 3.1 8B - Fast and cheap
-      "llama-3.2-90b-text-preview", // Llama 3.2 90B - Latest preview
-      "mixtral-8x7b-32768",        // Mixtral 8x7B - Good performance
-      "gemma2-9b-it",              // Gemma 2 9B - Google's model
-      "mistral-7b-instruct",       // Mistral 7B - Good for instruction
-      "whisper-large-v3"           // Groq Whisper - Voice transcription
+      "llama-3.1-8b-instant",       // Llama 3.1 8B - Fast and cheap, confirmed working
+      "llama-3.3-70b-versatile",    // Llama 3.3 70B - Strong general model
+      "openai/gpt-oss-120b",        // GPT-OSS 120B - Groq's recommended migration target
+      "openai/gpt-oss-20b"          // GPT-OSS 20B - Fast, replaces retired Mixtral/Gemma models
     ],
     endpoint: "https://api.groq.com/openai/v1/chat/completions"
   },
@@ -55,14 +52,14 @@ export const AI_PROVIDERS: AIProvider[] = [
     name: "Google Gemini",
     id: "google",
     requiresApiKey: true,
-    models: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"],
+    models: ["gemini-pro-latest", "gemini-flash-latest", "gemini-3.5-flash-lite"],
     endpoint: "https://generativelanguage.googleapis.com/v1beta/models"
   },
   {
     name: "Mistral AI",
     id: "mistral",
     requiresApiKey: true,
-    models: ["mistral-large", "mistral-medium", "mistral-small"],
+    models: ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"],
     endpoint: "https://api.mistral.ai/v1/chat/completions"
   },
   {
