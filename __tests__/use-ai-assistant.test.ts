@@ -7,7 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAIAssistant } from '../hooks/use-ai-assistant';
 import { DEFAULT_AI_SETTINGS } from '../lib/ai-config';
 
-const STORAGE_KEY = 'hex-kex-ai-settings';
+const STORAGE_KEY = 'byok-ai-settings';
+const LEGACY_STORAGE_KEY = 'hex-kex-ai-settings';
 const MESSAGES_STORAGE_KEY = 'hex-kex-ai-messages';
 
 describe('useAIAssistant localStorage resilience', () => {
@@ -49,5 +50,33 @@ describe('useAIAssistant localStorage resilience', () => {
     const { result } = renderHook(() => useAIAssistant());
 
     expect(result.current.settings.provider).toBe('groq');
+  });
+
+  it('migrates settings saved under the old per-surface key to the shared one', () => {
+    const store: Record<string, string> = {
+      [LEGACY_STORAGE_KEY]: JSON.stringify({
+        ...DEFAULT_AI_SETTINGS,
+        provider: 'anthropic',
+      }),
+    };
+    vi.spyOn(window.localStorage, 'getItem').mockImplementation(
+      (key: string) => store[key] ?? null
+    );
+    const setItemSpy = vi
+      .spyOn(window.localStorage, 'setItem')
+      .mockImplementation((key: string, value: string) => {
+        store[key] = value;
+      });
+    const removeItemSpy = vi
+      .spyOn(window.localStorage, 'removeItem')
+      .mockImplementation((key: string) => {
+        delete store[key];
+      });
+
+    const { result } = renderHook(() => useAIAssistant());
+
+    expect(result.current.settings.provider).toBe('anthropic');
+    expect(setItemSpy).toHaveBeenCalledWith(STORAGE_KEY, expect.any(String));
+    expect(removeItemSpy).toHaveBeenCalledWith(LEGACY_STORAGE_KEY);
   });
 });

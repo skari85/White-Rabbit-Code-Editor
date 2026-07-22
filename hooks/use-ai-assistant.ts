@@ -17,7 +17,12 @@ function hasValidConfig(settings: AISettings): boolean {
   return !provider.requiresApiKey || Boolean(settings.apiKey?.trim());
 }
 
-const STORAGE_KEY = 'hex-kex-ai-settings';
+// The same key every AI surface in the app now reads/writes (Coder Space,
+// the classic editor, and workspace), so a key entered on any one of them
+// is immediately usable on the others — see byok-ai-settings.tsx and
+// use-ai-assistant-enhanced.ts, which already treated this as canonical.
+const STORAGE_KEY = 'byok-ai-settings';
+const LEGACY_STORAGE_KEY = 'hex-kex-ai-settings';
 const MESSAGES_STORAGE_KEY = 'hex-kex-ai-messages';
 
 export function useAIAssistant() {
@@ -29,7 +34,17 @@ export function useAIAssistant() {
 
   // Load settings from localStorage on mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem(STORAGE_KEY);
+    // One-time migration: a key saved here before the storage keys were
+    // unified lives under the old name and would otherwise look "missing".
+    let savedSettings = localStorage.getItem(STORAGE_KEY);
+    if (!savedSettings) {
+      const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacy) {
+        localStorage.setItem(STORAGE_KEY, legacy);
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
+        savedSettings = legacy;
+      }
+    }
     const savedMessages = localStorage.getItem(MESSAGES_STORAGE_KEY);
 
     if (savedSettings) {

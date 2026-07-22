@@ -4,11 +4,23 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, Eye, EyeOff, Check, AlertTriangle, Info } from 'lucide-react';
-import { AISettings } from '@/types/ai';
+import { AISettings } from '@/lib/ai-config';
 
 interface BYOKAISettingsProps {
   isOpen: boolean;
@@ -17,16 +29,18 @@ interface BYOKAISettingsProps {
   onSaveSettings: (settings: AISettings) => void;
 }
 
-export default function BYOKAISettings({ 
-  isOpen, 
-  onClose, 
-  currentSettings, 
-  onSaveSettings 
+export default function BYOKAISettings({
+  isOpen,
+  onClose,
+  currentSettings,
+  onSaveSettings,
 }: BYOKAISettingsProps) {
   const [settings, setSettings] = useState<AISettings>(currentSettings);
   const [showApiKey, setShowApiKey] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [connectionStatus, setConnectionStatus] = useState<
+    'idle' | 'success' | 'error'
+  >('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
@@ -61,8 +75,8 @@ export default function BYOKAISettings({
         case 'openai':
           testUrl = 'https://api.openai.com/v1/models';
           testHeaders = {
-            'Authorization': `Bearer ${settings.apiKey}`,
-            'Content-Type': 'application/json'
+            Authorization: `Bearer ${settings.apiKey}`,
+            'Content-Type': 'application/json',
           };
           break;
         case 'anthropic':
@@ -70,19 +84,19 @@ export default function BYOKAISettings({
           testHeaders = {
             'x-api-key': settings.apiKey,
             'Content-Type': 'application/json',
-            'anthropic-version': '2023-06-01'
+            'anthropic-version': '2023-06-01',
           };
           testBody = {
             model: 'claude-haiku-4-5-20251001',
             max_tokens: 10,
-            messages: [{ role: 'user', content: 'test' }]
+            messages: [{ role: 'user', content: 'test' }],
           };
           break;
         case 'groq':
           testUrl = 'https://api.groq.com/openai/v1/models';
           testHeaders = {
-            'Authorization': `Bearer ${settings.apiKey}`,
-            'Content-Type': 'application/json'
+            Authorization: `Bearer ${settings.apiKey}`,
+            'Content-Type': 'application/json',
           };
           break;
       }
@@ -90,18 +104,24 @@ export default function BYOKAISettings({
       const response = await fetch(testUrl, {
         method: settings.provider === 'anthropic' ? 'POST' : 'GET',
         headers: testHeaders,
-        ...(settings.provider === 'anthropic' && { body: JSON.stringify(testBody) })
+        ...(settings.provider === 'anthropic' && {
+          body: JSON.stringify(testBody),
+        }),
       });
 
       if (response.ok) {
         setConnectionStatus('success');
       } else {
         setConnectionStatus('error');
-        setErrorMessage(`API returned ${response.status}: ${response.statusText}`);
+        setErrorMessage(
+          `API returned ${response.status}: ${response.statusText}`
+        );
       }
     } catch (error) {
       setConnectionStatus('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Connection failed');
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Connection failed'
+      );
     } finally {
       setTestingConnection(false);
     }
@@ -114,28 +134,28 @@ export default function BYOKAISettings({
           name: 'OpenAI',
           description: 'GPT-4o and GPT-4.1 models',
           keyFormat: 'sk-...',
-          website: 'https://platform.openai.com/api-keys'
+          website: 'https://platform.openai.com/api-keys',
         };
       case 'anthropic':
         return {
           name: 'Anthropic',
           description: 'Claude models (Sonnet 5, Opus 4.8, Haiku 4.5)',
           keyFormat: 'sk-ant-...',
-          website: 'https://console.anthropic.com/'
+          website: 'https://console.anthropic.com/',
         };
       case 'groq':
         return {
           name: 'Groq',
           description: 'Fast inference for Llama and GPT-OSS models',
           keyFormat: 'gsk_...',
-          website: 'https://console.groq.com/keys'
+          website: 'https://console.groq.com/keys',
         };
       default:
         return {
           name: 'Unknown',
           description: '',
           keyFormat: '',
-          website: ''
+          website: '',
         };
     }
   };
@@ -145,55 +165,58 @@ export default function BYOKAISettings({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+      <Card className='w-full max-w-2xl max-h-[90vh] overflow-y-auto'>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className='flex items-center justify-between'>
             <div>
               <CardTitle>AI Settings - Bring Your Own Key (BYOK)</CardTitle>
               <CardDescription>
-                Configure your own AI provider API keys for enhanced privacy and control
+                Configure your own AI provider API keys for enhanced privacy and
+                control
               </CardDescription>
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-4 h-4" />
+            <Button variant='ghost' size='sm' onClick={onClose}>
+              <X className='w-4 h-4' />
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className='space-y-6'>
           {/* Provider Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="provider-select">AI Provider</Label>
+          <div className='space-y-2'>
+            <Label htmlFor='provider-select'>AI Provider</Label>
             <Select
               value={settings.provider}
               onValueChange={(value: 'openai' | 'anthropic' | 'groq') =>
                 setSettings({ ...settings, provider: value, apiKey: '' })
               }
             >
-              <SelectTrigger id="provider-select">
-                <SelectValue placeholder="Select AI provider" />
+              <SelectTrigger id='provider-select'>
+                <SelectValue placeholder='Select AI provider' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="openai">OpenAI (GPT-4o, GPT-4.1)</SelectItem>
-                <SelectItem value="anthropic">Anthropic (Claude 5/4.8)</SelectItem>
-                <SelectItem value="groq">Groq (Fast Inference)</SelectItem>
+                <SelectItem value='openai'>OpenAI (GPT-4o, GPT-4.1)</SelectItem>
+                <SelectItem value='anthropic'>
+                  Anthropic (Claude 5/4.8)
+                </SelectItem>
+                <SelectItem value='groq'>Groq (Fast Inference)</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Provider Information */}
           <Alert>
-            <Info className="h-4 w-4" />
+            <Info className='h-4 w-4' />
             <AlertDescription>
               <strong>{providerInfo.name}:</strong> {providerInfo.description}
               <br />
               <strong>Key format:</strong> {providerInfo.keyFormat}
               <br />
-              <a 
-                href={providerInfo.website} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
+              <a
+                href={providerInfo.website}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-blue-600 hover:underline'
               >
                 Get your API key →
               </a>
@@ -201,61 +224,85 @@ export default function BYOKAISettings({
           </Alert>
 
           {/* API Key Input */}
-          <div className="space-y-2">
-            <Label htmlFor="apiKey">API Key</Label>
-            <div className="relative">
+          <div className='space-y-2'>
+            <Label htmlFor='apiKey'>API Key</Label>
+            <div className='relative'>
               <Input
-                id="apiKey"
+                id='apiKey'
                 type={showApiKey ? 'text' : 'password'}
                 value={settings.apiKey}
-                onChange={(e) => setSettings({ ...settings, apiKey: e.target.value })}
+                onChange={e =>
+                  setSettings({ ...settings, apiKey: e.target.value })
+                }
                 placeholder={`Enter your ${providerInfo.name} API key`}
-                className="pr-10"
+                className='pr-10'
               />
               <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3"
+                type='button'
+                variant='ghost'
+                size='sm'
+                className='absolute right-0 top-0 h-full px-3'
                 onClick={() => setShowApiKey(!showApiKey)}
               >
-                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showApiKey ? (
+                  <EyeOff className='w-4 h-4' />
+                ) : (
+                  <Eye className='w-4 h-4' />
+                )}
               </Button>
             </div>
           </div>
 
           {/* Model Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="model-select">Model</Label>
+          <div className='space-y-2'>
+            <Label htmlFor='model-select'>Model</Label>
             <Select
               value={settings.model}
-              onValueChange={(value) => setSettings({ ...settings, model: value })}
+              onValueChange={value =>
+                setSettings({ ...settings, model: value })
+              }
             >
-              <SelectTrigger id="model-select">
-                <SelectValue placeholder="Select model" />
+              <SelectTrigger id='model-select'>
+                <SelectValue placeholder='Select model' />
               </SelectTrigger>
               <SelectContent>
                 {settings.provider === 'openai' && (
                   <>
-                    <SelectItem value="gpt-4o">GPT-4o (Latest)</SelectItem>
-                    <SelectItem value="gpt-4o-mini">GPT-4o Mini (Fast)</SelectItem>
-                    <SelectItem value="gpt-4.1">GPT-4.1</SelectItem>
-                    <SelectItem value="gpt-4.1-mini">GPT-4.1 Mini</SelectItem>
+                    <SelectItem value='gpt-4o'>GPT-4o (Latest)</SelectItem>
+                    <SelectItem value='gpt-4o-mini'>
+                      GPT-4o Mini (Fast)
+                    </SelectItem>
+                    <SelectItem value='gpt-4.1'>GPT-4.1</SelectItem>
+                    <SelectItem value='gpt-4.1-mini'>GPT-4.1 Mini</SelectItem>
                   </>
                 )}
                 {settings.provider === 'anthropic' && (
                   <>
-                    <SelectItem value="claude-sonnet-5">Claude Sonnet 5 (Latest)</SelectItem>
-                    <SelectItem value="claude-opus-4-8">Claude Opus 4.8</SelectItem>
-                    <SelectItem value="claude-haiku-4-5-20251001">Claude Haiku 4.5</SelectItem>
+                    <SelectItem value='claude-sonnet-5'>
+                      Claude Sonnet 5 (Latest)
+                    </SelectItem>
+                    <SelectItem value='claude-opus-4-8'>
+                      Claude Opus 4.8
+                    </SelectItem>
+                    <SelectItem value='claude-haiku-4-5-20251001'>
+                      Claude Haiku 4.5
+                    </SelectItem>
                   </>
                 )}
                 {settings.provider === 'groq' && (
                   <>
-                    <SelectItem value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</SelectItem>
-                    <SelectItem value="llama-3.3-70b-versatile">Llama 3.3 70B</SelectItem>
-                    <SelectItem value="openai/gpt-oss-120b">GPT-OSS 120B</SelectItem>
-                    <SelectItem value="openai/gpt-oss-20b">GPT-OSS 20B</SelectItem>
+                    <SelectItem value='llama-3.1-8b-instant'>
+                      Llama 3.1 8B (Fast)
+                    </SelectItem>
+                    <SelectItem value='llama-3.3-70b-versatile'>
+                      Llama 3.3 70B
+                    </SelectItem>
+                    <SelectItem value='openai/gpt-oss-120b'>
+                      GPT-OSS 120B
+                    </SelectItem>
+                    <SelectItem value='openai/gpt-oss-20b'>
+                      GPT-OSS 20B
+                    </SelectItem>
                   </>
                 )}
               </SelectContent>
@@ -263,28 +310,28 @@ export default function BYOKAISettings({
           </div>
 
           {/* Connection Test */}
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Button
               onClick={testConnection}
               disabled={!settings.apiKey || testingConnection}
-              className="w-full"
+              className='w-full'
             >
               {testingConnection ? 'Testing Connection...' : 'Test Connection'}
             </Button>
-            
+
             {connectionStatus === 'success' && (
-              <Alert className="border-green-200 bg-green-50">
-                <Check className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
+              <Alert className='border-green-200 bg-green-50'>
+                <Check className='h-4 w-4 text-green-600' />
+                <AlertDescription className='text-green-800'>
                   Connection successful! Your API key is working correctly.
                 </AlertDescription>
               </Alert>
             )}
-            
+
             {connectionStatus === 'error' && (
-              <Alert className="border-red-200 bg-red-50">
-                <AlertTriangle className="h-4 w-4 text-red-600" />
-                <AlertDescription className="text-red-800">
+              <Alert className='border-red-200 bg-red-50'>
+                <AlertTriangle className='h-4 w-4 text-red-600' />
+                <AlertDescription className='text-red-800'>
                   Connection failed: {errorMessage}
                 </AlertDescription>
               </Alert>
@@ -293,19 +340,20 @@ export default function BYOKAISettings({
 
           {/* Privacy Notice */}
           <Alert>
-            <Info className="h-4 w-4" />
+            <Info className='h-4 w-4' />
             <AlertDescription>
-              <strong>Privacy:</strong> Your API keys are stored locally in your browser and never sent to our servers. 
-              All AI requests go directly from your browser to your chosen provider.
+              <strong>Privacy:</strong> Your API keys are stored locally in your
+              browser and never sent to our servers. All AI requests go directly
+              from your browser to your chosen provider.
             </AlertDescription>
           </Alert>
 
           {/* Action Buttons */}
-          <div className="flex gap-2 pt-4">
-            <Button onClick={handleSave} className="flex-1">
+          <div className='flex gap-2 pt-4'>
+            <Button onClick={handleSave} className='flex-1'>
               Save Settings
             </Button>
-            <Button variant="outline" onClick={onClose} className="flex-1">
+            <Button variant='outline' onClick={onClose} className='flex-1'>
               Cancel
             </Button>
           </div>
