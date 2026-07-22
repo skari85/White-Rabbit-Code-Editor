@@ -90,6 +90,7 @@ export default function WorkspaceSidebar({
   const [newCatName, setNewCatName] = useState('');
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editingCatName, setEditingCatName] = useState('');
+  const canDeleteCategory = categories.length > 1;
 
   // ---- workspace creation ----
   const handleCreateWs = () => {
@@ -134,6 +135,41 @@ export default function WorkspaceSidebar({
         <span className="font-semibold text-sm tracking-wide truncate">
           White Rabbit
         </span>
+      </div>
+
+      {/* ------- Quick switch ------- */}
+      <div className="px-3 py-2 border-b border-zinc-800">
+        <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+          Quick switch
+        </p>
+        <div className="mt-1.5 space-y-1.5">
+          <select
+            value={activeWorkspace?.id ?? ''}
+            onChange={(e) => onSelectWorkspace(e.target.value)}
+            className="w-full h-7 rounded-md border border-zinc-700 bg-zinc-800 px-2 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
+            aria-label="Select workspace"
+          >
+            {workspaces.map((ws) => (
+              <option key={ws.id} value={ws.id}>
+                {ws.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={activeCategory?.id ?? ''}
+            onChange={(e) => onSelectCategory(e.target.value)}
+            className="w-full h-7 rounded-md border border-zinc-700 bg-zinc-800 px-2 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
+            aria-label="Select category"
+            disabled={categories.length === 0}
+          >
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <ScrollArea className="flex-1">
@@ -285,13 +321,15 @@ export default function WorkspaceSidebar({
                         setEditingCatName(cat.name);
                       }}
                     />
-                    <Trash2
-                      className="w-3 h-3 hover:!opacity-100 cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteCategory(cat.id);
-                      }}
-                    />
+                    {canDeleteCategory && (
+                      <Trash2
+                        className="w-3 h-3 hover:!opacity-100 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteCategory(cat.id);
+                        }}
+                      />
+                    )}
                   </span>
                 </button>
               );

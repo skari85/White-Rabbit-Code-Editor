@@ -14,7 +14,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useParams } from 'next/navigation';
 
 // Existing UI primitives already in the project
 import {
@@ -62,6 +62,7 @@ export default function WorkspaceLayout() {
   // ---- routing ----
   const router = useRouter();
   const pathname = usePathname();
+  const params = useParams();
 
   // ---- local UI state ----
   const [showSettings, setShowSettings] = useState(false);
@@ -73,8 +74,55 @@ export default function WorkspaceLayout() {
   const workspaceName = ws.activeWorkspace?.name ?? 'Workspace';
   const categoryName = ws.activeCategory?.name ?? 'Category';
   const promptText = ws.promptForCategory?.instructionsText ?? '';
+  const routeWorkspaceParam = params?.workspaceId;
+  const routeCategoryParam = params?.categoryId;
+  const routeWorkspaceId = Array.isArray(routeWorkspaceParam)
+    ? routeWorkspaceParam[0]
+    : routeWorkspaceParam;
+  const routeCategoryId = Array.isArray(routeCategoryParam)
+    ? routeCategoryParam[0]
+    : routeCategoryParam;
+  const artifactsDefaultHeight = Math.max(
+    10,
+    100 - ws.panelSizes.promptHeight - ws.panelSizes.outputHeight
+  );
 
-  // ---- URL sync: update browser URL when workspace/category changes ----
+  // ---- URL sync: apply route params into the workspace store (deep-linking) ----
+  useEffect(() => {
+    if (!routeWorkspaceId) return;
+
+    const workspaceExists = ws.store.workspaces.some(
+      (workspace) => workspace.id === routeWorkspaceId
+    );
+    if (!workspaceExists) return;
+
+    if (ws.activeWorkspace?.id !== routeWorkspaceId) {
+      ws.selectWorkspace(routeWorkspaceId);
+      return;
+    }
+
+    if (!routeCategoryId) return;
+    const categoryExists = ws.store.categories.some(
+      (category) =>
+        category.workspaceId === routeWorkspaceId &&
+        category.id === routeCategoryId
+    );
+
+    if (categoryExists && ws.activeCategory?.id !== routeCategoryId) {
+      ws.selectCategory(routeCategoryId);
+    }
+  }, [
+    routeWorkspaceId,
+    routeCategoryId,
+    ws.activeWorkspace,
+    ws.activeCategory,
+    ws.store.workspaces,
+    ws.store.categories,
+    ws.selectWorkspace,
+    ws.selectCategory,
+  ]);
+
+  // ---- URL sync: keep browser URL aligned with store selection ----
   useEffect(() => {
     if (!ws.activeWorkspace || !ws.activeCategory) return;
     const target = `/w/${ws.activeWorkspace.id}/c/${ws.activeCategory.id}`;
@@ -271,7 +319,11 @@ export default function WorkspaceLayout() {
                 >
                   <ResizablePanelGroup direction="vertical" className="h-full">
                     {/* Prompt / Instructions */}
-                    <ResizablePanel defaultSize={30} minSize={10}>
+                    <ResizablePanel
+                      defaultSize={ws.panelSizes.promptHeight}
+                      minSize={10}
+                      onResize={(size) => ws.savePanelSizes({ promptHeight: size })}
+                    >
                       <PromptPanel
                         instructionsText={promptText}
                         onInstructionsChange={ws.updatePrompt}
@@ -282,7 +334,11 @@ export default function WorkspaceLayout() {
                     <ResizableHandle withHandle />
 
                     {/* Output / Logs */}
-                    <ResizablePanel defaultSize={40} minSize={10}>
+                    <ResizablePanel
+                      defaultSize={ws.panelSizes.outputHeight}
+                      minSize={10}
+                      onResize={(size) => ws.savePanelSizes({ outputHeight: size })}
+                    >
                       <OutputPanel
                         outputs={ws.outputsForCategory}
                         onClear={ws.clearOutputs}
@@ -295,7 +351,7 @@ export default function WorkspaceLayout() {
                     <ResizableHandle withHandle />
 
                     {/* Artifacts + Tasks (tabbed bottom section) */}
-                    <ResizablePanel defaultSize={30} minSize={10}>
+                    <ResizablePanel defaultSize={artifactsDefaultHeight} minSize={10}>
                       <BottomTabs
                         artifacts={ws.artifactsForCategory}
                         onSelectArtifact={handleSelectArtifact}
