@@ -660,6 +660,21 @@ export default function CoderSpace() {
               className='flex-1 rounded-xl bg-[#161616] border border-[#262626] focus:border-[#6c2fff] outline-none px-4 py-3 text-base placeholder:text-[#555]'
             />
             <Button
+              type='button'
+              variant='outline'
+              disabled={!prompt.trim() || busy || optimizing}
+              onClick={() => void optimizePrompt()}
+              className='rounded-xl border-[#262626] bg-[#161616] hover:border-[#00ffe1] hover:text-[#00ffe1] disabled:opacity-40 px-3'
+              aria-label='Magic Wand — pimp up this prompt'
+              title='Magic Wand: let AI sharpen this prompt'
+            >
+              {optimizing ? (
+                <div className='w-4 h-4 animate-spin rounded-full border-2 border-[#7a7a7a] border-t-[#00ffe1]' />
+              ) : (
+                <Wand2 className='w-4 h-4' />
+              )}
+            </Button>
+            <Button
               type='submit'
               className='rounded-xl bg-[#6c2fff] hover:bg-[#5a1fe0] px-5'
             >
@@ -998,8 +1013,8 @@ export default function CoderSpace() {
             disabled={!prompt.trim() || busy || optimizing}
             onClick={() => void optimizePrompt()}
             className='rounded-xl border-[#262626] bg-[#161616] hover:border-[#00ffe1] hover:text-[#00ffe1] disabled:opacity-40'
-            aria-label='Optimize prompt for the AI'
-            title='Rewrite this into a sharper prompt'
+            aria-label='Magic Wand — pimp up this prompt'
+            title='Magic Wand: let AI sharpen this prompt'
           >
             {optimizing ? (
               <div className='w-4 h-4 animate-spin rounded-full border-2 border-[#7a7a7a] border-t-[#00ffe1]' />
