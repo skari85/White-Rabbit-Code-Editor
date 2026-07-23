@@ -105,7 +105,6 @@ export function parseFilesFromAIResponse(response: string): ParsedAIFile[] {
   while ((match = CODE_BLOCK_REGEX.exec(response)) !== null) {
     const language = (match[1] || 'text').toLowerCase();
     const code = match[3].trim();
-    if (!code) continue;
 
     const explicitName = match[2]?.trim();
     const filename =
@@ -113,6 +112,12 @@ export function parseFilesFromAIResponse(response: string): ParsedAIFile[] {
         ? explicitName
         : DEFAULT_FILENAMES[language];
     if (!filename) continue;
+
+    // An empty block naming a specific file is a legitimate "clear this
+    // file" instruction and should be applied; an empty block relying on
+    // the language's default-filename fallback (no explicit name) is far
+    // more likely a stray/formatting artifact, so that case still skips.
+    if (!code && !explicitName) continue;
 
     byName.set(filename, { filename, language, code });
   }
@@ -404,6 +409,12 @@ const APPLE_ICON = {
 
 async function fetchAsBase64(url: string): Promise<string> {
   const res = await fetch(url);
+  if (!res.ok) {
+    // fetch() only rejects on network failure, not HTTP error status — left
+    // unchecked, a 404's HTML error page gets silently base64-encoded and
+    // shipped as the app's icon instead of failing the deploy visibly.
+    throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`);
+  }
   const buffer = await res.arrayBuffer();
   const bytes = new Uint8Array(buffer);
   let binary = '';

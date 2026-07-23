@@ -217,6 +217,7 @@ export default function CoderSpace() {
   const promptRef = useRef<HTMLInputElement>(null);
   const celebrateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelRef = useRef(false);
+  const previewFrameRef = useRef<HTMLIFrameElement>(null);
 
   const triggerCelebration = useCallback(() => {
     if (celebrateTimer.current) clearTimeout(celebrateTimer.current);
@@ -268,10 +269,16 @@ export default function CoderSpace() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Collect console output posted up from the preview iframe's bridge script
+  // Collect console output posted up from the preview iframe's bridge script.
+  // Only trust messages that actually come from our own preview frame —
+  // window is a global event target, so without this check any other
+  // frame/script on the page could post a fake 'wr-console' message and
+  // have it treated as real preview output (including feeding the
+  // "Fix the errors" button's auto-generated prompt with attacker text).
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
       if (e.data?.type !== 'wr-console') return;
+      if (e.source !== previewFrameRef.current?.contentWindow) return;
       setConsoleEntries(prev =>
         [...prev, { level: e.data.level, text: String(e.data.text) }].slice(
           -200
@@ -332,8 +339,13 @@ export default function CoderSpace() {
     const hash = window.location.hash;
     if (!hash.startsWith('#p=')) return;
     void decodeProjectFromHash(hash.slice(3)).then(shared => {
-      if (!shared) return;
       window.history.replaceState(null, '', window.location.pathname);
+      if (!shared) {
+        setStatus(
+          'That share link looks broken or incomplete — nothing to open.'
+        );
+        return;
+      }
       enterWorkspace(
         shared.files.map(f => ({ ...f, lastModified: new Date() })),
         shared.name
@@ -681,6 +693,11 @@ export default function CoderSpace() {
               Build
             </Button>
           </form>
+          {status && (
+            <p className='text-xs text-[#7a7a7a] text-center' role='status'>
+              {status}
+            </p>
+          )}
 
           <div className='grid grid-cols-2 sm:grid-cols-4 gap-3'>
             {SPACE_TEMPLATES.map(t => (
@@ -903,6 +920,7 @@ export default function CoderSpace() {
         {showPreview && (
           <div className='w-full md:w-1/2 min-w-0 md:border-l border-[#262626] bg-white'>
             <iframe
+              ref={previewFrameRef}
               title='Live preview'
               sandbox='allow-scripts'
               srcDoc={previewHtml}

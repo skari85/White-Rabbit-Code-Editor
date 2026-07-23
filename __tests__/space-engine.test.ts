@@ -136,10 +136,20 @@ describe('parseFilesFromAIResponse', () => {
     expect(files[0].code).toBe('const v = 2;');
   });
 
-  it('ignores empty blocks and unknown languages without filenames', () => {
-    const response = '```ruby\nputs 1\n```\n```html // a.html\n\n```';
+  it('ignores empty blocks in unknown languages with no explicit filename', () => {
+    const response = '```ruby\nputs 1\n```';
 
     expect(parseFilesFromAIResponse(response)).toHaveLength(0);
+  });
+
+  it('applies an empty block that names a specific file, as a clear-file instruction', () => {
+    const response = '```html // a.html\n\n```';
+
+    const files = parseFilesFromAIResponse(response);
+
+    expect(files).toHaveLength(1);
+    expect(files[0].filename).toBe('a.html');
+    expect(files[0].code).toBe('');
   });
 });
 
@@ -272,6 +282,8 @@ describe('buildDeployableFiles', () => {
 
   beforeEach(() => {
     global.fetch = vi.fn(async () => ({
+      ok: true,
+      status: 200,
       arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
     })) as unknown as typeof fetch;
   });
@@ -324,5 +336,26 @@ describe('buildDeployableFiles', () => {
 
     const icon = out.find(f => f.name === 'icon-192.png')!;
     expect(icon.encoding).toBe('base64');
+  });
+
+  it('rejects instead of silently embedding a 404 page as an icon', async () => {
+    global.fetch = vi.fn(async () => ({
+      ok: false,
+      status: 404,
+      arrayBuffer: async () => new Uint8Array().buffer,
+    })) as unknown as typeof fetch;
+
+    const files = [
+      {
+        name: 'index.html',
+        content: '<html><head></head><body></body></html>',
+        type: 'html' as const,
+        lastModified: new Date(),
+      },
+    ];
+
+    await expect(buildDeployableFiles(files, 'My Test App')).rejects.toThrow(
+      /HTTP 404/
+    );
   });
 });
