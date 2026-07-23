@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   AISettings,
   AIMessage,
@@ -237,6 +237,14 @@ export function useAIAssistantEnhanced() {
   const [streamedMessage, setStreamedMessage] = useState<string>('');
   const [isStreaming, setIsStreaming] = useState(false);
 
+  // Guards against overlapping sendMessage/sendStreamingMessage calls (e.g.
+  // switching AI provider mid-request) stomping each other's isLoading/
+  // isStreaming/streamedMessage state or clobbering a newer saved
+  // conversation with a slower, now-stale response. Whichever call started
+  // most recently "owns" the shared state; an older call that resolves
+  // later becomes a no-op instead of corrupting it.
+  const requestIdRef = useRef(0);
+
   // Load settings from localStorage on mount (prioritize BYOK settings)
   useEffect(() => {
     // Check if we're in the browser environment
@@ -446,6 +454,7 @@ export function useAIAssistantEnhanced() {
         );
       }
 
+      const myRequestId = ++requestIdRef.current;
       setIsLoading(true);
 
       try {
@@ -498,6 +507,13 @@ Please help me with this request by refining the existing code.`;
         // Send to AI service
         const response = await aiService.sendMessage(updatedMessages);
 
+        // A newer sendMessage/sendStreamingMessage call has started since
+        // this one began — don't let this now-stale response overwrite
+        // whatever the newer call has already saved.
+        if (requestIdRef.current !== myRequestId) {
+          return response;
+        }
+
         // Parse and execute file commands
         const fileCommands = parseFileCommands(response.content);
         if (fileCommands.length > 0) {
@@ -527,7 +543,9 @@ Please help me with this request by refining the existing code.`;
         console.error('AI service error:', error);
         throw error;
       } finally {
-        setIsLoading(false);
+        if (requestIdRef.current === myRequestId) {
+          setIsLoading(false);
+        }
       }
     },
     [aiService, isConfigured, messages, saveMessages]
@@ -549,6 +567,7 @@ Please help me with this request by refining the existing code.`;
         );
       }
 
+      const myRequestId = ++requestIdRef.current;
       setIsLoading(true);
       setIsStreaming(true);
       setStreamedMessage('');
@@ -650,6 +669,13 @@ Please help me with this request by refining the existing code.`;
         for await (const chunk of aiService.sendMessageStream(
           updatedMessages
         )) {
+          // A newer call has since started (e.g. the user switched provider
+          // or fired another request) — stop consuming this stale stream so
+          // it can't keep writing into the editor or clobber shared state.
+          if (requestIdRef.current !== myRequestId) {
+            break;
+          }
+
           fullContent += chunk;
           buffer += chunk;
 
@@ -727,6 +753,17 @@ Please help me with this request by refining the existing code.`;
           setStreamedMessage(cleaned);
         }
 
+        // A newer call superseded this one while streaming — don't apply
+        // its (now-stale) trailing content or save it over newer messages.
+        if (requestIdRef.current !== myRequestId) {
+          return {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: fullContent,
+            timestamp: new Date(),
+          };
+        }
+
         // If a block was open but the stream ended, apply what we have
         if (currentFile) {
           applyPartial(currentFile, true);
@@ -764,9 +801,11 @@ Please help me with this request by refining the existing code.`;
         console.error('AI service error:', error);
         throw error;
       } finally {
-        setIsLoading(false);
-        setIsStreaming(false);
-        setStreamedMessage('');
+        if (requestIdRef.current === myRequestId) {
+          setIsLoading(false);
+          setIsStreaming(false);
+          setStreamedMessage('');
+        }
       }
     },
     [aiService, isConfigured, messages, saveMessages]

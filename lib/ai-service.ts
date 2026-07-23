@@ -433,56 +433,65 @@ export class AIService {
       throw new Error('Groq API key is required');
     }
 
-    const response = await fetch(
-      'https://api.groq.com/openai/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.settings.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: this.settings.model,
-          messages: [
-            { role: 'system', content: this.settings.systemPrompt },
-            ...messages.map(m => ({ role: m.role, content: m.content })),
-          ],
-          temperature: this.settings.temperature,
-          max_tokens: this.settings.maxTokens,
-        }),
-      }
-    );
+    try {
+      const response = await fetch(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.settings.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: this.settings.model,
+            messages: [
+              { role: 'system', content: this.settings.systemPrompt },
+              ...messages.map(m => ({ role: m.role, content: m.content })),
+            ],
+            temperature: this.settings.temperature,
+            max_tokens: this.settings.maxTokens,
+          }),
+        }
+      );
 
-    if (!response.ok) {
-      let errorMessage = 'Unknown error';
-      try {
-        const error = await response.json();
-        errorMessage =
-          error.error?.message ||
-          error.message ||
-          `HTTP ${response.status}: ${response.statusText}`;
-      } catch (e) {
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      if (!response.ok) {
+        let errorMessage = 'Unknown error';
+        try {
+          const error = await response.json();
+          errorMessage =
+            error.error?.message ||
+            error.message ||
+            `HTTP ${response.status}: ${response.statusText}`;
+        } catch (e) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+
+        if (response.status === 401) {
+          errorMessage =
+            'Invalid API Key. Please check your Groq API key is correct and has the proper permissions.';
+        }
+
+        throw new Error(`Groq API error: ${errorMessage}`);
       }
 
-      if (response.status === 401) {
-        errorMessage =
-          'Invalid API Key. Please check your Groq API key is correct and has the proper permissions.';
-      }
+      const data = await response.json();
+      const choice = data.choices[0];
 
-      throw new Error(`Groq API error: ${errorMessage}`);
+      return {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: choice.message.content,
+        timestamp: new Date(),
+        tokens: data.usage?.total_tokens,
+      };
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error(
+          'Network error: Please check your internet connection and API key'
+        );
+      }
+      throw error;
     }
-
-    const data = await response.json();
-    const choice = data.choices[0];
-
-    return {
-      id: Date.now().toString(),
-      role: 'assistant',
-      content: choice.message.content,
-      timestamp: new Date(),
-      tokens: data.usage?.total_tokens,
-    };
   }
 
   private async sendMistralMessage(messages: AIMessage[]): Promise<AIMessage> {
