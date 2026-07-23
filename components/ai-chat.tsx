@@ -875,7 +875,7 @@ export function AIChat({
               }}
               placeholder='Ask me anything... (Shift+Enter for new line)'
               className='min-h-[60px] max-h-[140px] resize-none bg-gray-700 border-gray-500 text-white placeholder-gray-400 pr-24 text-sm leading-relaxed'
-              disabled={isLoading}
+              disabled={isLoading || magicWandBusy}
               aria-label='AI chat message input'
             />
 
