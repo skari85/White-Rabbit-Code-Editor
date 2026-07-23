@@ -140,6 +140,8 @@ export default function CodeEditor() {
     getSelectedFileType,
     initializeDefaultProject,
     hasUnsavedChanges,
+    crossTabNotice,
+    dismissCrossTabNotice,
   } = useCodeBuilder();
 
   // AI Assistant
@@ -346,6 +348,26 @@ export default function CodeEditor() {
 
   return (
     <div className='h-screen bg-gray-900'>
+      {crossTabNotice && (
+        <div className='flex items-center justify-between gap-3 bg-amber-500/90 text-black text-sm px-4 py-2'>
+          <span>{crossTabNotice}</span>
+          <div className='flex items-center gap-2 shrink-0'>
+            <button
+              onClick={() => window.location.reload()}
+              className='font-semibold underline underline-offset-2'
+            >
+              Reload
+            </button>
+            <button
+              onClick={dismissCrossTabNotice}
+              aria-label='Dismiss'
+              className='px-2'
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
       {/* New App Wizard & Publish Modals */}
       <NewAppWizard
         open={showNewApp}

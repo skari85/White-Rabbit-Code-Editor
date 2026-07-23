@@ -32,6 +32,7 @@ export function useCodeBuilder() {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [crossTabNotice, setCrossTabNotice] = useState<string | null>(null);
 
   // Save project to localStorage. Returns whether it actually succeeded —
   // quota-exceeded and corrupted-JSON are real failure modes here, not
@@ -669,6 +670,37 @@ document.addEventListener('mousemove', function(e) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [saveProject]);
 
+  // Two tabs open on the same project each save independently on their own
+  // debounce, with no coordination — the last one to save silently
+  // clobbers the other's on-disk state, and that other tab has no idea its
+  // in-memory copy is now stale. True conflict-free merging of concurrent
+  // text edits is a much bigger feature (real-time collab, OT/CRDTs); the
+  // realistic, contained fix is making that clobbering *visible* instead of
+  // silent, via the storage event (which the browser only fires in *other*
+  // tabs, never the one that made the write) so the user can choose to
+  // reload rather than unknowingly overwrite the other tab's work.
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key !== PROJECT_STORAGE_KEY || !e.newValue) return;
+      try {
+        const incoming: ProjectData = JSON.parse(e.newValue);
+        if (currentProject && incoming.id === currentProject.id) {
+          setCrossTabNotice(
+            'This project was just saved from another tab. Reload to see those changes, or keep editing here — your changes will overwrite theirs the next time this tab saves.'
+          );
+        }
+      } catch {
+        // Ignore malformed cross-tab payloads; nothing actionable here.
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [currentProject]);
+
+  const dismissCrossTabNotice = useCallback(() => {
+    setCrossTabNotice(null);
+  }, []);
+
   const updateFileContent = useCallback((fileName: string, content: string) => {
     setFiles(prev =>
       prev.map(file =>
@@ -1103,6 +1135,8 @@ export default function Component() {
     isSaving,
     lastSaved,
     saveError,
+    crossTabNotice,
+    dismissCrossTabNotice,
     // Context analysis methods
     getProjectContext,
     getRelatedFiles,

@@ -213,6 +213,7 @@ export default function CoderSpace() {
   } | null>(null);
   const [templateId, setTemplateId] = useState<string>('default');
   const [showHint, setShowHint] = useState(false);
+  const [crossTabNotice, setCrossTabNotice] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const promptRef = useRef<HTMLInputElement>(null);
@@ -257,6 +258,30 @@ export default function CoderSpace() {
       return next;
     });
   }, [stage, files, projectName, projectId]);
+
+  // Two tabs open on the same project each autosave independently with no
+  // coordination — the last one to save silently clobbers the other's
+  // on-disk copy. Real conflict-free merging is a much bigger feature; the
+  // contained fix is surfacing the clobbering instead of hiding it, via the
+  // storage event (which only fires in *other* tabs, never the one that
+  // wrote the change).
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key !== PROJECTS_STORAGE_KEY || !e.newValue || !projectId) return;
+      try {
+        const incoming: SpaceProject[] = JSON.parse(e.newValue);
+        if (incoming.some(p => p.id === projectId)) {
+          setCrossTabNotice(
+            'This project was just saved from another tab. Reload to see those changes, or keep editing here — your changes will overwrite theirs on your next edit.'
+          );
+        }
+      } catch {
+        // Ignore malformed cross-tab payloads; nothing actionable here.
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [projectId]);
 
   // Cmd/Ctrl+K focuses the prompt from anywhere
   useEffect(() => {
@@ -805,6 +830,26 @@ export default function CoderSpace() {
 
   return (
     <div className='h-screen bg-[#0d0d0d] text-[#eaeaea] flex flex-col'>
+      {crossTabNotice && (
+        <div className='flex items-center justify-between gap-3 bg-amber-500/90 text-black text-sm px-4 py-2 shrink-0'>
+          <span>{crossTabNotice}</span>
+          <div className='flex items-center gap-2 shrink-0'>
+            <button
+              onClick={() => window.location.reload()}
+              className='font-semibold underline underline-offset-2'
+            >
+              Reload
+            </button>
+            <button
+              onClick={() => setCrossTabNotice(null)}
+              aria-label='Dismiss'
+              className='px-2'
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
       {/* Top bar */}
       <header className='flex items-center gap-3 px-3 py-2 border-b border-[#262626] shrink-0'>
         <button
