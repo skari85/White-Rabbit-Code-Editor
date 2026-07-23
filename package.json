@@ -133,8 +133,8 @@
     "@types/react-plotly.js": "2.6.3",
     "@typescript-eslint/eslint-plugin": "8.41.0",
     "@typescript-eslint/parser": "8.41.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "@vitest/ui": "^2.0.0",
+    "@vitejs/plugin-react": "^6.0.0",
+    "@vitest/ui": "^4.1.10",
     "concurrently": "^8.2.2",
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
@@ -151,7 +151,7 @@
     "postcss": "8.4.49",
     "prettier": "^3.0.0",
     "typescript": "^5",
-    "vitest": "^2.0.0",
+    "vitest": "^4.1.10",
     "wait-on": "^7.2.0"
   },
   "overrides": {
