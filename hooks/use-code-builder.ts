@@ -773,29 +773,37 @@ export default function Component() {
     [selectedFile, files]
   );
 
-  // AI Integration: Create or update file from AI response
+  // AI Integration: Create or update file from AI response. Uses a single
+  // functional setFiles update — reading `files` directly (as this used to)
+  // and deciding create-vs-update from that stale snapshot means multiple
+  // synchronous calls in the same tick (e.g. several files from one AI
+  // response, or two blocks naming the same file) don't see each other's
+  // effects: each thinks the file doesn't exist yet and pushes a duplicate
+  // entry, and whichever's content happens to apply last wins by accident
+  // of timing rather than by design. A functional update always sees the
+  // real latest state, so this composes correctly no matter how many times
+  // it's called back-to-back before a render happens.
   const createOrUpdateFileFromAI = useCallback(
     (fileName: string, content: string, type: FileContent['type']) => {
-      const existingFile = files.find(f => f.name === fileName);
-
-      if (existingFile) {
-        // Update existing file
-        updateFileContent(fileName, content);
-      } else {
-        // Create new file
-        const newFile: FileContent = {
-          name: fileName,
-          content,
-          type,
-          lastModified: new Date(),
-        };
-        setFiles(prev => [...prev, newFile]);
-      }
-
-      // Switch to the updated/created file
+      setFiles(prev => {
+        const existingIndex = prev.findIndex(f => f.name === fileName);
+        if (existingIndex >= 0) {
+          const next = [...prev];
+          next[existingIndex] = {
+            ...next[existingIndex],
+            content,
+            lastModified: new Date(),
+          };
+          return next;
+        }
+        return [
+          ...prev,
+          { name: fileName, content, type, lastModified: new Date() },
+        ];
+      });
       setSelectedFile(fileName);
     },
-    [files, updateFileContent]
+    []
   );
 
   // AI Integration: Apply multiple file changes from AI response

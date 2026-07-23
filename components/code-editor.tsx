@@ -135,6 +135,7 @@ export default function CodeEditor() {
     addNewFile,
     deleteFile,
     updateFileContent,
+    createOrUpdateFileFromAI,
     getSelectedFileContent,
     getSelectedFileType,
     initializeDefaultProject,
@@ -523,12 +524,7 @@ export default function CodeEditor() {
 
                       // Create or update the target file in Monaco and focus it
                       const fileType = getFileTypeFromLanguage(language);
-                      const exists = files.some(f => f.name === filename);
-                      if (!exists) {
-                        addNewFile(filename, fileType);
-                      }
-                      setTimeout(() => updateFileContent(filename, content), 0);
-                      setSelectedFile(filename);
+                      createOrUpdateFileFromAI(filename, content, fileType);
                       setViewMode('code');
                     } catch (error) {
                       console.error('Error in onCodeGenerated:', error);
@@ -566,8 +562,7 @@ export default function CodeEditor() {
                     }
                   };
 
-                  addNewFile(name, getFileType(name));
-                  setTimeout(() => updateFileContent(name, content), 100);
+                  createOrUpdateFileFromAI(name, content, getFileType(name));
                 }}
                 onFileUpdate={updateFileContent}
                 onFileSelect={setSelectedFile}
@@ -750,15 +745,11 @@ export default function CodeEditor() {
                           onFileCreate={(filename, content, language) => {
                             // Create new file from Monaco Code Space
                             const fileType = getFileTypeFromLanguage(language);
-                            const exists = files.some(f => f.name === filename);
-                            if (!exists) {
-                              addNewFile(filename, fileType);
-                            }
-                            setTimeout(
-                              () => updateFileContent(filename, content),
-                              0
+                            createOrUpdateFileFromAI(
+                              filename,
+                              content,
+                              fileType
                             );
-                            setSelectedFile(filename);
                             trackFileCreated(fileType, filename);
                           }}
                           theme={codeColor ? 'vs-light' : 'vs-dark'}
@@ -785,45 +776,33 @@ export default function CodeEditor() {
                           onFileCreate={(filename, content, language) => {
                             // Create new file from AI generation in split pane
                             const fileType = getFileTypeFromLanguage(language);
-                            const exists = files.some(f => f.name === filename);
-                            if (!exists) {
-                              addNewFile(filename, fileType);
-                            }
-                            setTimeout(
-                              () => updateFileContent(filename, content),
-                              0
+                            createOrUpdateFileFromAI(
+                              filename,
+                              content,
+                              fileType
                             );
-                            setSelectedFile(filename);
                             trackFileCreated(fileType, filename);
                           }}
                           onMultipleFilesCreate={fileList => {
-                            // Create multiple files from AI generation in split pane
-                            fileList.forEach((file, index) => {
+                            // Create multiple files from AI generation in split pane.
+                            // createOrUpdateFileFromAI uses a functional setFiles
+                            // update, so calling it synchronously in a loop (even
+                            // for files sharing a name) composes correctly instead
+                            // of racing — no setTimeout stagger needed.
+                            fileList.forEach(file => {
                               const fileType = getFileTypeFromLanguage(
                                 file.language
                               );
-                              const exists = files.some(
-                                f => f.name === file.filename
-                              );
-                              if (!exists) {
-                                addNewFile(file.filename, fileType);
-                              }
-                              setTimeout(
-                                () =>
-                                  updateFileContent(
-                                    file.filename,
-                                    file.content
-                                  ),
-                                index * 100
+                              createOrUpdateFileFromAI(
+                                file.filename,
+                                file.content,
+                                fileType
                               );
                               trackFileCreated(fileType, file.filename);
                             });
                             // Select the first created file
                             if (fileList.length > 0) {
-                              setTimeout(
-                                () => setSelectedFile(fileList[0].filename),
-                                200
-                              );
+                              setSelectedFile(fileList[0].filename);
                             }
                           }}
                         />
@@ -846,47 +825,33 @@ export default function CodeEditor() {
                               // Create new file from AI generation
                               const fileType =
                                 getFileTypeFromLanguage(language);
-                              const exists = files.some(
-                                f => f.name === filename
+                              createOrUpdateFileFromAI(
+                                filename,
+                                content,
+                                fileType
                               );
-                              if (!exists) {
-                                addNewFile(filename, fileType);
-                              }
-                              setTimeout(
-                                () => updateFileContent(filename, content),
-                                0
-                              );
-                              setSelectedFile(filename);
                               trackFileCreated(fileType, filename);
                             }}
                             onMultipleFilesCreate={fileList => {
-                              // Create multiple files from AI generation
-                              fileList.forEach((file, index) => {
+                              // Create multiple files from AI generation.
+                              // createOrUpdateFileFromAI uses a functional
+                              // setFiles update, so calling it synchronously
+                              // in a loop composes correctly instead of
+                              // racing — no setTimeout stagger needed.
+                              fileList.forEach(file => {
                                 const fileType = getFileTypeFromLanguage(
                                   file.language
                                 );
-                                const exists = files.some(
-                                  f => f.name === file.filename
-                                );
-                                if (!exists) {
-                                  addNewFile(file.filename, fileType);
-                                }
-                                setTimeout(
-                                  () =>
-                                    updateFileContent(
-                                      file.filename,
-                                      file.content
-                                    ),
-                                  index * 100
+                                createOrUpdateFileFromAI(
+                                  file.filename,
+                                  file.content,
+                                  fileType
                                 );
                                 trackFileCreated(fileType, file.filename);
                               });
                               // Select the first created file
                               if (fileList.length > 0) {
-                                setTimeout(
-                                  () => setSelectedFile(fileList[0].filename),
-                                  200
-                                );
+                                setSelectedFile(fileList[0].filename);
                               }
                             }}
                           />
