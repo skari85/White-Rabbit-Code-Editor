@@ -1,4 +1,11 @@
-const { app, BrowserWindow, Menu, shell, ipcMain, dialog } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  Menu,
+  shell,
+  ipcMain,
+  dialog,
+} = require('electron');
 const path = require('path');
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -15,23 +22,22 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: false,
       webSecurity: true,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
     },
     icon: path.join(__dirname, '../public/icon-512.png'),
     titleBarStyle: 'default',
     show: false, // Don't show until ready
     backgroundColor: '#0d0d0d',
     title: 'White Rabbit Code Editor',
-    autoHideMenuBar: false
+    autoHideMenuBar: false,
   });
 
   // Load the app
   if (isDev) {
     // In development, load from Next.js dev server
     mainWindow.loadURL('http://localhost:3012');
-    
+
     // Open DevTools in development
     mainWindow.webContents.openDevTools();
   } else {
@@ -42,7 +48,7 @@ function createWindow() {
   // Show window when ready to prevent visual flash
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    
+
     // Focus the window
     mainWindow.focus();
   });
@@ -52,20 +58,15 @@ function createWindow() {
     mainWindow = null;
   });
 
-  // Security: Prevent new window creation
+  // Security: prevent new window creation, opening external links in the
+  // default browser instead. (The older 'new-window' event this used to
+  // also handle was removed from Electron itself years ago — this handler
+  // alone covers both cases.)
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    // Allow external links to open in default browser
     if (url.startsWith('http')) {
       shell.openExternal(url);
-      return { action: 'deny' };
     }
     return { action: 'deny' };
-  });
-
-  // Handle external links
-  mainWindow.webContents.on('new-window', (event, navigationUrl) => {
-    event.preventDefault();
-    shell.openExternal(navigationUrl);
   });
 
   // Create application menu
@@ -82,7 +83,7 @@ function createMenu() {
           accelerator: 'CmdOrCtrl+N',
           click: () => {
             mainWindow.webContents.send('menu-action', 'new-project');
-          }
+          },
         },
         {
           label: 'Open Project',
@@ -90,13 +91,17 @@ function createMenu() {
           click: async () => {
             const result = await dialog.showOpenDialog(mainWindow, {
               properties: ['openDirectory'],
-              title: 'Open Project Folder'
+              title: 'Open Project Folder',
             });
-            
+
             if (!result.canceled && result.filePaths.length > 0) {
-              mainWindow.webContents.send('menu-action', 'open-project', result.filePaths[0]);
+              mainWindow.webContents.send(
+                'menu-action',
+                'open-project',
+                result.filePaths[0]
+              );
             }
-          }
+          },
         },
         { type: 'separator' },
         {
@@ -104,14 +109,14 @@ function createMenu() {
           accelerator: 'CmdOrCtrl+S',
           click: () => {
             mainWindow.webContents.send('menu-action', 'save');
-          }
+          },
         },
         {
           label: 'Save As...',
           accelerator: 'CmdOrCtrl+Shift+S',
           click: () => {
             mainWindow.webContents.send('menu-action', 'save-as');
-          }
+          },
         },
         { type: 'separator' },
         {
@@ -119,9 +124,9 @@ function createMenu() {
           accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
           click: () => {
             app.quit();
-          }
-        }
-      ]
+          },
+        },
+      ],
     },
     {
       label: 'Edit',
@@ -132,8 +137,8 @@ function createMenu() {
         { role: 'cut' },
         { role: 'copy' },
         { role: 'paste' },
-        { role: 'selectall' }
-      ]
+        { role: 'selectall' },
+      ],
     },
     {
       label: 'View',
@@ -146,15 +151,12 @@ function createMenu() {
         { role: 'zoomIn' },
         { role: 'zoomOut' },
         { type: 'separator' },
-        { role: 'togglefullscreen' }
-      ]
+        { role: 'togglefullscreen' },
+      ],
     },
     {
       label: 'Window',
-      submenu: [
-        { role: 'minimize' },
-        { role: 'close' }
-      ]
+      submenu: [{ role: 'minimize' }, { role: 'close' }],
     },
     {
       label: 'Help',
@@ -166,30 +168,35 @@ function createMenu() {
               type: 'info',
               title: 'About White Rabbit Code Editor',
               message: 'White Rabbit Code Editor',
-              detail: 'Version 4.1.3\n\nAI-Powered Code Editor\nBuild web applications through conversation\n\n© 2025 White Rabbit Team'
+              detail:
+                'Version 4.1.3\n\nAI-Powered Code Editor\nBuild web applications through conversation\n\n© 2025 White Rabbit Team',
             });
-          }
+          },
         },
         {
           label: 'Documentation',
           click: () => {
             shell.openExternal('https://whiterabbit.dev/docs');
-          }
+          },
         },
         {
           label: 'GitHub Repository',
           click: () => {
-            shell.openExternal('https://github.com/skari85/pwa-code');
-          }
+            shell.openExternal(
+              'https://github.com/skari85/White-Rabbit-Code-Editor'
+            );
+          },
         },
         {
           label: 'Report Issue',
           click: () => {
-            shell.openExternal('https://github.com/skari85/pwa-code/issues');
-          }
-        }
-      ]
-    }
+            shell.openExternal(
+              'https://github.com/skari85/White-Rabbit-Code-Editor/issues'
+            );
+          },
+        },
+      ],
+    },
   ];
 
   // macOS specific menu adjustments
@@ -205,8 +212,8 @@ function createMenu() {
         { role: 'hideothers' },
         { role: 'unhide' },
         { type: 'separator' },
-        { role: 'quit' }
-      ]
+        { role: 'quit' },
+      ],
     });
 
     // Window menu
@@ -215,7 +222,7 @@ function createMenu() {
       { role: 'minimize' },
       { role: 'zoom' },
       { type: 'separator' },
-      { role: 'front' }
+      { role: 'front' },
     ];
   }
 
@@ -244,7 +251,7 @@ app.on('window-all-closed', () => {
 app.on('web-contents-created', (event, contents) => {
   contents.on('will-navigate', (event, navigationUrl) => {
     const parsedUrl = new URL(navigationUrl);
-    
+
     if (parsedUrl.origin !== 'http://localhost:3012' && !isDev) {
       event.preventDefault();
     }

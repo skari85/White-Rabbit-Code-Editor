@@ -108,7 +108,7 @@
   "publish": {
     "provider": "github",
     "owner": "skari85",
-    "repo": "pwa-code",
+    "repo": "White-Rabbit-Code-Editor",
     "releaseType": "release"
   }
 }
