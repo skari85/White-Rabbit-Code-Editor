@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const PROJECT_STORAGE_KEY = 'white-rabbit-project';
 const PROJECTS_LIST_KEY = 'white-rabbit-projects-list';
@@ -28,33 +28,53 @@ export function useCodeBuilder() {
   const [currentProject, setCurrentProject] = useState<ProjectData | null>(
     null
   );
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Save project to localStorage
-  const saveProject = useCallback((project: ProjectData) => {
-    localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(project));
+  // Save project to localStorage. Returns whether it actually succeeded —
+  // quota-exceeded and corrupted-JSON are real failure modes here, not
+  // hypotheticals, so callers need to know rather than assume it worked.
+  const saveProject = useCallback((project: ProjectData): boolean => {
+    try {
+      localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(project));
 
-    // Update projects list
-    const projectsList = JSON.parse(
-      localStorage.getItem(PROJECTS_LIST_KEY) || '[]'
-    );
-    const existingIndex = projectsList.findIndex(
-      (p: any) => p.id === project.id
-    );
+      let projectsList: any[] = [];
+      try {
+        const parsed = JSON.parse(
+          localStorage.getItem(PROJECTS_LIST_KEY) || '[]'
+        );
+        if (Array.isArray(parsed)) projectsList = parsed;
+      } catch {
+        // Corrupted list — self-heal by starting a fresh one rather than
+        // failing the whole save over a secondary index.
+        projectsList = [];
+      }
 
-    const projectSummary = {
-      id: project.id,
-      name: project.name,
-      lastModified: project.lastModified,
-      fileCount: project.files.length,
-    };
+      const existingIndex = projectsList.findIndex(
+        (p: any) => p.id === project.id
+      );
 
-    if (existingIndex >= 0) {
-      projectsList[existingIndex] = projectSummary;
-    } else {
-      projectsList.push(projectSummary);
+      const projectSummary = {
+        id: project.id,
+        name: project.name,
+        lastModified: project.lastModified,
+        fileCount: project.files.length,
+      };
+
+      if (existingIndex >= 0) {
+        projectsList[existingIndex] = projectSummary;
+      } else {
+        projectsList.push(projectSummary);
+      }
+
+      localStorage.setItem(PROJECTS_LIST_KEY, JSON.stringify(projectsList));
+      return true;
+    } catch (error) {
+      console.error('Failed to save project:', error);
+      return false;
     }
-
-    localStorage.setItem(PROJECTS_LIST_KEY, JSON.stringify(projectsList));
   }, []);
 
   // Initialize default project
@@ -598,6 +618,12 @@ document.addEventListener('mousemove', function(e) {
     initializeDefaultProject();
   }, [initializeDefaultProject]);
 
+  // Always holds the freshest project data, updated synchronously on every
+  // files/selectedFile change — independent of the save debounce below, so
+  // the beforeunload flush can save what's actually on screen even if the
+  // debounce timer hasn't fired yet.
+  const latestProjectRef = useRef<ProjectData | null>(null);
+
   // Auto-save project when files or settings change
   useEffect(() => {
     if (currentProject && files.length > 0) {
@@ -607,16 +633,41 @@ document.addEventListener('mousemove', function(e) {
         selectedFile,
         lastModified: new Date(),
       };
+      latestProjectRef.current = updatedProject;
+      setHasUnsavedChanges(true);
 
       // Debounce save to avoid too frequent saves
       const timeoutId = setTimeout(() => {
-        setCurrentProject(updatedProject);
-        saveProject(updatedProject);
+        setIsSaving(true);
+        const ok = saveProject(updatedProject);
+        if (ok) {
+          setCurrentProject(updatedProject);
+          setHasUnsavedChanges(false);
+          setLastSaved(new Date());
+          setSaveError(null);
+        } else {
+          setSaveError(
+            'Could not save your project — browser storage may be full or unavailable.'
+          );
+        }
+        setIsSaving(false);
       }, 1000);
 
       return () => clearTimeout(timeoutId);
     }
   }, [files, selectedFile, saveProject]);
+
+  // Flush a synchronous save on unload so closing/refreshing the tab within
+  // the debounce window doesn't lose the last edits.
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (latestProjectRef.current) {
+        saveProject(latestProjectRef.current);
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [saveProject]);
 
   const updateFileContent = useCallback((fileName: string, content: string) => {
     setFiles(prev =>
@@ -1040,6 +1091,10 @@ export default function Component() {
     currentProject,
     saveProject,
     initializeDefaultProject,
+    hasUnsavedChanges,
+    isSaving,
+    lastSaved,
+    saveError,
     // Context analysis methods
     getProjectContext,
     getRelatedFiles,
