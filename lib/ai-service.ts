@@ -377,10 +377,18 @@ export class AIService {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            contents: [
-              { parts: [{ text: this.settings.systemPrompt }] },
-              ...messages.map(m => ({ parts: [{ text: m.content }] })),
-            ],
+            systemInstruction: this.settings.systemPrompt
+              ? { parts: [{ text: this.settings.systemPrompt }] }
+              : undefined,
+            // Gemini's contents array must alternate user/model roles,
+            // starting with user — the system prompt goes in
+            // systemInstruction above, never as a contents entry.
+            contents: messages
+              .filter(m => m.role !== 'system')
+              .map(m => ({
+                role: m.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: m.content }],
+              })),
             generationConfig: {
               temperature: this.settings.temperature,
               maxOutputTokens: this.settings.maxTokens,
