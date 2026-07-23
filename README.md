@@ -56,7 +56,7 @@
 
    ```bash
    git clone https://github.com/skari85/White-Rabbit-Code-Editor.git
-   cd pwa-code
+   cd White-Rabbit-Code-Editor
    ```
 
 2. **Install dependencies**
