@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { FileContent } from '@/hooks/use-code-builder';
 import { useAIAssistant } from '@/hooks/use-ai-assistant';
 import { AIService } from '@/lib/ai-service';
+import { budgetFilesForContext, omittedFilesNote } from '@/lib/context-budget';
 import {
   ConsoleEntry,
   PROMPT_OPTIMIZER_SYSTEM_PROMPT,
@@ -453,13 +454,18 @@ export default function CoderSpace() {
     setPrompt('');
     try {
       // filesOverride covers the launch flow, where state hasn't settled yet
-      const fileContext = (filesOverride ?? files)
+      const { included, omitted } = budgetFilesForContext(
+        filesOverride ?? files,
+        undefined,
+        selectedFile
+      );
+      const fileContext = included
         .map(
           f =>
             `\`\`\`${monacoLanguageFromName(f.name)} // ${f.name}\n${f.content}\n\`\`\``
         )
         .join('\n\n');
-      const content = `${trimmed}\n\nCurrent project "${projectName}" files:\n\n${fileContext}\n\n${AI_FILE_INSTRUCTION}`;
+      const content = `${trimmed}\n\nCurrent project "${projectName}" files:\n\n${fileContext}${omittedFilesNote(omitted)}\n\n${AI_FILE_INSTRUCTION}`;
 
       const backupFiles = filesOverride ?? files;
       // The Space has its own system prompt; the user's stored chat prompt

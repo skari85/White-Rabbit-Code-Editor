@@ -6,6 +6,7 @@ import {
   AI_PROVIDERS,
 } from '@/lib/ai-config';
 import { AIService } from '@/lib/ai-service';
+import { budgetFilesForContext, omittedFilesNote } from '@/lib/context-budget';
 
 // Documentation types
 interface DocumentationSection {
@@ -469,7 +470,12 @@ export function useAIAssistantEnhanced() {
         // Add context if provided
         let contextualContent = content;
         if (context) {
-          const allFilesContent = context.files
+          const { included, omitted } = budgetFilesForContext(
+            context.files,
+            undefined,
+            context.selectedFile
+          );
+          const allFilesContent = included
             .map(
               file =>
                 `\`\`\`${file.type}
@@ -487,7 +493,7 @@ CURRENT PROJECT CONTEXT:
 - Total files: ${context.files.length}
 
 ALL PROJECT FILES:
-${allFilesContent}
+${allFilesContent}${omittedFilesNote(omitted)}
 
 INSTRUCTIONS:
 - Work with the existing code above
@@ -584,7 +590,12 @@ Please help me with this request by refining the existing code.`;
         // Add context if provided
         let contextualContent = content;
         if (context) {
-          const allFilesContent = context.files
+          const { included, omitted } = budgetFilesForContext(
+            context.files,
+            undefined,
+            context.selectedFile
+          );
+          const allFilesContent = included
             .map(
               file =>
                 `\`\`\`${file.type}
@@ -602,7 +613,7 @@ CURRENT PROJECT CONTEXT:
 - Total files: ${context.files.length}
 
 ALL PROJECT FILES:
-${allFilesContent}
+${allFilesContent}${omittedFilesNote(omitted)}
 
 INSTRUCTIONS:
 - Work with the existing code above
