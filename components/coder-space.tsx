@@ -407,22 +407,32 @@ export default function CoderSpace() {
   const applyAIFiles = useCallback(
     (parsed: ReturnType<typeof parseFilesFromAIResponse>) => {
       if (parsed.length === 0) return 0;
+      let resolvedFirstName = parsed[0].filename;
       setFiles(prev => {
         const next = [...prev];
-        for (const p of parsed) {
-          const existing = next.findIndex(f => f.name === p.filename);
+        parsed.forEach((p, i) => {
+          // Case-insensitive match: buildPreviewHtml/export treat filenames
+          // as effectively case-insensitive (e.g. index.html vs Index.html
+          // collide on any case-insensitive filesystem), so an AI response
+          // naming a file that differs only in case must update the
+          // existing file, not create an invisible/colliding duplicate.
+          const existing = next.findIndex(
+            f => f.name.toLowerCase() === p.filename.toLowerCase()
+          );
+          const resolvedName = existing >= 0 ? next[existing].name : p.filename;
+          if (i === 0) resolvedFirstName = resolvedName;
           const file: FileContent = {
-            name: p.filename,
+            name: resolvedName,
             content: p.code,
             type: fileTypeFromName(p.filename),
             lastModified: new Date(),
           };
           if (existing >= 0) next[existing] = file;
           else next.push(file);
-        }
+        });
         return next;
       });
-      setSelectedFile(parsed[0].filename);
+      setSelectedFile(resolvedFirstName);
       return parsed.length;
     },
     []
@@ -478,10 +488,15 @@ export default function CoderSpace() {
             setShowPreview(false);
           }
           const live = streaming;
+          let resolvedLiveName = live.filename;
           setFiles(prev => {
-            const existing = prev.findIndex(f => f.name === live.filename);
+            const existing = prev.findIndex(
+              f => f.name.toLowerCase() === live.filename.toLowerCase()
+            );
+            resolvedLiveName =
+              existing >= 0 ? prev[existing].name : live.filename;
             const file: FileContent = {
-              name: live.filename,
+              name: resolvedLiveName,
               content: live.code,
               type: fileTypeFromName(live.filename),
               lastModified: new Date(),
@@ -493,7 +508,7 @@ export default function CoderSpace() {
             }
             return [...prev, file];
           });
-          setSelectedFile(live.filename);
+          setSelectedFile(resolvedLiveName);
           setStatus(`Writing ${live.filename}…`);
         } else {
           setStatus(`Thinking… ${response.length} chars`);
@@ -501,17 +516,34 @@ export default function CoderSpace() {
       }
 
       const applied = applyAIFiles(parseFilesFromAIResponse(response));
-      if (applied > 0) {
+      // If a fence never closed — the response got truncated (max tokens)
+      // or the user hit Stop mid-generation — its partial content was
+      // already live-written into `files` above, but parseFilesFromAIResponse
+      // only returns *complete* blocks, so that file isn't in `applied` at
+      // all. Without this check, a response that only touched one
+      // truncated file reports "No files found" and never offers Undo,
+      // leaving a broken file with no way back to the pre-prompt state.
+      const stillOpen = parseStreamingAIResponse(response).streaming;
+      const editorWasTouched = applied > 0 || watchingEditor;
+
+      if (editorWasTouched) {
         setAiBackup({ files: backupFiles, selectedFile });
-        triggerCelebration();
+        if (applied > 0) triggerCelebration();
         // Writing is done — flip back to the running result
         if (watchingEditor) setShowPreview(true);
       }
-      setStatus(
-        applied > 0
-          ? `Updated ${applied} file${applied === 1 ? '' : 's'}`
-          : 'No files found in the response — try rephrasing.'
-      );
+
+      if (stillOpen) {
+        setStatus(
+          `${stillOpen.filename} was cut off mid-response and may be incomplete — use Undo below if it looks wrong, or ask again.`
+        );
+      } else {
+        setStatus(
+          applied > 0
+            ? `Updated ${applied} file${applied === 1 ? '' : 's'}`
+            : 'No files found in the response — try rephrasing.'
+        );
+      }
     } catch (error) {
       setStatus(
         error instanceof Error ? error.message : 'Something went wrong'
@@ -573,7 +605,8 @@ export default function CoderSpace() {
 
   const addFile = () => {
     const name = window.prompt('File name', 'notes.md')?.trim();
-    if (!name || files.some(f => f.name === name)) return;
+    if (!name || files.some(f => f.name.toLowerCase() === name.toLowerCase()))
+      return;
     setFiles(prev => [
       ...prev,
       {
