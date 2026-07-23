@@ -3,21 +3,22 @@
 > **AI-Powered Code Editor** - Build web applications through conversation
 
 [![License](https://img.shields.io/badge/License-Custom-blue.svg)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.0.0-blue)](https://reactjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.5.21-black)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.1.1-blue)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0.2-blue)](https://www.typescriptlang.org/)
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://www.whiterabbit.onl)
 
 ## ✨ Features
 
 ### 🤖 AI-Powered Development
+
 - **Conversational Coding**: Create applications through natural language
 - **AI Code Completions**: Intelligent, context-aware code suggestions
 - **Multi-AI Support**: OpenAI, Anthropic, Groq, Google AI, and more
-- **Smart Documentation**: Auto-generate documentation for your code
-- **Context Understanding**: AI knows your entire project structure
+- **BYOK**: Bring your own API key — requests go straight from your browser to your chosen provider
 
 ### 💻 Advanced Code Editor
+
 - **Monaco Editor**: VS Code-quality editing experience
 - **Syntax Highlighting**: Support for JavaScript, TypeScript, React, HTML, CSS
 - **Live Preview**: Real-time preview of your web applications
@@ -25,6 +26,7 @@
 - **Theme Support**: Dark and light modes with custom themes
 
 ### 🚀 Modern Development Tools
+
 - **Live Coding**: See changes instantly as you type
 - **Terminal Integration**: Built-in terminal for running commands
 - **Export Projects**: Download your projects as ZIP files
@@ -32,6 +34,7 @@
 - **Offline Support**: Works without internet connection
 
 ### 🛠️ Technical Stack
+
 - Built with **Next.js 15** and **React 19**
 - **TypeScript** for type safety
 - **Monaco Editor** for professional code editing
@@ -42,6 +45,7 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
 - npm or pnpm package manager
 - AI API key (OpenAI, Anthropic, Groq, etc.) - optional but recommended
@@ -49,12 +53,14 @@
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
-   git clone https://github.com/skari85/pwa-code.git
+   git clone https://github.com/skari85/White-Rabbit-Code-Editor.git
    cd pwa-code
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    # or
@@ -62,6 +68,7 @@
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env.local
    ```
@@ -69,6 +76,7 @@
    Edit `.env.local` and add your API keys for AI providers and GitHub OAuth.
 
 4. **Start the development server**
+
    ```bash
    npm run dev
    # or
@@ -81,14 +89,17 @@
 ## 🔧 Configuration
 
 ### AI Provider Setup
+
 To enable AI features, configure at least one AI provider:
 
 1. **OpenAI** (Recommended)
+
    ```env
    OPENAI_API_KEY=sk-your-openai-api-key-here
    ```
 
 2. **Anthropic (Claude)**
+
    ```env
    ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key-here
    ```
@@ -99,6 +110,7 @@ To enable AI features, configure at least one AI provider:
    ```
 
 ### GitHub OAuth Setup (Optional)
+
 For user authentication and future GitHub integrations:
 
 1. **Create GitHub OAuth App**
@@ -109,6 +121,7 @@ For user authentication and future GitHub integrations:
    - Callback URL: `http://localhost:3012/api/auth/callback/github`
 
 2. **Configure Environment Variables**
+
    ```env
    NEXTAUTH_URL=http://localhost:3012
    NEXTAUTH_SECRET=your-secret-key-here
@@ -124,23 +137,27 @@ For user authentication and future GitHub integrations:
 ## 🎯 How to Use
 
 ### 1. Start Coding
+
 - **Create Files**: Add HTML, CSS, JavaScript, TypeScript, or React files
 - **AI Chat**: Describe what you want to build in natural language
 - **Live Preview**: See your changes instantly in the preview panel
 
 ### 2. AI-Powered Development
+
 - **Ask Questions**: "Create a React component for a todo list"
 - **Get Suggestions**: AI provides intelligent code completions as you type
 - **Generate Code**: AI can create entire files based on your descriptions
-- **Documentation**: Auto-generate docs for your functions and components
+- **Magic Wand**: Refine a rough prompt into a sharper one before sending it
 
 ### 3. Advanced Features
+
 - **Multi-File Projects**: Organize your code across multiple files
 - **Terminal**: Run commands and scripts directly in the browser
 - **Themes**: Switch between dark and light modes
 - **Export**: Download your project as a ZIP file
 
 ### 4. AI Configuration
+
 - **Settings**: Configure your preferred AI provider and model
 - **API Keys**: Add your own API keys for unlimited usage
 - **Personality**: Choose between different AI assistant personalities
@@ -165,7 +182,7 @@ White-Rabbit-Code-Editor/
 │   └── use-analytics.ts       # Usage tracking
 ├── lib/                   # Utility libraries
 │   ├── ai-config.ts      # AI provider configurations
-│   ├── ai-completion-service.ts # Code completion engine
+│   ├── ai-service.ts     # Multi-provider AI request handling
 │   └── utils.ts          # General utilities
 ├── public/               # Static assets
 │   ├── whiterabbitlogo.png    # Application logo
@@ -176,6 +193,7 @@ White-Rabbit-Code-Editor/
 ## 🤖 AI Features
 
 ### Supported AI Providers
+
 - **OpenAI**: GPT-3.5, GPT-4, GPT-4 Turbo
 - **Anthropic**: Claude 3 Haiku, Sonnet, Opus
 - **Groq**: Llama 3, Mixtral (ultra-fast inference)
@@ -183,9 +201,9 @@ White-Rabbit-Code-Editor/
 - **Mistral**: Mistral 7B, Mixtral 8x7B
 
 ### AI Capabilities
+
 - **Code Generation**: Create complete files from descriptions
 - **Code Completion**: Intelligent autocomplete as you type
-- **Documentation**: Auto-generate JSDoc comments
 - **Code Explanation**: Understand complex code snippets
 - **Debugging Help**: Get assistance with errors and bugs
 - **Refactoring**: Improve code structure and performance
@@ -193,17 +211,20 @@ White-Rabbit-Code-Editor/
 ## 🛠️ Development
 
 ### Building for Production
+
 ```bash
 npm run build
 npm start
 ```
 
 ### Code Quality
+
 ```bash
 npm run lint
 ```
 
 ### Available Scripts
+
 ```bash
 npm run dev          # Start development server
 npm run build        # Build for production
@@ -213,6 +234,7 @@ npm run deploy       # Deploy with license verification
 ```
 
 ### Technologies Used
+
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **Editor**: Monaco Editor (VS Code engine)
@@ -232,6 +254,7 @@ npm run deploy       # Deploy with license verification
 ## 🗺️ Roadmap
 
 ### Upcoming Features
+
 - [ ] GitHub repository integration
 - [ ] Real-time collaboration
 - [ ] Plugin system for extensions
@@ -242,6 +265,7 @@ npm run deploy       # Deploy with license verification
 - [ ] Deployment integrations (Vercel, Netlify)
 
 ### AI Enhancements
+
 - [ ] Voice-to-code functionality
 - [ ] Visual design to code conversion
 - [ ] Automated testing generation
@@ -254,12 +278,14 @@ npm run deploy       # Deploy with license verification
 **⚠️ Important: This software is protected by a custom license.**
 
 ### ✅ Personal Use Allowed
+
 - ✅ Personal projects and learning
 - ✅ Educational purposes
 - ✅ Non-commercial use
 - ✅ Modifications for personal use
 
 ### ❌ Commercial Use Restricted
+
 - ❌ Business/commercial organizations
 - ❌ Revenue-generating activities
 - ❌ Commercial products/services
@@ -268,7 +294,9 @@ npm run deploy       # Deploy with license verification
 **Commercial licenses are available.** Contact us for pricing and terms.
 
 ### 📝 Attribution Required
+
 All uses must include:
+
 ```
 Powered by White Rabbit Code Editor
 ```
@@ -289,14 +317,13 @@ For commercial use, enterprise licenses, or custom arrangements:
 
 White Rabbit is an independent open-source project and is not affiliated with or endorsed by any third-party IDE vendor. JetBrains and related marks are trademarks of JetBrains s.r.o. All other trademarks are the property of their respective owners.
 
-
 See the [LICENSE](LICENSE) file for complete terms and conditions.
 
 ## Support
 
 If you encounter any issues or have questions:
 
-1. Check the [Issues](https://github.com/skari85/pwa-code/issues) page
+1. Check the [Issues](https://github.com/skari85/White-Rabbit-Code-Editor/issues) page
 2. Create a new issue with detailed information
 3. Join our community discussions
 
@@ -320,6 +347,7 @@ We welcome contributions! Here's how you can help:
 6. **Open a Pull Request**
 
 ### Development Guidelines
+
 - Follow TypeScript best practices
 - Add tests for new features
 - Update documentation as needed
